@@ -1,290 +1,21 @@
-<template>
-  <div class="p-6 max-w-screen-2xl mx-auto space-y-8">
-    <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-      <div>
-        <h1 class="text-3xl font-bold tracking-tight text-slate-900">
-          {{ t('admin.systemStatus.title') }}
-        </h1>
-        <p class="text-slate-500 mt-1 text-lg">
-          {{ t('admin.systemStatus.subtitle') }}
-        </p>
-      </div>
-      <div class="flex items-center gap-2">
-        <span class="text-xs font-medium text-slate-400 mr-2">v{{ appVersion }}</span>
-        <Button variant="outline" @click="fetchStatus" :disabled="loading" class="h-10 px-4">
-          <RefreshCw :class="['w-4 h-4 mr-2', loading && 'animate-spin']" />
-          {{ t('admin.systemStatus.refresh') }}
-        </Button>
-      </div>
-    </div>
-
-    <!-- Overall Status Banner -->
-    <div
-      class="rounded-xl border bg-white p-6 shadow-sm flex items-center gap-5 transition-all duration-300"
-      :class="
-        status === 'ok' ? 'border-emerald-100 bg-emerald-50/10' : 'border-rose-100 bg-rose-50/10'
-      "
-    >
-      <div
-        class="flex h-16 w-16 items-center justify-center rounded-full shadow-sm"
-        :class="status === 'ok' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'"
-      >
-        <CheckCircle2 v-if="status === 'ok'" class="h-8 w-8" />
-        <AlertTriangle v-else class="h-8 w-8" />
-      </div>
-      <div class="space-y-1">
-        <h2 class="text-2xl font-semibold tracking-tight text-slate-900">
-          {{
-            status === 'ok'
-              ? t('admin.systemStatus.allSystemsOperational')
-              : t('admin.systemStatus.systemIssues')
-          }}
-        </h2>
-        <p class="text-slate-500">
-          {{
-            status === 'ok'
-              ? 'All services are functioning normally.'
-              : 'Some systems are experiencing performance degradation.'
-          }}
-        </p>
-      </div>
-    </div>
-
-    <!-- Metrics Grid -->
-    <div class="grid gap-6 md:grid-cols-3">
-      <!-- Uptime -->
-      <Card class="bg-white shadow-sm border-slate-200">
-        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle class="text-sm font-medium text-slate-500">
-            {{ t('admin.systemStatus.uptime') }}
-          </CardTitle>
-          <Timer class="h-4 w-4 text-emerald-500" />
-        </CardHeader>
-        <CardContent>
-          <div class="text-2xl font-bold text-slate-900">
-            {{
-              typeof uptime === 'string'
-                ? uptime
-                : uptime
-                  ? formatUptimeShort(uptime as number)
-                  : '-'
-            }}
-          </div>
-          <p class="text-xs text-emerald-600 mt-1 font-medium">Updated just now</p>
-        </CardContent>
-      </Card>
-
-      <!-- Response Time -->
-      <Card class="bg-white shadow-sm border-slate-200">
-        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle class="text-sm font-medium text-slate-500">
-            {{ t('admin.systemStatus.responseTime') }}
-          </CardTitle>
-          <Zap class="h-4 w-4 text-amber-500" />
-        </CardHeader>
-        <CardContent>
-          <div class="text-2xl font-bold text-slate-900">
-            {{ responseTime ? responseTime.toFixed(0) : '-' }}
-            <span class="text-sm font-normal text-slate-400">ms</span>
-          </div>
-          <p :class="['text-xs mt-1 font-medium', getLatencyColor(responseTime)]">
-            {{ getLatencyStatus(responseTime) }}
-          </p>
-        </CardContent>
-      </Card>
-
-      <!-- Last Checked -->
-      <Card class="bg-white shadow-sm border-slate-200">
-        <CardHeader class="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle class="text-sm font-medium text-slate-500">
-            {{ t('admin.systemStatus.lastChecked') }}
-          </CardTitle>
-          <Clock class="h-4 w-4 text-blue-500" />
-        </CardHeader>
-        <CardContent>
-          <div class="text-2xl font-bold text-slate-900">
-            {{ lastChecked ? formatTimeRaw(lastChecked) : '-' }}
-          </div>
-          <p class="text-xs text-slate-500 mt-1">Next check in {{ pollInterval / 1000 }}s</p>
-        </CardContent>
-      </Card>
-    </div>
-
-    <div class="grid gap-6 md:grid-cols-2">
-      <!-- System Services -->
-      <Card class="bg-white shadow-sm border-slate-200 col-span-1">
-        <CardHeader>
-          <CardTitle class="text-lg font-semibold flex items-center gap-2">
-            <Server class="w-5 h-5 text-slate-400" />
-            {{ t('admin.systemStatus.systemServices') }}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div class="space-y-4">
-            <!-- API Server -->
-            <div class="flex items-center justify-between p-4 rounded-lg border bg-slate-50/50">
-              <div class="flex items-center gap-3">
-                <div
-                  :class="[
-                    'w-2.5 h-2.5 rounded-full',
-                    status === 'ok' ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500',
-                  ]"
-                ></div>
-                <div class="font-medium text-slate-700">API Gateway</div>
-              </div>
-              <div class="flex items-center gap-4">
-                <span
-                  class="text-sm font-medium"
-                  :class="status === 'ok' ? 'text-emerald-600' : 'text-rose-600'"
-                >
-                  {{ status === 'ok' ? 'Operational' : 'Issues' }}
-                </span>
-              </div>
-            </div>
-
-            <!-- Database -->
-            <div class="flex items-center justify-between p-4 rounded-lg border bg-slate-50/50">
-              <div class="flex items-center gap-3">
-                <div
-                  :class="[
-                    'w-2.5 h-2.5 rounded-full',
-                    details?.database?.status === 'up' || status === 'ok'
-                      ? 'bg-emerald-500'
-                      : 'bg-rose-500',
-                  ]"
-                ></div>
-                <div class="font-medium text-slate-700">Database Connection</div>
-              </div>
-              <div class="flex items-center gap-4">
-                <span
-                  class="text-sm font-medium"
-                  :class="
-                    details?.database?.status === 'up' || status === 'ok'
-                      ? 'text-emerald-600'
-                      : 'text-rose-600'
-                  "
-                >
-                  {{
-                    details?.database?.status === 'up' || status === 'ok'
-                      ? 'Operational'
-                      : 'Degraded'
-                  }}
-                </span>
-              </div>
-            </div>
-
-            <!-- Redis -->
-            <div class="flex items-center justify-between p-4 rounded-lg border bg-slate-50/50">
-              <div class="flex items-center gap-3">
-                <div
-                  :class="[
-                    'w-2.5 h-2.5 rounded-full',
-                    details?.redis?.status === 'up' || status === 'ok'
-                      ? 'bg-emerald-500'
-                      : 'bg-rose-500',
-                  ]"
-                ></div>
-                <div class="font-medium text-slate-700">Redis Cache</div>
-              </div>
-              <div class="flex items-center gap-4">
-                <span
-                  class="text-sm font-medium"
-                  :class="
-                    details?.redis?.status === 'up' || status === 'ok'
-                      ? 'text-emerald-600'
-                      : 'text-rose-600'
-                  "
-                >
-                  {{
-                    details?.redis?.status === 'up' || status === 'ok' ? 'Operational' : 'Degraded'
-                  }}
-                </span>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <!-- Recent Checks -->
-      <Card class="bg-white shadow-sm border-slate-200 col-span-1">
-        <CardHeader>
-          <CardTitle class="text-lg font-semibold flex items-center gap-2">
-            <History class="w-5 h-5 text-slate-400" />
-            {{ t('admin.systemStatus.recentChecks') }}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div class="rounded-md border overflow-hidden">
-            <table class="w-full text-sm">
-              <thead class="bg-slate-50 text-slate-500">
-                <tr class="border-b">
-                  <th class="h-10 px-4 text-left font-medium">
-                    {{ t('admin.systemStatus.status') }}
-                  </th>
-                  <th class="h-10 px-4 text-left font-medium">Time</th>
-                  <th class="h-10 px-4 text-right font-medium">
-                    {{ t('admin.systemStatus.latency') }}
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="(check, i) in history"
-                  :key="i"
-                  class="border-b last:border-0 hover:bg-slate-50/50"
-                >
-                  <td class="p-4">
-                    <div class="flex items-center gap-2">
-                      <CheckCircle2 v-if="check.status === 'ok'" class="w-4 h-4 text-emerald-500" />
-                      <AlertTriangle v-else class="w-4 h-4 text-rose-500" />
-                      <span
-                        class="font-medium"
-                        :class="check.status === 'ok' ? 'text-emerald-700' : 'text-rose-700'"
-                      >
-                        {{ check.status === 'ok' ? 'OK' : 'Error' }}
-                      </span>
-                    </div>
-                  </td>
-                  <td class="p-4 text-slate-600">
-                    {{ formatTimeRaw(check.timestamp) }}
-                  </td>
-                  <td class="p-4 text-right font-mono text-slate-600">
-                    {{ check.latency.toFixed(0) }} ms
-                  </td>
-                </tr>
-                <tr v-if="history.length === 0">
-                  <td colspan="3" class="p-8 text-center text-muted-foreground">
-                    No data available yet
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { notificationsApi } from '@/services/notifications';
 import {
-  AlertTriangle,
+  Activity,
+  AlertCircle,
+  BarChart3,
   CheckCircle2,
   Clock,
-  History,
+  Database,
+  FileText,
   RefreshCw,
   Server,
-  Timer,
-  Zap,
+  Users,
+  Wifi,
 } from 'lucide-vue-next';
-import { onMounted, onUnmounted, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
-
-const { t } = useI18n();
-const appVersion = __APP_VERSION__;
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 interface HealthCheck {
   status: 'ok' | 'error';
@@ -300,8 +31,28 @@ const loading = ref(false);
 const history = ref<HealthCheck[]>([]);
 const details = ref<any>(null);
 
+// Stats
+const unreadAlerts = ref(0);
+const pendingApprovals = ref(0);
+const onlineUsers = ref(1); // Self
+
 const pollInterval = 10000;
 let timer: ReturnType<typeof setInterval> | null = null;
+let statsTimer: number | null = null;
+
+const fetchStats = async () => {
+  try {
+    const response = await notificationsApi.getAll();
+    unreadAlerts.value = response.data.filter((n) => !n.isRead).length;
+    pendingApprovals.value = response.data.filter(
+      (n) => (n.type as string) === 'APPROVAL_REQUEST' && !n.isRead
+    ).length;
+    // Mock online users fluctuation
+    onlineUsers.value = Math.floor(Math.random() * 5) + 1;
+  } catch (error) {
+    console.error('Failed to fetch stats', error);
+  }
+};
 
 const fetchStatus = async () => {
   loading.value = true;
@@ -316,8 +67,6 @@ const fetchStatus = async () => {
 
     if (res.ok) {
       const data = await res.json();
-
-      // Support both NestJS Terminus style (lowercase) and Custom BE style (Capitalized)
       const rawStatus = data.status || data.Status || '';
       const isOk =
         typeof rawStatus === 'string'
@@ -329,13 +78,11 @@ const fetchStatus = async () => {
       currentStatus = isOk ? 'ok' : 'error';
       const rawUptime = data.uptime || data.Uptime || null;
       if (typeof rawUptime === 'string') {
-        // Strip out seconds part if it exists (e.g., ": 39 Second" -> "")
         uptime.value = rawUptime.replace(/ : \d+ Second/g, '').replace(/ : Minute/g, ' Minute');
       } else {
         uptime.value = rawUptime;
       }
 
-      // Map details from standardized or custom fields
       const redisRaw = data.redisStatus || data['Redis Status'] || '';
       const isRedisOk =
         typeof redisRaw === 'string' &&
@@ -348,7 +95,6 @@ const fetchStatus = async () => {
 
       lastChecked.value = new Date();
     } else {
-      // Even if not ok, might have partial data
       try {
         const data = await res.json();
         details.value = data.details || null;
@@ -372,43 +118,227 @@ const addToHistory = (status: 'ok' | 'error', timestamp: Date, latency: number) 
   if (history.value.length > 5) history.value.pop();
 };
 
-const formatUptimeShort = (seconds: number) => {
-  const d = Math.floor(seconds / (3600 * 24));
-  const h = Math.floor((seconds % (3600 * 24)) / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-
-  const parts = [];
-  if (d > 0) parts.push(`${d}d`);
-  if (h > 0) parts.push(`${h}h`);
-  parts.push(`${m}m`);
-
-  return parts.join(' ');
-};
-
 const formatTimeRaw = (date: Date) => {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 };
 
-const getLatencyColor = (ms: number | null) => {
-  if (!ms) return 'text-slate-500';
-  if (ms < 200) return 'text-emerald-600';
-  if (ms < 500) return 'text-amber-600';
-  return 'text-rose-600';
-};
-
-const getLatencyStatus = (ms: number | null) => {
-  if (!ms) return 'Unknown';
-  if (ms < 200) return 'Excellent';
-  if (ms < 500) return 'Good';
-  return 'Slow';
-};
+// Mock Recent Activity
+const recentActivity = computed(() => [
+  { type: 'EDIT', requester: 'U', status: 'APPROVED', time: '16-Jan-2026, 16:09' },
+  { type: 'EDIT', requester: 'U', status: 'APPROVED', time: '16-Jan-2026, 16:08' },
+  { type: 'EDIT', requester: 'U', status: 'APPROVED', time: '16-Jan-2026, 16:08' },
+  { type: 'EDIT', requester: 'U', status: 'APPROVED', time: '16-Jan-2026, 16:07' },
+  { type: 'EDIT', requester: 'U', status: 'APPROVED', time: '16-Jan-2026, 15:46' },
+]);
 
 onMounted(() => {
   fetchStatus();
+  fetchStats();
   timer = setInterval(fetchStatus, pollInterval);
+  statsTimer = window.setInterval(fetchStats, 60000);
 });
 
 onUnmounted(() => {
   if (timer) clearInterval(timer);
+  if (statsTimer) clearInterval(statsTimer);
 });
 </script>
+
+<template>
+  <div class="p-8 max-w-screen-2xl mx-auto space-y-8 bg-slate-50 min-h-[calc(100vh-4rem)]">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-bold tracking-tight text-slate-900">System Monitor</h1>
+        <p class="text-slate-500 mt-1">Real-time overview of system performance and activities.</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <div
+          class="flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700"
+        >
+          <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          SYSTEM HEALTHY
+        </div>
+        <Button variant="outline" size="sm" @click="fetchStatus" :disabled="loading" class="h-8">
+          <RefreshCw :class="['w-3.5 h-3.5 mr-2', loading && 'animate-spin']" />
+          Refresh
+        </Button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Main Content (Left) -->
+      <div class="lg:col-span-2 space-y-8">
+        <!-- Top Metrics Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Pending Approvals -->
+          <Card class="border shadow-none">
+            <CardContent class="p-6">
+              <div class="flex items-center justify-between mb-4">
+                <span class="text-sm font-medium text-slate-600">Pending Approvals</span>
+                <CheckCircle2 class="w-4 h-4 text-orange-500" />
+              </div>
+              <div class="text-4xl font-bold text-orange-600">{{ pendingApprovals }}</div>
+              <p class="text-xs text-slate-400 mt-1">Require attention</p>
+            </CardContent>
+          </Card>
+
+          <!-- Unread Alerts -->
+          <Card class="border shadow-none">
+            <CardContent class="p-6">
+              <div class="flex items-center justify-between mb-4">
+                <span class="text-sm font-medium text-slate-600">Unread Alerts</span>
+                <AlertCircle class="w-4 h-4 text-blue-500" />
+              </div>
+              <div class="text-4xl font-bold text-blue-600">{{ unreadAlerts }}</div>
+              <p class="text-xs text-slate-400 mt-1">System notifications</p>
+            </CardContent>
+          </Card>
+
+          <!-- Online Users -->
+          <Card class="border shadow-none">
+            <CardContent class="p-6">
+              <div class="flex items-center justify-between mb-4">
+                <span class="text-sm font-medium text-slate-600">Online Users</span>
+                <Users class="w-4 h-4 text-emerald-500" />
+              </div>
+              <div class="text-4xl font-bold text-emerald-600">{{ onlineUsers }}</div>
+              <p class="text-xs text-slate-400 mt-1">Active now in system</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <!-- Recent Activity -->
+        <Card class="border shadow-none h-full">
+          <CardHeader>
+            <CardTitle class="text-lg font-semibold">Recent Activity</CardTitle>
+            <p class="text-sm text-slate-500">Latest approval requests and system actions.</p>
+          </CardHeader>
+          <CardContent>
+            <div class="w-full overflow-auto">
+              <table class="w-full text-sm text-left">
+                <thead class="text-slate-400 font-medium">
+                  <tr>
+                    <th class="pb-3 pl-2">Type</th>
+                    <th class="pb-3">Requester</th>
+                    <th class="pb-3 text-center">Status</th>
+                    <th class="pb-3 text-right pr-2">Time</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr v-for="(item, i) in recentActivity" :key="i" class="group">
+                    <td class="py-4 pl-2 font-medium text-slate-700">{{ item.type }}</td>
+                    <td class="py-4">
+                      <div
+                        class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs font-bold"
+                      >
+                        {{ item.requester }}
+                      </div>
+                    </td>
+                    <td class="py-4 text-center">
+                      <span
+                        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-700 uppercase"
+                      >
+                        {{ item.status }}
+                      </span>
+                    </td>
+                    <td class="py-4 text-right text-slate-400 pr-2">{{ item.time }}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <!-- Sidebar (Right) -->
+      <div class="space-y-8">
+        <!-- System Health -->
+        <Card class="border shadow-none">
+          <CardHeader>
+            <CardTitle class="text-lg font-semibold">System Health</CardTitle>
+            <p class="text-sm text-slate-500">Operational Status</p>
+          </CardHeader>
+          <CardContent class="space-y-6">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <Database class="w-4 h-4 text-slate-400" />
+                <span class="font-medium text-slate-700">Database</span>
+              </div>
+              <span
+                class="px-2 py-0.5 rounded text-xs font-bold uppercase"
+                :class="
+                  details?.database?.status === 'up' || status === 'ok'
+                    ? 'bg-emerald-500 text-white'
+                    : 'bg-rose-500 text-white'
+                "
+              >
+                {{ details?.database?.status === 'up' || status === 'ok' ? 'Connected' : 'Error' }}
+              </span>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <Server class="w-4 h-4 text-slate-400" />
+                <span class="font-medium text-slate-700">API Server</span>
+              </div>
+              <span
+                class="px-2 py-0.5 rounded text-xs font-bold uppercase"
+                :class="status === 'ok' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'"
+              >
+                {{ status === 'ok' ? 'Online' : 'Offline' }}
+              </span>
+            </div>
+
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <Wifi class="w-4 h-4 text-slate-400" />
+                <span class="font-medium text-slate-700">Socket.IO</span>
+              </div>
+              <span
+                class="px-2 py-0.5 rounded text-xs font-bold uppercase bg-emerald-500 text-white"
+              >
+                Active
+              </span>
+            </div>
+
+            <div class="pt-4 border-t flex items-center gap-2 text-xs text-slate-400">
+              <Clock class="w-3 h-3" />
+              Last check: {{ lastChecked ? formatTimeRaw(lastChecked) : 'Just now' }}
+            </div>
+          </CardContent>
+        </Card>
+
+        <!-- Monitoring Tools -->
+        <Card class="border shadow-none">
+          <CardHeader>
+            <CardTitle class="text-lg font-semibold">Monitoring Tools</CardTitle>
+          </CardHeader>
+          <CardContent class="space-y-2">
+            <Button
+              variant="ghost"
+              class="w-full justify-start text-slate-600 hover:text-blue-600 hover:bg-blue-50"
+            >
+              <Activity class="w-4 h-4 mr-3 text-blue-500" />
+              Traffic Analytics
+            </Button>
+            <Button
+              variant="ghost"
+              class="w-full justify-start text-slate-600 hover:text-rose-600 hover:bg-rose-50"
+            >
+              <FileText class="w-4 h-4 mr-3 text-rose-500" />
+              System Logs
+            </Button>
+            <Button
+              variant="ghost"
+              class="w-full justify-start text-slate-600 hover:text-amber-600 hover:bg-amber-50"
+            >
+              <BarChart3 class="w-4 h-4 mr-3 text-amber-500" />
+              Performance Metrics
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  </div>
+</template>

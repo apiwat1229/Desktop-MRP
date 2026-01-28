@@ -1,41 +1,29 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import AppSidebar from '@/components/AppSidebar.vue';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { useRoute } from 'vue-router';
-import Sidebar from './Sidebar.vue';
 
-// const authStore = useAuthStore();
+// If SiteHeader is missing, we can implement a basic header or verify its existence.
+// For now assuming the user wants to keep the header logic if it existed.
+// But Step 844 removed it. Step 817 deleted it.
+// I'll create a simple header inline or leave it empty for now.
+
 const route = useRoute();
-
-const showSidebar = computed(() => {
-  if (
-    route.path.startsWith('/admin/cuplump') ||
-    route.path.startsWith('/cuplump-pool') ||
-    route.path.startsWith('/admin/uss') ||
-    route.path.startsWith('/admin/helpdesk') ||
-    route.path.startsWith('/admin/project-timeline') ||
-    route.path.startsWith('/admin/qa') ||
-    route.path.startsWith('/admin/production')
-  ) {
-    return false;
-  }
-  return route.path.startsWith('/admin');
-});
 </script>
 
 <template>
-  <div class="flex flex-1 h-full overflow-hidden bg-transparent text-foreground font-sans">
-    <!-- Sidebar -->
-    <Sidebar v-if="showSidebar" />
-
-    <!-- Main Content Area -->
-    <main class="flex-1 overflow-x-hidden overflow-y-auto p-4 lg:p-6">
-      <router-view v-slot="{ Component }">
-        <transition name="fade" mode="out-in">
-          <component :is="Component" :key="route.path" />
-        </transition>
-      </router-view>
-    </main>
-  </div>
+  <SidebarProvider>
+    <AppSidebar />
+    <SidebarInset>
+      <div class="flex flex-1 flex-col gap-4 p-4">
+        <router-view v-slot="{ Component }">
+          <transition name="fade" mode="out-in">
+            <component :is="Component" :key="route.path" />
+          </transition>
+        </router-view>
+      </div>
+    </SidebarInset>
+  </SidebarProvider>
 </template>
 
 <style scoped>

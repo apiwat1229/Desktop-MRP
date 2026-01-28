@@ -1,13 +1,13 @@
 import { usePermissions } from '@/composables/usePermissions';
 import {
     Bell,
-    ClipboardCheck,
+    Calendar,
+    Factory,
     Layers,
-    LayoutDashboard,
     Server,
     Shield,
     Truck,
-    Users,
+    Users
 } from 'lucide-vue-next';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -20,7 +20,7 @@ export function useSidebarMenu() {
         {
             title: t('admin.sidebar.main'),
             items: [
-                { name: t('admin.sidebar.dashboard'), path: '/admin', icon: LayoutDashboard }, // Public for admin panel
+
                 {
                     name: t('admin.sidebar.roles'),
                     path: '/admin/roles',
@@ -57,7 +57,26 @@ export function useSidebarMenu() {
                     icon: Layers,
                     permission: 'production:read',
                 },
-                { name: t('admin.sidebar.approvals'), path: '/approvals', icon: ClipboardCheck },
+
+            ],
+        },
+        {
+            title: t('services.title'),
+            items: [
+                {
+                    name: t('services.booking.name'),
+                    path: '/bookings',
+                    icon: Calendar,
+                    items: [
+                        { name: 'Cuplump', path: '/bookings/cuplump' },
+                        { name: 'USS', path: '/bookings/uss' },
+                    ],
+                },
+                {
+                    name: t('services.mrp.name'),
+                    path: '/mrp',
+                    icon: Factory,
+                },
             ],
         },
         {
@@ -73,7 +92,7 @@ export function useSidebarMenu() {
             .map((group) => ({
                 ...group,
                 items: group.items.filter((item) => {
-                    if (!item.permission) return true;
+                    if (!('permission' in item) || !item.permission) return true;
                     if (isAdmin.value) return true;
                     return hasPermission(item.permission);
                 }),

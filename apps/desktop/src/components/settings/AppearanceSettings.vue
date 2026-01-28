@@ -34,6 +34,14 @@ const fontFamilies = [
     style: { fontFamily: 'Noto Sans Thai, sans-serif' },
   },
 ];
+
+import { useI18n } from 'vue-i18n';
+const { locale } = useI18n();
+
+const changeLocale = (newLocale: string) => {
+  locale.value = newLocale;
+  localStorage.setItem('language', newLocale);
+};
 </script>
 
 <template>
@@ -108,6 +116,32 @@ const fontFamilies = [
           </Label>
         </div>
       </RadioGroup>
+    </div>
+
+    <!-- Language Section -->
+
+    <div class="space-y-4">
+      <div class="font-medium">Language</div>
+      <div class="grid grid-cols-2 gap-4">
+        <Button
+          variant="outline"
+          class="h-16 flex flex-col items-center justify-center gap-2"
+          :class="{ 'border-primary border-2': locale === 'en' }"
+          @click="changeLocale('en')"
+        >
+          <span class="text-2xl">🇬🇧</span>
+          <span>English</span>
+        </Button>
+        <Button
+          variant="outline"
+          class="h-16 flex flex-col items-center justify-center gap-2"
+          :class="{ 'border-primary border-2': locale === 'th' }"
+          @click="changeLocale('th')"
+        >
+          <span class="text-2xl">🇹🇭</span>
+          <span>ไทย</span>
+        </Button>
+      </div>
     </div>
   </div>
 </template>

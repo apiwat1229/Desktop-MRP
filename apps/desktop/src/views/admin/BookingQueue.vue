@@ -30,8 +30,6 @@ import {
   CarouselPrevious,
 } from '@/components/ui/carousel';
 import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import Spinner from '@/components/ui/spinner/Spinner.vue';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuthStore } from '@/stores/auth';
 import { useRoute, useRouter } from 'vue-router';
@@ -91,6 +89,25 @@ const calendarPopoverOpen = ref(false); // Add popover state
 const searchQuery = ref(''); // Add search query state
 
 const queueMode = ref<'Cuplump' | 'USS'>('Cuplump'); // Booking Mode
+
+const updateModeFromRoute = () => {
+  if (route.path.includes('uss')) {
+    queueMode.value = 'USS';
+  } else {
+    queueMode.value = 'Cuplump';
+  }
+};
+
+onMounted(() => {
+  updateModeFromRoute();
+});
+
+watch(
+  () => route.path,
+  () => {
+    updateModeFromRoute();
+  }
+);
 
 const sheetOpen = ref(false);
 const ticketDialogOpen = ref(false);
@@ -478,23 +495,6 @@ watch(selectedSlot, (newSlot) => {
       </div>
 
       <div class="flex items-center space-x-2">
-        <Tabs v-model="queueMode" class="w-[250px]">
-          <TabsList class="grid w-full grid-cols-2 bg-muted/50 p-1 h-10 rounded-lg gap-1">
-            <TabsTrigger
-              value="Cuplump"
-              class="h-9 text-xs font-black uppercase tracking-wide data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-2 data-[state=active]:border-primary transition-all rounded-md"
-            >
-              Cuplump
-            </TabsTrigger>
-            <TabsTrigger
-              value="USS"
-              class="h-9 text-xs font-black uppercase tracking-wide data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-2 data-[state=active]:border-primary transition-all rounded-md"
-            >
-              USS
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
-
         <Button
           size="sm"
           :disabled="isSlotFull"
@@ -609,10 +609,8 @@ watch(selectedSlot, (newSlot) => {
       v-else-if="queues.length === 0"
       class="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-border rounded-xl bg-background/50 min-h-[300px]"
     >
-      <div
-        class="w-16 h-16 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-4"
-      >
-        <FileText class="w-8 h-8 text-blue-500" />
+      <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+        <FileText class="w-8 h-8 text-primary" />
       </div>
       <h3 class="text-lg font-semibold">{{ t('bookingQueue.noData') }}</h3>
       <p class="text-muted-foreground mt-1">{{ t('bookingQueue.noBookings') }}</p>

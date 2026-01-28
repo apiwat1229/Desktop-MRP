@@ -1,6 +1,5 @@
 ```
 <script setup lang="ts">
-import Navbar from '@/components/layout/Navbar.vue';
 import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/sonner';
 import api from '@/services/api';
@@ -50,9 +49,6 @@ onUnmounted(() => {
 <template>
   <GlobalBackground />
   <div class="flex flex-col h-screen text-foreground">
-    <!-- Navbar always visible -->
-    <Navbar :show-brand="true" />
-
     <div class="flex-1 overflow-hidden relative">
       <!-- Loading & Error States -->
       <div

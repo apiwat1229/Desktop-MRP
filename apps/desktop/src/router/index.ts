@@ -51,8 +51,22 @@ const routes = [
             },
             {
                 path: 'bookings',
-                name: 'Booking Queue',
-                component: () => import('../views/admin/BookingQueue.vue'),
+                children: [
+                    {
+                        path: '',
+                        redirect: '/bookings/cuplump',
+                    },
+                    {
+                        path: 'cuplump',
+                        name: 'BookingCuplump',
+                        component: () => import('../views/admin/BookingQueue.vue'),
+                    },
+                    {
+                        path: 'uss',
+                        name: 'BookingUSS',
+                        component: () => import('../views/admin/BookingQueue.vue'),
+                    },
+                ]
             },
         ]
     },
@@ -158,10 +172,7 @@ const routes = [
                 component: () => import('../views/admin/UssDetail.vue'),
             },
 
-            {
-                path: 'bookings',
-                redirect: '/bookings',
-            },
+
             {
                 path: 'analytics',
                 name: 'Analytics',
@@ -176,7 +187,7 @@ const routes = [
     },
     {
         path: '/approvals',
-        component: () => import('@/components/layout/NavbarOnlyLayout.vue'),
+        component: () => import('@/components/layout/MainLayout.vue'),
         meta: { requiresAuth: true },
         children: [
             {

@@ -299,7 +299,7 @@
     }
   },
   "services": {
-    "title": "Services & Modules",
+    "title": "MRP System",
     "subtitle": "Select a module to access specialized tools.",
     "mrp": {
       "name": "MRP System",

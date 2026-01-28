@@ -1,0 +1,37 @@
+<script setup lang="ts">
+import { cn } from '@/lib/utils';
+import { Separator, type SeparatorProps } from 'radix-vue';
+import { type HTMLAttributes, computed } from 'vue';
+
+const props = defineProps<SeparatorProps & { class?: HTMLAttributes['class']; label?: string }>();
+
+const delegatedProps = computed(() => {
+  const { class: _, ...delegated } = props;
+
+  return delegated;
+});
+</script>
+
+<template>
+  <Separator
+    v-bind="delegatedProps"
+    :class="
+      cn(
+        'shrink-0 bg-border',
+        props.orientation === 'vertical' ? 'h-full w-[1px]' : 'h-[1px] w-full',
+        props.class
+      )
+    "
+  >
+    <span
+      v-if="props.label"
+      :class="
+        cn(
+          'text-xs text-muted-foreground bg-background absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex justify-center items-center',
+          props.orientation === 'vertical' ? 'w-[1px] py-1' : 'h-[1px] px-1'
+        )
+      "
+      >{{ props.label }}</span
+    >
+  </Separator>
+</template>
