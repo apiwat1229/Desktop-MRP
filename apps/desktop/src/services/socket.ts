@@ -22,7 +22,7 @@ class SocketService {
         const apiUrl = import.meta.env.VITE_API_URL || 'https://app.ytrc.co.th';
         const socketUrl = apiUrl.replace('/api', '');
 
-        console.log('SocketService: Connecting to', socketUrl);
+
 
         this.socket = io(socketUrl, {
             transports: ['websocket', 'polling'],
@@ -33,7 +33,6 @@ class SocketService {
         });
 
         this.socket.on('connect', () => {
-            console.log('SocketService: Connected:', this.socket?.id);
             this.isConnected = true;
 
             // Join pending room if exists, otherwise join from authStore
@@ -42,13 +41,10 @@ class SocketService {
                 this.pendingRoomUserId = null;
             } else if (authStore.user?.id) {
                 this.joinRoom(authStore.user.id);
-            } else {
-                console.log('SocketService: User ID not ready yet, waiting for joinRoom call.');
             }
         });
 
         this.socket.on('disconnect', () => {
-            console.log('SocketService: Disconnected');
             this.isConnected = false;
         });
 
@@ -56,15 +52,11 @@ class SocketService {
             console.error('SocketService: Connection error:', err);
         });
 
-        // Debug
-        this.socket.on('notification', (data) => {
-            console.log('SocketService: Received notification event:', data);
-        });
+
     }
 
     joinRoom(userId: string) {
         if (this.socket && this.isConnected) {
-            console.log(`SocketService: Joining room user:${userId}`);
             this.socket.emit('join', userId);
         } else {
             console.log(`SocketService: Socket or connection not ready, buffering joinRoom for user:${userId}`);

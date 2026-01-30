@@ -32,8 +32,6 @@ function createWindow() {
 
   win = new BrowserWindow({
     icon: path.join(process.env.VITE_PUBLIC, 'electron-vite.svg'),
-    frame: false,
-    titleBarStyle: 'hidden',
     center: true, // Force center on every launch as requested
     webPreferences: {
       preload: path.join(MAIN_DIST, 'preload.mjs'),
@@ -43,6 +41,7 @@ function createWindow() {
     // Default to a larger size suitable for Full HD (1920x1080)
     width: bounds?.width || 1600,
     height: bounds?.height || 900,
+    frame: false,
   })
 
   // Save window state
@@ -126,6 +125,39 @@ ipcMain.on('window-maximize', () => {
 
 ipcMain.on('window-close', () => {
   win?.close();
+});
+
+// App Controls
+ipcMain.on('app-reload', () => {
+  win?.webContents.reload();
+});
+
+ipcMain.on('app-force-reload', () => {
+  win?.webContents.reloadIgnoringCache();
+});
+
+ipcMain.on('app-toggle-devtools', () => {
+  win?.webContents.toggleDevTools();
+});
+
+ipcMain.on('app-zoom-in', () => {
+  const currentZoom = win?.webContents.getZoomLevel() || 0;
+  win?.webContents.setZoomLevel(currentZoom + 0.5);
+});
+
+ipcMain.on('app-zoom-out', () => {
+  const currentZoom = win?.webContents.getZoomLevel() || 0;
+  win?.webContents.setZoomLevel(currentZoom - 0.5);
+});
+
+ipcMain.on('app-zoom-reset', () => {
+  win?.webContents.setZoomLevel(0);
+});
+
+ipcMain.on('app-toggle-fullscreen', () => {
+  if (win) {
+    win.setFullScreen(!win.isFullScreen());
+  }
 });
 
 // Print Handler
@@ -276,6 +308,11 @@ app.whenReady().then(() => {
   autoUpdater.autoInstallOnAppQuit = true // Install when app quits
 
   createWindow()
+
+  // Hide the default menu bar
+  if (win) {
+    win.setMenu(null);
+  }
 
   // Check for updates on startup (production only)
   setTimeout(() => {

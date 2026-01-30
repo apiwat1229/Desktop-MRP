@@ -23,5 +23,38 @@ declare namespace NodeJS {
 
 // Used in Renderer process, expose in `preload.ts`
 interface Window {
-  ipcRenderer: import('electron').IpcRenderer
+  ipcRenderer: {
+    send(channel: string, ...args: any[]): void;
+    on(channel: string, listener: (event: any, ...args: any[]) => void): void;
+    removeListener(channel: string, listener: (event: any, ...args: any[]) => void): void;
+    removeAllListeners(channel: string): void;
+
+    app: {
+      reload(): void;
+      forceReload(): void;
+      toggleDevTools(): void;
+      zoomIn(): void;
+      zoomOut(): void;
+      zoomReset(): void;
+      toggleFullScreen(): void;
+    };
+
+    window: {
+      minimize(): void;
+      maximize(): void;
+      close(): void;
+    };
+
+    autoUpdate: {
+      checkForUpdates(): void;
+      downloadUpdate(): void;
+      installUpdate(): void;
+      onChecking(callback: () => void): () => void;
+      onUpdateAvailable(callback: (info: any) => void): () => void;
+      onUpdateNotAvailable(callback: (info: any) => void): () => void;
+      onDownloadProgress(callback: (progress: any) => void): () => void;
+      onUpdateDownloaded(callback: (info: any) => void): () => void;
+      onError(callback: (error: string) => void): () => void;
+    };
+  }
 }

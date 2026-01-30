@@ -25,7 +25,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
@@ -41,7 +40,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Bell,
-  CheckCircle2,
+  BellOff,
   Home,
   LayoutDashboard,
   LogOut,
@@ -132,7 +131,7 @@ const handleMarkAsRead = async (id: string) => {
 };
 
 const handleViewAll = () => {
-  router.push('/my-notifications');
+  router.push('/activity-center');
 };
 
 // Window Controls
@@ -222,7 +221,7 @@ const handleNotificationClick = async (notification: NotificationDto) => {
   if (notification.actionUrl && !notification.actionUrl.startsWith('/bookings')) {
     router.push(notification.actionUrl);
   } else if (!notification.actionUrl) {
-    router.push('/my-notifications');
+    router.push('/activity-center');
   }
 };
 
@@ -423,138 +422,195 @@ onUnmounted(() => {
     </div>
 
     <div class="flex items-center gap-4 no-drag">
-      <!-- Notifications -->
+      <!-- User Profile -->
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
-          <Button variant="ghost" size="icon" class="relative group">
-            <Bell
-              class="w-5 h-5 transition-transform duration-500 ease-in-out"
-              :class="{ 'animate-bell-ring text-primary': unreadCount > 0 }"
-            />
+          <Button variant="ghost" class="relative h-9 w-9 rounded-full p-0">
+            <Avatar class="h-9 w-9 rounded-full border-2 border-background shadow-sm">
+              <AvatarImage :src="authStore.userAvatarUrl" :alt="authStore.user?.username || ''" />
+              <AvatarFallback class="rounded-full bg-primary/10 text-primary">{{
+                userInitials()
+              }}</AvatarFallback>
+            </Avatar>
+            <!-- Notification Badge on Avatar -->
             <span
               v-if="unreadCount > 0"
-              class="absolute top-1 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[0.625rem] font-bold text-destructive-foreground animate-in zoom-in duration-300"
+              class="absolute -top-0.5 -right-0.5 flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground ring-2 ring-background animate-in zoom-in duration-300"
             >
               {{ unreadCount > 9 ? '9+' : unreadCount }}
             </span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent class="w-80 p-0" align="end" side="bottom" :side-offset="8">
-          <div class="flex items-center justify-between p-4 border-b">
-            <h4 class="font-semibold leading-none">Notifications</h4>
-            <span class="text-xs text-muted-foreground" v-if="unreadCount > 0">
-              {{ unreadCount }} unread
-            </span>
+        <DropdownMenuContent
+          class="w-80 p-0 overflow-hidden border shadow-xl rounded-xl"
+          align="end"
+          side="bottom"
+          :side-offset="8"
+        >
+          <!-- User Profile Brief -->
+          <div
+            class="px-5 py-5 pb-4 bg-gradient-to-br from-primary/5 via-transparent to-transparent"
+          >
+            <div class="flex items-center gap-4">
+              <div class="relative group">
+                <Avatar
+                  class="h-12 w-12 rounded-full ring-2 ring-primary/20 ring-offset-2 transition-transform group-hover:scale-105"
+                >
+                  <AvatarImage
+                    :src="authStore.userAvatarUrl"
+                    :alt="authStore.user?.username || ''"
+                  />
+                  <AvatarFallback class="bg-primary text-primary-foreground font-bold">
+                    {{ userInitials() }}
+                  </AvatarFallback>
+                </Avatar>
+                <div
+                  class="absolute -bottom-1 -right-1 h-4 w-4 rounded-full bg-green-500 border-2 border-background"
+                  title="Online"
+                ></div>
+              </div>
+              <div class="flex flex-col min-w-0">
+                <p class="text-base font-bold text-foreground leading-tight truncate">
+                  {{ authStore.user?.displayName || authStore.user?.username }}
+                </p>
+                <p class="text-xs text-muted-foreground truncate opacity-80 mt-0.5">
+                  {{ authStore.user?.email }}
+                </p>
+              </div>
+            </div>
           </div>
 
-          <div class="max-h-[300px] overflow-y-auto">
-            <div v-if="unreadCount === 0" class="p-8 text-center text-muted-foreground">
-              <Bell class="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p class="text-sm">No new notifications</p>
+          <div class="px-2 pb-2">
+            <!-- Main Actions Grid -->
+            <div class="grid grid-cols-2 gap-2 p-1">
+              <button
+                @click="router.push('/profile')"
+                class="flex flex-col items-center justify-center gap-2 p-3 rounded-lg bg-muted/40 hover:bg-primary/10 hover:text-primary transition-all group"
+              >
+                <div
+                  class="p-2 rounded-full bg-background shadow-sm transition-transform group-hover:scale-110"
+                >
+                  <User class="w-4 h-4" />
+                </div>
+                <span class="text-[11px] font-semibold">Profile</span>
+              </button>
+              <button
+                @click="showThemeSettings = true"
+                class="flex flex-col items-center justify-center gap-2 p-3 rounded-lg bg-muted/40 hover:bg-primary/10 hover:text-primary transition-all group"
+              >
+                <div
+                  class="p-2 rounded-full bg-background shadow-sm transition-transform group-hover:scale-110"
+                >
+                  <Settings class="w-4 h-4" />
+                </div>
+                <span class="text-[11px] font-semibold">Theme Settings</span>
+              </button>
             </div>
 
-            <template v-else>
-              <DropdownMenuItem
-                v-for="notification in unreadNotifications.slice(0, 5)"
-                :key="notification.id"
-                class="flex flex-col items-start gap-1 p-3 cursor-pointer focus:bg-muted/50 border-b last:border-0"
-                @click="handleNotificationClick(notification)"
+            <DropdownMenuSeparator class="mx-2 my-2" />
+
+            <!-- Notifications Feed Area -->
+            <div class="mx-1 rounded-xl bg-muted/30 border border-border/50 overflow-hidden">
+              <div
+                class="px-4 py-2 flex items-center justify-between border-b border-border/40 bg-muted/20"
               >
-                <div class="flex items-start justify-between w-full gap-2">
-                  <div class="flex items-center gap-2 flex-1 overflow-hidden">
-                    <div class="h-2 w-2 min-w-[8px] rounded-full bg-primary"></div>
-                    <span class="font-semibold text-sm line-clamp-1 break-all">{{
-                      notification.title
-                    }}</span>
-                  </div>
+                <div class="flex items-center gap-2">
+                  <Bell class="w-3.5 h-3.5 text-muted-foreground" />
                   <span
-                    class="text-[0.625rem] text-muted-foreground whitespace-nowrap flex-shrink-0"
+                    class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground opacity-80"
                   >
-                    {{ formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true }) }}
+                    Recent Alerts
                   </span>
                 </div>
-                <p class="text-xs text-muted-foreground line-clamp-2 pl-4">
-                  {{ notification.message }}
-                </p>
+                <span
+                  v-if="unreadCount > 0"
+                  class="text-[9px] font-bold bg-primary/20 text-primary px-1.5 py-0.5 rounded-full"
+                >
+                  {{ unreadCount }}
+                </span>
+              </div>
+
+              <div class="max-h-[200px] overflow-y-auto">
+                <div
+                  v-if="unreadCount === 0"
+                  class="py-10 flex flex-col items-center justify-center"
+                >
+                  <div
+                    class="h-10 w-10 rounded-full bg-background flex items-center justify-center mb-2 shadow-sm italic opacity-20"
+                  >
+                    <BellOff class="w-5 h-5" />
+                  </div>
+                  <p class="text-[11px] text-muted-foreground font-medium">All clear! No alerts</p>
+                </div>
+
+                <template v-else>
+                  <div
+                    v-for="notification in unreadNotifications.slice(0, 3)"
+                    :key="notification.id"
+                    class="group relative flex flex-col gap-0.5 p-3 hover:bg-primary/5 cursor-pointer border-b border-border/30 last:border-0 transition-colors"
+                    @click="handleNotificationClick(notification)"
+                  >
+                    <div class="flex items-start justify-between gap-2">
+                      <span
+                        class="font-bold text-[11px] text-foreground leading-tight line-clamp-1 group-hover:text-primary transition-colors italic"
+                      >
+                        {{ notification.title }}
+                      </span>
+                      <span class="text-[9px] text-muted-foreground whitespace-nowrap opacity-60">
+                        {{
+                          formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })
+                        }}
+                      </span>
+                    </div>
+                    <p
+                      class="text-[10px] text-muted-foreground line-clamp-2 leading-relaxed opacity-90"
+                    >
+                      {{ notification.message }}
+                    </p>
+                  </div>
+                </template>
+              </div>
+
+              <div class="border-t border-border/40">
+                <button
+                  @click="handleViewAll"
+                  class="w-full py-2.5 text-[10px] font-bold text-primary/80 hover:text-primary hover:bg-primary/5 transition-all uppercase tracking-widest"
+                >
+                  View Activity Center
+                </button>
+              </div>
+            </div>
+
+            <!-- Contextual Menu -->
+            <div class="mt-2 space-y-0.5 p-1">
+              <DropdownMenuItem
+                v-if="isAdmin"
+                @click="router.push({ name: 'AdminDashboard' })"
+                class="flex items-center h-10 px-3 rounded-lg focus:bg-primary/10 group cursor-pointer"
+              >
+                <div
+                  class="h-7 w-7 rounded-md bg-blue-500/10 flex items-center justify-center transition-colors group-focus:bg-blue-500/20"
+                >
+                  <LayoutDashboard class="h-4 w-4 text-blue-600" />
+                </div>
+                <span class="text-sm font-medium ml-3">Admin Control Panel</span>
               </DropdownMenuItem>
-            </template>
-          </div>
 
-          <div class="p-2 border-t bg-muted/20">
-            <Button variant="ghost" size="sm" class="w-full text-xs" @click="handleViewAll">
-              View all notifications
-            </Button>
-          </div>
-        </DropdownMenuContent>
-      </DropdownMenu>
+              <div class="h-px bg-border/40 my-1 mx-2"></div>
 
-      <!-- User Profile -->
-      <DropdownMenu>
-        <DropdownMenuTrigger as-child>
-          <Button variant="ghost" class="relative h-8 w-8 rounded-full">
-            <Avatar class="h-8 w-8 rounded-full">
-              <AvatarImage :src="authStore.userAvatarUrl" :alt="authStore.user?.username || ''" />
-              <AvatarFallback class="rounded-full">{{ userInitials() }}</AvatarFallback>
-            </Avatar>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent class="w-56" align="end" side="bottom" :side-offset="8">
-          <DropdownMenuLabel class="font-normal">
-            <div class="flex flex-col space-y-1">
-              <p class="text-sm font-medium leading-none">
-                {{ authStore.user?.displayName || authStore.user?.username }}
-              </p>
-              <p class="text-xs leading-none text-muted-foreground">
-                {{ authStore.user?.email }}
-              </p>
+              <DropdownMenuItem
+                @click="handleLogout"
+                class="flex items-center h-10 px-3 rounded-lg text-destructive focus:bg-destructive/10 cursor-pointer transition-colors group"
+              >
+                <div
+                  class="h-7 w-7 rounded-md bg-destructive/10 flex items-center justify-center group-focus:bg-destructive/20"
+                >
+                  <LogOut class="h-4 w-4" />
+                </div>
+                <span class="text-sm font-bold ml-3 italic">Sign Out</span>
+              </DropdownMenuItem>
             </div>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-
-          <DropdownMenuItem
-            v-if="isAdmin || hasPermission('approvals:approve')"
-            @click="router.push('/approvals')"
-            class="justify-between"
-          >
-            <div class="flex items-center">
-              <CheckCircle2 class="mr-2 h-4 w-4" />
-              <span>{{ t('navbar.approvals') }}</span>
-            </div>
-            <span
-              v-if="pendingApprovalCount > 0"
-              class="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-100 px-1 text-xs font-bold text-red-600"
-            >
-              {{ pendingApprovalCount > 99 ? '99+' : pendingApprovalCount }}
-            </span>
-          </DropdownMenuItem>
-
-          <DropdownMenuItem
-            v-if="isAdmin"
-            @click="
-              () => {
-                console.log('[Navbar] Navigating to AdminDashboard');
-                router.push({ name: 'AdminDashboard' });
-              }
-            "
-          >
-            <LayoutDashboard class="mr-2 h-4 w-4" />
-            <span>{{ t('navbar.adminPanel') }}</span>
-          </DropdownMenuItem>
-
-          <DropdownMenuItem @click="router.push('/profile')">
-            <User class="mr-2 h-4 w-4" />
-            <span>Profile</span>
-          </DropdownMenuItem>
-
-          <DropdownMenuItem @click="showThemeSettings = true">
-            <Settings class="mr-2 h-4 w-4" />
-            <span>Theme Settings</span>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem @click="handleLogout" class="text-red-600 focus:text-red-600">
-            <LogOut class="mr-2 h-4 w-4" />
-            <span>Log out</span>
-          </DropdownMenuItem>
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
 

@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/sidebar';
 import { notificationsApi } from '@/services/notifications';
 import { useAuthStore } from '@/stores/auth';
-import { Bell, ClipboardCheck } from 'lucide-vue-next';
+import { Bell } from 'lucide-vue-next';
 import { onMounted, onUnmounted, ref } from 'vue';
 
 const unreadCount = ref(0);
@@ -49,32 +49,22 @@ onUnmounted(() => {
   <SidebarGroup>
     <SidebarGroupContent>
       <SidebarMenu>
-        <!-- My Notifications -->
+        <!-- Activity Center -->
         <SidebarMenuItem>
           <SidebarMenuButton as-child>
-            <router-link to="/my-notifications">
+            <router-link to="/activity-center">
               <Bell class="mr-2 h-4 w-4" />
-              <span>My Notifications</span>
+              <span class="group-data-[collapsible=icon]:hidden">Activity Center</span>
             </router-link>
           </SidebarMenuButton>
           <SidebarMenuBadge
-            v-if="unreadCount > 0"
-            class="bg-red-500 text-white min-w-[1.25rem] h-5"
-            >{{ unreadCount > 99 ? '99+' : unreadCount }}</SidebarMenuBadge
+            v-if="unreadCount + pendingApprovalsCount > 0"
+            class="bg-blue-600 text-white min-w-[1.25rem] h-5"
           >
-        </SidebarMenuItem>
-
-        <!-- Approval Requests -->
-        <SidebarMenuItem>
-          <SidebarMenuButton as-child>
-            <router-link to="/approvals">
-              <ClipboardCheck class="mr-2 h-4 w-4" />
-              <span>Approval Requests</span>
-            </router-link>
-          </SidebarMenuButton>
-          <SidebarMenuBadge v-if="pendingApprovalsCount > 0">{{
-            pendingApprovalsCount
-          }}</SidebarMenuBadge>
+            {{
+              unreadCount + pendingApprovalsCount > 99 ? '99+' : unreadCount + pendingApprovalsCount
+            }}
+          </SidebarMenuBadge>
         </SidebarMenuItem>
       </SidebarMenu>
     </SidebarGroupContent>

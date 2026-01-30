@@ -151,10 +151,6 @@ const headerTitle = computed(() => {
   return t('admin.notifications.configuration');
 });
 
-const headerSubtitle = computed(() => {
-  return t('admin.notifications.subtitle');
-});
-
 // State
 const activeTab = ref('broadcast');
 const broadcasts = ref<BroadcastDto[]>([]);
@@ -787,30 +783,35 @@ onMounted(() => {
   <div class="space-y-6">
     <!-- Stats Header Bar -->
     <div
-      class="rounded-xl border bg-white shadow-sm p-4 px-6 flex flex-col md:flex-row items-center justify-between gap-4"
+      class="rounded-xl border bg-white shadow-sm p-4 px-6 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-4"
     >
-      <div class="flex items-center gap-4">
-        <div class="h-12 w-12 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">
+      <div class="absolute top-1/2 right-0 -translate-y-1/2 pointer-events-none opacity-[0.03]">
+        <Bell class="w-64 h-64 rotate-12" />
+      </div>
+
+      <div class="flex items-center gap-4 relative z-10">
+        <div
+          class="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary"
+        >
           <component :is="headerIcon" class="h-6 w-6" />
         </div>
         <div>
           <h1 class="text-lg font-bold text-gray-900">{{ headerTitle }}</h1>
-          <p class="text-sm text-gray-500">{{ headerSubtitle }}</p>
         </div>
       </div>
 
       <div class="flex items-center gap-8 border-l pl-8 ml-4">
         <div class="text-center">
-          <span class="block text-xs font-bold text-gray-400 uppercase">{{
+          <span class="block text-xs font-bold text-muted-foreground uppercase">{{
             t('admin.notifications.totalBroadcasts')
           }}</span>
-          <span class="text-2xl font-bold text-gray-900">{{ broadcasts.length }}</span>
+          <span class="text-2xl font-bold text-foreground">{{ broadcasts.length }}</span>
         </div>
         <div class="text-center">
-          <span class="block text-xs font-bold text-green-500 uppercase">{{
+          <span class="block text-xs font-bold text-emerald-500 uppercase">{{
             t('admin.notifications.activeGroups')
           }}</span>
-          <span class="text-2xl font-bold text-green-600">{{ groups.length }}</span>
+          <span class="text-2xl font-bold text-emerald-600">{{ groups.length }}</span>
         </div>
         <div class="text-center">
           <span class="block text-xs font-bold text-orange-500 uppercase">{{
@@ -824,14 +825,14 @@ onMounted(() => {
         <Button
           v-if="activeTab === 'broadcast'"
           @click="handleOpenBroadcastDialog"
-          class="bg-blue-600 hover:bg-blue-700 text-white gap-2 shadow-blue-200 shadow-lg"
+          class="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 shadow-primary/20 shadow-lg"
         >
           <Plus class="w-4 h-4" /> {{ t('admin.notifications.createNew') }}
         </Button>
         <Button
           v-if="activeTab === 'groups'"
           @click="handleCreateGroup"
-          class="bg-blue-600 hover:bg-blue-700 text-white gap-2 shadow-blue-200 shadow-lg"
+          class="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 shadow-primary/20 shadow-lg"
         >
           <Plus class="w-4 h-4" /> {{ t('admin.notifications.newGroup') }}
         </Button>

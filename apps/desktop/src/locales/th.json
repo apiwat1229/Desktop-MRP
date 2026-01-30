@@ -79,7 +79,10 @@
     "slot": "ช่วงเวลา",
     "supplier": "ผู้ส่ง/ร้านค้า",
     "decimalLimit": "กรอกทศนิยมได้ไม่เกิน {n} ตำแหน่ง",
-    "back": "กลับ"
+    "back": "ย้อนกลับ",
+    "all": "ทั้งหมด",
+    "complete": "เสร็จสิ้น",
+    "incomplete": "ยังไม่เสร็จ"
   },
   "validation": {
     "required": "กรุณากรอกข้อมูล",
@@ -114,7 +117,7 @@
       "createPlan": "สร้างแผน",
       "ussPoPri": "ยางแผ่น PO PRI",
       "ussSummary": "สรุปยางแผ่น",
-      "labOrders": "JOB ORDER",
+      "labOrders": "ใบงานสั่งผลิต",
       "jobOrderList": "รายการใบสั่งผลิต",
       "jobOrderCreate": "สร้างใบสั่งผลิต",
       "editPlan": "แก้ไขแผน",
@@ -258,9 +261,15 @@
     }
   },
   "production": {
+    "name": "การผลิต",
+    "description": "ติดตามสายการผลิต, ฉลาก QR งานระหว่างทำ & ยืนยันกระบวนการ",
+    "reportList": "รายงานการผลิต & คุณภาพ",
+    "jobOrderList": "รายการใบสั่งผลิต",
+    "history": {
+      "empty": "ไม่พบประวัติการผลิต"
+    },
     "title": "รายงานการผลิตและคุณภาพประจำวัน",
     "subtitle": "จัดการและบันทึกรายงานการผลิตประจำวัน",
-    "reportList": "รายการรายงาน",
     "createReport": "สร้างรายงานใหม่",
     "dryerName": "ชื่อตู้อบ",
     "bookNo": "เล่มที่",
@@ -292,9 +301,13 @@
       "production": "Production",
       "warehouse": "Warehouse"
     },
-    "history": {
-      "title": "ประวัติรายงานการผลิต",
-      "empty": "ไม่พบรายงานการผลิต"
+    "stats": {
+      "totalReports": "รายงานทั้งหมด",
+      "totalPallets": "พาเลททั้งหมด",
+      "totalBales": "ก้อนทั้งหมด",
+      "totalOrders": "ใบสั่งผลิตทั้งหมด",
+      "activeJobs": "ใบงานที่กำลังทำ",
+      "completed": "เสร็จสมบูรณ์"
     }
   },
   "services": {
@@ -305,8 +318,8 @@
       "description": "การวางแผนความต้องการวัสดุสำหรับการผลิตและสินค้าคงคลัง"
     },
     "cuplump": {
-      "name": "บ่อยางก้อนถ้วย",
-      "description": "ระบบจัดการบ่อยางก้อนถ้วย"
+      "name": "Cuplump",
+      "description": "ระบบจัดการกองยางถ้วย"
     },
     "booking": {
       "name": "คิวการจอง",
@@ -1196,166 +1209,7 @@
         "infoDesc": "การแจ้งเบิกอุปกรณ์มาตรฐานมักใช้เวลา 2-3 วันทำการ คุณจะได้รับการแจ้งเตือนเมื่อคำขอได้รับอนุมัติ"
       }
     },
-    "uss": {
-      "name": "ยางแผ่น",
-      "description": "ระบบจัดการและติดตามยางแผ่น"
-    },
-    "shipping": {
-      "name": "การจัดส่งสินค้า",
-      "description": "การส่งรถบรรทุก, QR ขาออก และยืนยันการจัดส่ง"
-    },
-    "receiving": {
-      "name": "การรับวัตถุดิบ",
-      "description": "การดำเนินงานรับยางก้อนถ้วย & USS, การชั่งน้ำหนัก และจัดการลานยาง"
-    },
-    "production": {
-      "name": "การผลิต",
-      "description": "ติดตามสายการผลิต, ฉลาก QR งานระหว่างทำ & ยืนยันกระบวนการ"
-    },
-    "purchasing": {
-      "name": "จัดซื้อ",
-      "description": "การจัดการการจัดซื้อและการประสานงานผู้จัดจำหน่าย"
-    },
-    "projectTimeline": {
-      "name": "การบริหารจัดการโครงการ",
-      "description": "การจัดการสินค้าคงคลังและการติดตามโครงการ"
-    },
-    "contracts": {
-      "name": "จัดการสัญญา",
-      "description": "จัดการสัญญา การต่ออายุ และเอกสารทางกฎหมาย",
-      "title": "จัดการสัญญา",
-      "subtitle": "จัดการและติดตามสัญญาทั้งหมดขององค์กร",
-      "dashboard": {
-        "title": "จัดการสัญญา",
-        "subtitle": "จัดการ ติดตาม และต่ออายุข้อตกลงและเอกสารสัญญาของคุณ",
-        "stats": {
-          "expiringValue": "มูลค่าสัญญาใกล้หมดอายุ",
-          "expiringValueDesc": "มูลค่ารวมของสัญญาที่จะหมดอายุ",
-          "totalContracts": "สัญญาทั้งหมด",
-          "totalContractsDesc": "รวมทุกแผนก",
-          "activeStatus": "สถานะใช้งาน",
-          "activeStatusDesc": "สัญญาที่ยังไม่หมดอายุ",
-          "expiringSoon": "ใกล้หมดอายุ",
-          "expiringSoonDesc": "ต้องดำเนินการภายใน {period}"
-        },
-        "periods": {
-          "1month": "1 เดือน",
-          "3months": "3 เดือน",
-          "6months": "6 เดือน",
-          "month": "เดือน",
-          "months": "เดือน"
-        },
-        "filters": {
-          "searchPlaceholder": "ค้นหาสัญญา...",
-          "type": "ประเภท",
-          "allTypes": "ทุกประเภท",
-          "department": "แผนก",
-          "allDepartments": "ทุกแผนก",
-          "status": "สถานะ",
-          "allStatus": "ทุกสถานะ",
-          "showing": "แสดง {start} ถึง {end} จาก {total} สัญญา",
-          "page": "หน้า {current} จาก {total}",
-          "previous": "ก่อนหน้า",
-          "next": "ถัดไป"
-        },
-        "table": {
-          "title": "ชื่อสัญญา",
-          "type": "ประเภท",
-          "department": "แผนก",
-          "duration": "ระยะเวลา",
-          "daysLeft": "จำนวนวัน",
-          "value": "มูลค่า",
-          "status": "สถานะ",
-          "actions": "การกระทำ",
-          "allContracts": "สัญญาทั้งหมด",
-          "total": "ทั้งหมด: {count} สัญญา",
-          "today": "วันนี้",
-          "expired": "หมดอายุ",
-          "day": "วัน",
-          "days": "วัน"
-        }
-      },
-      "newContract": "สัญญาใหม่",
-      "editContract": "แก้ไขสัญญา",
-      "createContract": "สร้างสัญญา",
-      "updateContract": "อัปเดตสัญญา",
-      "deleteContract": "ลบสัญญา",
-      "viewContract": "ดูสัญญา",
-      "contractList": "รายการสัญญา",
-      "contractDetails": "รายละเอียดสัญญา",
-      "loadingContract": "กำลังโหลดรายละเอียดสัญญา...",
-      "createNewContract": "สร้างบันทึกสัญญาใหม่",
-      "updateContractInfo": "อัปเดตข้อมูลสัญญา",
-      "contractCreated": "สร้างสัญญาสำเร็จ",
-      "contractUpdated": "อัปเดตสัญญาสำเร็จ",
-      "contractDeleted": "ลบสัญญาสำเร็จ",
-      "errorLoading": "โหลดสัญญาไม่สำเร็จ",
-      "errorSaving": "บันทึกสัญญาไม่สำเร็จ",
-      "fillRequired": "กรุณากรอกข้อมูลที่จำเป็น",
-      "contractNotFound": "ไม่พบสัญญา",
-      "form": {
-        "contractInfo": "ข้อมูลสัญญา",
-        "contractTitle": "ชื่อสัญญา",
-        "contractTitlePlaceholder": "ตัวอย่าง: สัญญาเช่าสำนักงาน 2024",
-        "contractType": "ประเภทสัญญา",
-        "selectType": "เลือกประเภท",
-        "totalCost": "มูลค่าสัญญา (บาท)",
-        "costPlaceholder": "0.00",
-        "startDate": "วันที่เริ่ม",
-        "endDate": "วันที่สิ้นสุด",
-        "pickDate": "เลือกวันที่",
-        "period": "ระยะเวลา",
-        "selectPeriod": "เลือกระยะเวลา",
-        "governance": "การกำกับดูแลและการแจ้งเตือน",
-        "responsiblePerson": "ผู้รับผิดชอบ",
-        "enterName": "กรอกชื่อ",
-        "department": "แผนก",
-        "selectDepartment": "เลือกแผนก",
-        "notificationRecipients": "ผู้รับการแจ้งเตือน",
-        "emailPlaceholder": "email@company.com",
-        "addEmail": "เพิ่ม",
-        "noRecipientsAdded": "ยังไม่ได้เพิ่มผู้รับ",
-        "documentAttachment": "แนบเอกสาร",
-        "uploadDocument": "อัปโหลดเอกสาร",
-        "documentAttached": "แนบเอกสารแล้ว",
-        "fileReady": "ไฟล์พร้อมใช้งาน",
-        "viewFile": "ดูไฟล์",
-        "remove": "ลบออก",
-        "selectFile": "เลือกไฟล์",
-        "fileSupport": "รองรับ PDF, JPG, PNG (ไม่เกิน 10MB)",
-        "uploadHelp": "อัปโหลดเอกสารสัญญาที่ลงนามแล้วเพื่อการเก็บรักษาและตรวจสอบ",
-        "notifications": "การแจ้งเตือน",
-        "basicInfo": "ข้อมูลพื้นฐาน",
-        "contractDetails": "รายละเอียดสัญญา",
-        "fileUploadDesc": "ลากไฟล์ PDF หรือรูปภาพมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์",
-        "preview": "ดูตัวอย่างเอกสาร"
-      },
-      "status": {
-        "label": "สถานะ",
-        "active": "ใช้งาน",
-        "expiring": "ใกล้หมดอายุ",
-        "expired": "หมดอายุ",
-        "draft": "ร่าง"
-      },
-      "types": {
-        "service": "บริการ",
-        "lease": "เช่า",
-        "software": "ซอฟต์แวร์",
-        "maintenance": "บำรุงรักษา",
-        "other": "อื่นๆ"
-      },
-      "actions": {
-        "create": "สร้างสัญญา",
-        "cancel": "ยกเลิก",
-        "save": "บันทึกสัญญา",
-        "saving": "กำลังบันทึก...",
-        "edit": "แก้ไข",
-        "download": "ดาวน์โหลด PDF",
-        "delete": "ลบ",
-        "deleteConfirm": "คุณแน่ใจหรือไม่ที่จะลบสัญญานี้?"
-      }
-    },
-    "accessModule": "เข้าถึงโมดูล"
+    "accessModule": "การเข้าถึงโมดูล"
   },
   "booking": {
     "title": "ภาพรวมคิว",
@@ -1410,6 +1264,86 @@
     }
   },
   "admin": {
+    "truckScale": {
+      "name": "ชั่งน้ำหนักรถบรรทุก",
+      "checkIn": "เช็คอิน",
+      "checkInDesc": "ลงทะเบียนรถบรรทุกขาเข้า",
+      "scaleIn": "ชั่งเข้า",
+      "scaleInDesc": "ชั่งน้ำหนักรถบรรทุกขาเข้า",
+      "scaleOut": "ชั่งออก",
+      "scaleOutDesc": "ชั่งน้ำหนักรถบรรทุกขาออก",
+      "dashboardDesc": "ภาพรวมการดำเนินงานชั่งน้ำหนัก"
+    },
+    "users": {
+      "title": "การจัดการผู้ใช้งาน",
+      "subtitle": "ภาพรวมและการจัดการผู้ใช้งานระบบ",
+      "addUser": "เพิ่มผู้ใช้ใหม่",
+      "createNewUserAccount": "สร้างบัญชีผู้ใช้งานใหม่",
+      "editUserAccount": "แก้ไขบัญชีผู้ใช้งาน",
+      "createUserDescription": "เพิ่มผู้ใช้งานใหม่เข้าสู่ระบบ",
+      "updateUserDescription": "อัปเดตรายละเอียดผู้ใช้งานเดิม",
+      "accountInfo": "ข้อมูลบัญชี",
+      "personalInfo": "ข้อมูลส่วนตัว",
+      "workInfo": "ข้อมูลการทำงาน",
+      "securityAccess": "ความปลอดภัยและการเข้าถึง",
+      "setPassword": "ตั้งรหัสผ่าน",
+      "username": "ชื่อผู้ใช้งาน",
+      "displayName": "ชื่อที่แสดง",
+      "avatarImage": "รูปโปรไฟล์",
+      "hodUser": "ผู้บังคับบัญชา (เลือกได้)",
+      "hodUserHelp": "(หัวหน้างาน/ผู้จัดการ)",
+      "role": "บทบาท",
+      "selectDepartment": "เลือกแผนก",
+      "selectPosition": "เลือกตำแหน่ง",
+      "selectHod": "เลือกผู้บังคับบัญชา (ผช.ผจก. ขึ้นไป)",
+      "roles": {
+        "user": "ผู้ใช้งานทั่วไป",
+        "admin": "ผู้ดูแลระบบ"
+      },
+      "deleteConfirm": "ยืนยันการลบ?",
+      "deleteMessage": "การกระทำนี้ไม่สามารถย้อนกลับได้ ข้อมูลจะถูกลบถาวร",
+      "pincode": "รหัส PIN",
+      "uploadImage": "อัปโหลดรูปภาพ",
+      "changeImage": "เปลี่ยนรูปภาพ",
+      "maxFileSize": "สูงสุด 2MB รองรับ JPG, PNG, GIF",
+      "saveChanges": "บันทึกการเปลี่ยนแปลง",
+      "confirmCreate": "ยืนยันและสร้าง",
+      "fillInfo": "กรอกข้อมูลด้านล่างเพื่อ",
+      "fillDetails": "กรอกรายละเอียดสำหรับผู้ใช้งาน",
+      "editUser": "แก้ไขผู้ใช้",
+      "createNew": "สร้างใหม่",
+      "user": "ผู้ใช้",
+      "basicInfo": "ข้อมูลเบื้องต้น",
+      "security": "ความปลอดภัย",
+      "employeeId": "รหัสพนักงาน",
+      "forcePasswordChange": "บังคับเปลี่ยนรหัสผ่านในการเข้าสู่ระบบครั้งถัดไป",
+      "selectRole": "เลือกบทบาท",
+      "allRoles": "ทุกบทบาท",
+      "allStatus": "ทุกสถานะ",
+      "createSuccess": "สร้างผู้ใช้งานสำเร็จ",
+      "updateSuccess": "อัปเดตผู้ใช้งานสำเร็จ",
+      "deleteSuccess": "ลบผู้ใช้งานสำเร็จ",
+      "deleteTitle": "ลบผู้ใช้งาน?",
+      "deleteDesc": "คุณแน่ใจหรือไม่ว่าต้องการลบผู้ใช้งานนี้? การกระทำนี้ไม่สามารถย้อนกลับได้",
+      "fetchError": "โหลดข้อมูลผู้ใช้งานไม่สำเร็จ",
+      "deleteError": "ลบผู้ใช้งานไม่สำเร็จ",
+      "approveSuccess": "อนุมัติผู้ใช้งานสำเร็จ",
+      "leaveBlankToKeep": "เว้นว่างไว้หากไม่ต้องการเปลี่ยนรหัสผ่าน",
+      "passwordHint": "เว้นว่างไว้หากไม่ต้องการเปลี่ยนรหัสผ่าน",
+      "systemRole": "บทบาทในระบบ",
+      "notifyRoles": "กลุ่มที่แจ้งเตือน",
+      "displayNamePlaceholder": "สร้างอัตโนมัติจากชื่อและนามสกุลหากเว้นว่างไว้",
+      "stats": {
+        "total": "ผู้ใช้งานทั้งหมด"
+      }
+    },
+    "status": {
+      "active": "ใช้งานอยู่",
+      "pending": "รอดำเนินการ",
+      "inactive": "ไม่ได้ใช้งาน",
+      "suspended": "ระงับการใช้งาน",
+      "total": "ทั้งหมด"
+    },
     "roles": {
       "createRole": "สร้างบทบาทใหม่",
       "editRole": "แก้ไขบทบาท",
@@ -1541,7 +1475,7 @@
     },
     "sidebar": {
       "main": "หลัก",
-      "system": "ระบบ",
+      "system": "System Setting",
       "dashboard": "แดชบอร์ด",
       "users": "ผู้ใช้งาน",
       "suppliers": "ผู้จัดจำหน่าย",
@@ -1747,74 +1681,7 @@
         "inactive": "ระงับการใช้งาน"
       }
     },
-    "users": {
-      "title": "การจัดการผู้ใช้งาน",
-      "subtitle": "จัดการการเข้าถึง โปรไฟล์ และสิทธิ์ของผู้ใช้",
-      "addUser": "เพิ่มผู้ใช้ใหม่",
-      "createNewUserAccount": "สร้างบัญชีผู้ใช้ใหม่",
-      "editUserAccount": "แก้ไขบัญชีผู้ใช้",
-      "createUserDescription": "เพิ่มผู้ใช้ใหม่เข้าสู่ระบบ",
-      "updateUserDescription": "อัปเดตรายละเอียดผู้ใช้ที่มีอยู่",
-      "accountInfo": "ข้อมูลบัญชี",
-      "personalInfo": "ข้อมูลส่วนตัว",
-      "workInfo": "ข้อมูลการทำงาน",
-      "securityAccess": "ความปลอดภัยและการเข้าถึง",
-      "setPassword": "ตั้งรหัสผ่าน",
-      "username": "ชื่อผู้ใช้",
-      "displayName": "ชื่อที่แสดง",
-      "avatarImage": "รูปโปรไฟล์",
-      "hodUser": "ผู้บังคับบัญชา (ระบุหรือไม่ก็ได้)",
-      "hodUserHelp": "(หัวหน้า/ผู้จัดการ)",
-      "role": "บทบาท",
-      "selectDepartment": "เลือกแผนก",
-      "selectPosition": "เลือกตำแหน่ง",
-      "selectHod": "เลือกผู้บังคับบัญชา (ผช.ผจก.+)",
-      "roles": {
-        "user": "ผู้ใช้ทั่วไป",
-        "admin": "ผู้ดูแลระบบ"
-      },
-      "deleteMessage": "การกระทำนี้ไม่สามารถย้อนกลับได้",
-      "pincode": "รหัส PIN",
-      "uploadImage": "อัปโหลดรูปภาพ",
-      "changeImage": "เปลี่ยนรูปภาพ",
-      "maxFileSize": "สูงสุด 2MB รองรับ JPG, PNG, GIF",
-      "saveChanges": "บันทึกการเปลี่ยนแปลง",
-      "confirmCreate": "ยืนยันและสร้าง",
-      "fillInfo": "กรอกข้อมูลด้านล่างเพื่อ",
-      "fillDetails": "กรอกรายละเอียดสำหรับผู้ใช้",
-      "editUser": "แก้ไขผู้ใช้",
-      "updateThe": "อัปเดต",
-      "createNew": "สร้างใหม่",
-      "user": "ผู้ใช้",
-      "basicInfo": "ข้อมูลพื้นฐาน",
-      "security": "ความปลอดภัย",
-      "employeeId": "รหัสพนักงาน",
-      "forcePasswordChange": "บังคับเปลี่ยนรหัสผ่านเมื่อเข้าสู่ระบบครั้งถัดไป",
-      "selectRole": "เลือกบทบาท",
-      "allRoles": "บทบาททั้งหมด",
-      "allStatus": "สถานะทั้งหมด",
-      "createSuccess": "สร้างผู้ใช้สำเร็จ",
-      "updateSuccess": "อัปเดตผู้ใช้สำเร็จ",
-      "saveSuccess": "บันทึกข้อมูลสำเร็จ",
-      "deleteConfirm": "ลบตัวอย่าง?",
-      "deleteDesc": "คุณแน่ใจหรือไม่ว่าต้องการลบผู้ใช้นี้? การกระทำนี้ไม่สามารถย้อนกลับได้",
-      "fetchError": "โหลดข้อมูลผู้ใช้ไม่สำเร็จ",
-      "saveError": "บันทึกผู้ใช้ไม่สำเร็จ",
-      "deleteError": "ลบผู้ใช้ไม่สำเร็จ",
-      "approveSuccess": "อนุมัติผู้ใช้สำเร็จ",
-      "leaveBlankToKeep": "เว้นว่างไว้เพื่อเก็บรหัสผ่านปัจจุบัน",
-      "passwordHint": "เว้นว่างไว้หากคุณไม่ต้องการเปลี่ยนรหัสผ่าน",
-      "systemRole": "บทบาทระบบ",
-      "notifyRoles": "กลุ่มแจ้งเตือน",
-      "displayNamePlaceholder": "สร้างอัตโนมัติจากชื่อ-นามสกุล หากเว้นว่าง"
-    },
-    "status": {
-      "active": "ใช้งาน",
-      "inactive": "ไม่ใช้งาน",
-      "suspended": "ระงับ",
-      "pending": "รออนุมัติ",
-      "total": "ทั้งหมด"
-    },
+
     "departments": {
       "qa": "ประกันคุณภาพ (QA)",
       "it": "เทคโนโลยีสารสนเทศ (IT)",
@@ -2012,7 +1879,7 @@
       "totalGross": "น้ำหนักรวม",
       "totalGrossWeight": "น้ำหนักรวมสุทธิ",
       "totalWeightIn": "น้ำหนักรวมขาเข้า",
-      "inOut": "เข้า / ออก"
+      "inOut": "น้ำหนัก เข้า / ออก"
     },
     "confirmCheckIn": "ยืนยันการเช็คอิน",
     "confirmCheckInDetails": "ยืนยันรายละเอียดการเช็คอิน",
@@ -2046,10 +1913,10 @@
     }
   },
   "cuplump": {
+    "pageTitle": "การรับยางก้อนถ้วย",
+    "pageDescription": "บันทึกการรับและชั่งน้ำหนักวัตถุดิบยางก้อนถ้วย",
     "title": "บ่อยางก้อนถ้วย",
     "detailTitle": "รายละเอียดบ่อยางก้อนถ้วย",
-    "pageTitle": "บ่อยางก้อนถ้วย",
-    "pageDescription": "ระบบจัดการและติดตามบ่อยางก้อนถ้วย",
     "lotNo": "หมายเลขล็อต",
     "supplier": "ผู้จัดจำหน่าย",
     "truck": "รถบรรทุก",
@@ -2107,6 +1974,10 @@
     "lotNoDuplicate": "เลขล็อตนี้ถูกใช้งานไปแล้ว"
   },
   "uss": {
+    "name": "ยางแผ่น",
+    "description": "ระบบจัดการและติดตามยางแผ่น",
+    "pageTitle": "การรับยางแผ่น",
+    "pageDescription": "บันทึกการรับและชั่งน้ำหนักวัตถุดิบยางแผ่น",
     "action": "การดำเนินการ",
     "title": "ยางแผ่น",
     "detailTitle": "รายละเอียดการรับยางแผ่น",

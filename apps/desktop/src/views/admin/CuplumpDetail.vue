@@ -98,7 +98,6 @@ const drcForm = ref({
   drcActual: '',
 });
 
-const drcEstRef = ref<any>(null);
 const drcReqRef = ref<any>(null);
 const drcActualRef = ref<any>(null);
 
@@ -790,7 +789,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="h-full flex flex-col p-6 max-w-[1600px] mx-auto space-y-6">
+  <div class="h-full flex flex-col p-6 space-y-6">
     <!-- Main Content Card -->
     <Card class="flex-1 overflow-hidden border-border/50 shadow-sm bg-card/50 backdrop-blur-sm">
       <CardContent class="p-0 h-full flex flex-col">
@@ -848,9 +847,7 @@ onMounted(async () => {
                   <PopoverContent class="w-80">
                     <div class="grid gap-4">
                       <div class="space-y-2">
-                        <h4
-                          class="font-medium leading-none text-blue-700 font-bold uppercase tracking-tight"
-                        >
+                        <h4 class="leading-none text-blue-700 font-bold uppercase tracking-tight">
                           Weight Management
                         </h4>
                         <p class="text-xs text-muted-foreground">
@@ -1078,7 +1075,6 @@ onMounted(async () => {
                           t('cuplump.drcEst')
                         }}</Label>
                         <Input
-                          ref="drcEstRef"
                           id="drcEst"
                           v-model="drcForm.drcEst"
                           type="number"

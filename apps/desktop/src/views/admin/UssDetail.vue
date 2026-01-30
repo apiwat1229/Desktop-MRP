@@ -788,7 +788,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="p-6 max-w-[1600px] mx-auto space-y-6">
+  <div class="p-6 space-y-6">
     <div v-if="isLoading" class="flex items-center justify-center p-12">
       <div class="text-center">
         <div
@@ -1020,9 +1020,7 @@ onMounted(async () => {
                 <PopoverContent class="w-80">
                   <div class="grid gap-4">
                     <div class="space-y-2">
-                      <h4
-                        class="font-medium leading-none text-blue-700 font-bold uppercase tracking-tight"
-                      >
+                      <h4 class="leading-none text-blue-700 font-bold uppercase tracking-tight">
                         Weight Management
                       </h4>
                       <p class="text-xs text-muted-foreground">

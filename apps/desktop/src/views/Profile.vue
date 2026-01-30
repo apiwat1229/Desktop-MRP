@@ -180,7 +180,7 @@ const uploadCroppedImage = async () => {
 </script>
 
 <template>
-  <div class="container max-w-4xl py-6 space-y-8 animate-in fade-in duration-500">
+  <div class="w-full py-6 space-y-8 animate-in fade-in duration-500">
     <!-- Header -->
     <div class="space-y-1">
       <h2 class="text-3xl font-bold tracking-tight">User Profile</h2>

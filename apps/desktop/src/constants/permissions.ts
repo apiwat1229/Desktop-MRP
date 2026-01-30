@@ -71,7 +71,7 @@ export const PERMISSION_GROUPS = {
         { value: SUPPLIERS_DELETE_REQUEST, label: 'Request Deletions' },
         { value: SUPPLIERS_APPROVE, label: 'Approve Changes' },
     ],
-    'Rubber Types': [
+    'Rubber Types Management': [
         { value: RUBBER_TYPES_READ, label: 'View Rubber Types' },
         { value: RUBBER_TYPES_CREATE, label: 'Create Rubber Types' },
         { value: RUBBER_TYPES_UPDATE, label: 'Update Rubber Types' },

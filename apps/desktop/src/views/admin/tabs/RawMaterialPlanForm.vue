@@ -396,7 +396,7 @@ const handleSave = async () => {
 
 <template>
   <div class="raw-material-plan-print-container">
-    <div class="space-y-6 max-w-[1600px] mx-auto p-4 bg-white rounded-xl shadow-sm border">
+    <div class="space-y-6 p-4 bg-white rounded-xl shadow-sm border">
       <!-- Plan Header Segment -->
       <div class="grid grid-cols-3 gap-8 pb-4 border-b border-slate-100">
         <div class="space-y-4">

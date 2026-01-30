@@ -451,60 +451,54 @@ onMounted(() => {
 
 <template>
   <div>
-    <div class="p-6 space-y-8 max-w-[1600px] mx-auto">
+    <div class="space-y-8">
       <!-- Header / Stats -->
-      <div class="p-6 rounded-xl border border-border bg-card shadow-sm relative overflow-hidden">
-        <div class="absolute top-1/2 right-12 -translate-y-1/2 pointer-events-none opacity-5">
-          <Truck class="w-64 h-64" />
+      <div
+        class="rounded-xl border border-border bg-card shadow-sm p-4 px-6 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-4"
+      >
+        <div class="absolute top-1/2 right-0 -translate-y-1/2 pointer-events-none opacity-[0.03]">
+          <Truck class="w-64 h-64 rotate-12" />
         </div>
 
-        <div class="flex items-center justify-between gap-6 relative z-10">
-          <!-- Title Section -->
-          <div class="flex items-center gap-6">
-            <div
-              class="p-4 bg-primary/10 rounded-xl text-primary flex items-center justify-center h-16 w-16"
-            >
-              <Truck class="h-8 w-8" />
-            </div>
-            <div>
-              <h1 class="text-2xl font-bold tracking-tight text-foreground">
-                {{ t('admin.suppliers.title') }}
-              </h1>
-              <p class="text-sm text-muted-foreground mt-1">
-                {{ t('admin.suppliers.subtitle') }}
-              </p>
-            </div>
+        <div class="flex items-center gap-4 relative z-10">
+          <div
+            class="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary"
+          >
+            <Truck class="h-6 w-6" />
           </div>
+          <div>
+            <h1 class="text-lg font-bold text-foreground">
+              {{ t('admin.suppliers.title') }}
+            </h1>
+          </div>
+        </div>
 
-          <!-- Stats Section -->
-          <div class="flex items-center gap-8">
-            <div class="text-center">
-              <div class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">
-                {{ t('admin.suppliers.stats.total') }}
-              </div>
-              <div class="text-3xl font-bold">{{ stats.total }}</div>
+        <div class="flex items-center gap-8 border-l pl-8 ml-4">
+          <div class="text-center">
+            <div class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">
+              {{ t('admin.suppliers.stats.total') }}
             </div>
-            <div class="text-center">
-              <div class="text-xs font-bold text-emerald-500 uppercase tracking-wider mb-1">
-                {{ t('admin.suppliers.stats.active') }}
-              </div>
-              <div class="text-3xl font-bold text-emerald-500">{{ stats.active }}</div>
-            </div>
-            <div class="text-center">
-              <div class="text-xs font-bold text-orange-500 uppercase tracking-wider mb-1">
-                {{ t('admin.suppliers.stats.suspended') }}
-              </div>
-              <div class="text-3xl font-bold text-orange-500">{{ stats.suspended }}</div>
-            </div>
+            <div class="text-2xl font-bold">{{ stats.total }}</div>
           </div>
+          <div class="text-center">
+            <div class="text-xs font-bold text-emerald-500 uppercase tracking-wider mb-1">
+              {{ t('admin.suppliers.stats.active') }}
+            </div>
+            <div class="text-2xl font-bold text-emerald-600">{{ stats.active }}</div>
+          </div>
+          <div class="text-center">
+            <div class="text-xs font-bold text-orange-500 uppercase tracking-wider mb-1">
+              {{ t('admin.suppliers.stats.suspended') }}
+            </div>
+            <div class="text-2xl font-bold text-orange-600">{{ stats.suspended }}</div>
+          </div>
+        </div>
 
-          <!-- Add Button -->
-          <div class="flex-shrink-0">
-            <Button @click="handleOpenCreate" size="lg" class="shadow-lg shadow-primary/20">
-              <Plus class="mr-2 h-5 w-5" />
-              {{ t('admin.suppliers.addNew') }}
-            </Button>
-          </div>
+        <div class="ml-auto flex-shrink-0">
+          <Button @click="handleOpenCreate" class="shadow-lg shadow-primary/20">
+            <Plus class="mr-2 h-4 w-4" />
+            {{ t('admin.suppliers.addNew') }}
+          </Button>
         </div>
       </div>
 

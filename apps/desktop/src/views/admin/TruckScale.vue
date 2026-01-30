@@ -2,8 +2,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
-import { Card, CardContent } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import Combobox from '@/components/ui/combobox/Combobox.vue';
 import DataTable from '@/components/ui/data-table/DataTable.vue';
 import {
@@ -12,7 +10,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -32,7 +29,7 @@ import {
   StepperTitle,
   StepperTrigger,
 } from '@/components/ui/stepper';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { usePermissions } from '@/composables/usePermissions';
 import { cn } from '@/lib/utils';
@@ -47,16 +44,17 @@ import type { ColumnDef } from '@tanstack/vue-table';
 import { format } from 'date-fns';
 import {
   AlertCircle,
+  ArrowRightLeft,
   ArrowUpDown,
   Calendar as CalendarIcon,
   CheckCircle,
   Circle,
   ClipboardList,
   Clock,
+  LayoutDashboard,
   Play,
   Scale,
   Search,
-  Settings,
   Square,
   Timer,
   Truck,
@@ -65,19 +63,55 @@ import {
 } from 'lucide-vue-next';
 import { computed, h, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRouter } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
 
 const { t } = useI18n();
 const router = useRouter();
+const route = useRoute();
 
 // State
-const activeTab = ref('checkin');
+const activeTab = computed(() => {
+  const path = route.path;
+  if (path.includes('/scale-in')) return 'scale-in';
+  if (path.includes('/scale-out')) return 'scale-out';
+  if (path.includes('/dashboard')) return 'dashboard';
+  return 'checkin';
+});
+
+const headerTitle = computed(() => {
+  switch (activeTab.value) {
+    case 'checkin':
+      return t('admin.truckScale.checkIn');
+    case 'scale-in':
+      return t('admin.truckScale.scaleIn');
+    case 'scale-out':
+      return t('admin.truckScale.scaleOut');
+    case 'dashboard':
+      return t('admin.truckScale.dashboard');
+    default:
+      return t('admin.truckScale.name');
+  }
+});
+
+const headerIcon = computed(() => {
+  switch (activeTab.value) {
+    case 'checkin':
+      return Truck;
+    case 'scale-in':
+      return Scale;
+    case 'scale-out':
+      return ArrowRightLeft; // Or another scale icon
+    case 'dashboard':
+      return LayoutDashboard;
+    default:
+      return Truck;
+  }
+});
 const bookings = ref<any[]>([]);
 const isLoading = ref(false);
 const searchQuery = ref('');
 const selectedCategory = ref('all'); // all, cuplump, uss
-const settingsOpen = ref(false);
 const settings = ref({
   autoRefresh: true,
   sound: false,
@@ -257,7 +291,6 @@ const fetchBookings = async () => {
     const response = await bookingsApi.getAll({ date: selectedDate.value });
     // Assuming backend returns array directly as per previous fix
     bookings.value = Array.isArray(response) ? response : (response as any).data || [];
-    if (bookings.value.length > 0) console.log('[TruckScale] Booking Data:', bookings.value[0]);
   } catch (error) {
     console.error('Failed to fetch bookings:', error);
     toast.error(t('truckScale.toast.loadBookingsFailed'));
@@ -686,7 +719,6 @@ const openWeightIn = (booking: any) => {
 };
 
 const confirmStartDrain = async () => {
-  console.log('Confirm Start Drain clicked:', selectedDrainBooking.value);
   if (!selectedDrainBooking.value) {
     console.error('No booking selected for drain start');
     return;
@@ -741,12 +773,6 @@ const saveWeightIn = async () => {
     weightInData.value.rubberType === weightInData.value.trailerRubberType &&
     weightInData.value.rubberType !== '' &&
     weightInData.value.trailerRubberType !== '';
-
-  console.log('Validating Weight In:', {
-    isTrailerTruck,
-    sameRubberType,
-    weightInData: weightInData.value,
-  });
 
   // Validation
   if (
@@ -1416,6 +1442,21 @@ const dashboardColumns: ColumnDef<any>[] = [
   },
 ];
 
+const headerSubtitle = computed(() => {
+  switch (activeTab.value) {
+    case 'scale-in':
+      return t('truckScale.scaleInDescription') || 'Manage and verify inbound truck weights';
+    case 'scale-out':
+      return t('truckScale.scaleOutDescription') || 'Process outbound truck weights and tickets';
+    case 'dashboard':
+      return '';
+    case 'checkin':
+      return t('truckScale.checkInDescription') || 'Register and check-in trucks';
+    default:
+      return '';
+  }
+});
+
 const handleSocketNotification = () => {
   // Only refresh if autoRefresh is on
   if (settings.value.autoRefresh) {
@@ -1444,14 +1485,7 @@ const handleSocketNotification = () => {
 };
 
 onMounted(async () => {
-  // Permission check with detailed logging
-  console.log('[TruckScale] Checking permissions...');
-  console.log('[TruckScale] User:', authStore.user);
-  console.log('[TruckScale] User permissions:', authStore.userPermissions);
-  console.log('[TruckScale] Has truckScale:read?', authStore.hasPermission('truckScale:read'));
-
   if (!authStore.hasPermission('truckScale:read')) {
-    console.log('[TruckScale] Permission denied! Redirecting to home...');
     toast.error(t('errors.noPermission'), {
       description: t('errors.noPermissionDescription'),
     });
@@ -1459,7 +1493,6 @@ onMounted(async () => {
     return;
   }
 
-  console.log('[TruckScale] Permission granted. Loading page...');
   loadSettings();
   fetchMasterData();
   await authStore.fetchUser();
@@ -1475,16 +1508,103 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="h-full flex flex-col p-6 space-y-6 max-w-[1600px] mx-auto w-full">
-    <!-- Tabs -->
-    <Tabs v-model="activeTab" class="w-full flex flex-col space-y-6">
-      <!-- Header & Tabs List Row -->
-      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div class="flex flex-row items-center gap-4">
-          <h1 class="text-3xl font-bold tracking-tight">{{ t('truckScale.title') }}</h1>
-          <div class="w-[180px]">
+  <div class="h-full flex flex-col space-y-6 w-full">
+    <!-- Banner -->
+    <div
+      class="rounded-xl border bg-white shadow-sm p-4 px-6 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-4"
+    >
+      <div class="absolute top-1/2 right-0 -translate-y-1/2 pointer-events-none opacity-[0.03]">
+        <component :is="headerIcon" class="w-64 h-64 rotate-12" />
+      </div>
+
+      <div class="flex items-center gap-4 relative z-10">
+        <div
+          class="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary"
+        >
+          <component :is="headerIcon" class="h-6 w-6" />
+        </div>
+        <div>
+          <h1 class="text-lg font-bold text-gray-900">{{ headerTitle }}</h1>
+          <p v-if="headerSubtitle" class="text-sm text-gray-500">{{ headerSubtitle }}</p>
+        </div>
+      </div>
+
+      <div
+        v-if="activeTab !== 'dashboard'"
+        class="flex flex-col xl:flex-row gap-4 items-end justify-between w-full xl:w-auto xl:ml-auto mt-4 md:mt-0 relative z-10"
+      >
+        <!-- Filters Group -->
+        <div class="flex flex-col md:flex-row gap-3 items-end w-full xl:w-auto shrink-0">
+          <!-- Search Popover -->
+          <div class="grid gap-1.5 w-full md:w-auto">
+            <Label class="text-xs font-semibold text-muted-foreground ml-0.5">Search</Label>
+            <Popover>
+              <PopoverTrigger as-child>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  class="h-9 w-9 bg-white/50 backdrop-blur-sm border-slate-200 hover:bg-white transition-all shadow-sm shrink-0"
+                >
+                  <Search class="h-4 w-4 text-slate-500" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent class="w-80 p-3" align="start" side="bottom">
+                <div class="relative group/search">
+                  <Search
+                    class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within/search:text-primary transition-colors"
+                  />
+                  <Input
+                    v-model="searchQuery"
+                    type="text"
+                    placeholder="Search..."
+                    class="pl-10 h-9 border-slate-200 focus:ring-2 focus:ring-primary/20 rounded-lg transition-all"
+                  />
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <div class="grid gap-1.5 w-full md:w-auto">
+            <Label class="text-xs font-semibold text-muted-foreground ml-0.5">{{
+              t('truckScale.date')
+            }}</Label>
+            <Popover v-model:open="isDatePopoverOpen">
+              <PopoverTrigger as-child>
+                <Button
+                  variant="outline"
+                  :class="
+                    cn(
+                      'w-full md:w-[150px] justify-start text-left font-bold h-9 bg-white/50 backdrop-blur-sm',
+                      !selectedDate && 'text-muted-foreground'
+                    )
+                  "
+                >
+                  <CalendarIcon class="mr-2 h-4 w-4 text-muted-foreground" />
+                  <span>{{
+                    selectedDate
+                      ? format(new Date(selectedDate), 'dd-MMM-yyyy')
+                      : t('truckScale.pickDate')
+                  }}</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent class="w-auto p-0">
+                <Calendar
+                  :model-value="selectedDateObject"
+                  @update:model-value="handleDateSelect"
+                  mode="single"
+                  initial-focus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+
+          <!-- Category Filter -->
+          <div class="grid gap-1.5 w-full md:w-[130px]">
+            <Label class="text-xs font-semibold text-muted-foreground ml-0.5">{{
+              t('truckScale.rubberType')
+            }}</Label>
             <Select v-model="selectedCategory">
-              <SelectTrigger>
+              <SelectTrigger class="h-9 font-bold bg-white/50 backdrop-blur-sm">
                 <SelectValue :placeholder="t('truckScale.rubberType')" />
               </SelectTrigger>
               <SelectContent>
@@ -1496,199 +1616,214 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <div class="flex items-center gap-2 ml-auto">
-          <!-- Tabs List -->
-          <TabsList class="self-start md:self-center">
-            <TabsTrigger value="checkin">
-              {{ t('truckScale.checkIn') }}
-            </TabsTrigger>
-            <TabsTrigger value="scale-in">
-              {{ t('truckScale.weightIn') }}
-            </TabsTrigger>
-            <TabsTrigger value="scale-out">
-              {{ t('truckScale.weightOut') }}
-            </TabsTrigger>
-            <TabsTrigger value="dashboard">
-              {{ t('truckScale.dashboard') }}
-            </TabsTrigger>
-          </TabsList>
+        <!-- Stats Cards Group -->
+        <div class="flex flex-row gap-2 w-full xl:w-auto overflow-x-auto pb-1 xl:pb-0">
+          <div
+            class="rounded-lg border bg-blue-50/50 border-blue-100 px-3 py-1.5 flex flex-col justify-center min-w-[100px] shrink-0"
+          >
+            <div class="flex items-center gap-1.5 mb-0.5">
+              <Truck class="w-3 h-3 text-blue-600" />
+              <span
+                class="text-[0.6rem] text-blue-600 font-bold uppercase tracking-wider whitespace-nowrap"
+                >{{ t('truckScale.totalExpected') || 'Total' }}</span
+              >
+            </div>
+            <span class="text-lg font-black text-blue-950 leading-none">{{ stats.total }}</span>
+          </div>
 
-          <!-- Settings Button -->
-          <Dialog v-model:open="settingsOpen">
-            <DialogTrigger as-child>
-              <Button variant="outline" size="icon" class="ml-2">
-                <Settings class="w-4 h-4" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent class="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>{{ t('common.settings') }}</DialogTitle>
-                <DialogDescription>
-                  Configure notification and auto-refresh settings.
-                </DialogDescription>
-              </DialogHeader>
-              <div class="grid gap-4 py-4">
-                <div class="flex items-center justify-between space-x-2">
-                  <Label htmlFor="auto-refresh" class="flex flex-col space-y-1">
-                    <span>{{ t('truckScale.settings.autoRefresh') }}</span>
-                    <span class="font-normal leading-snug text-muted-foreground">
-                      {{ t('truckScale.settings.autoRefreshDesc') }}
-                    </span>
-                  </Label>
-                  <Checkbox
-                    id="auto-refresh"
-                    :checked="settings.autoRefresh"
-                    @update:checked="(v) => (settings.autoRefresh = v)"
-                  />
-                </div>
-                <div class="flex items-center justify-between space-x-2">
-                  <Label htmlFor="sound" class="flex flex-col space-y-1">
-                    <span>{{ t('truckScale.settings.sound') }}</span>
-                    <span class="font-normal leading-snug text-muted-foreground">
-                      {{ t('truckScale.settings.soundDesc') }}
-                    </span>
-                  </Label>
-                  <Checkbox
-                    id="sound"
-                    :checked="settings.sound"
-                    @update:checked="(v) => (settings.sound = v)"
-                  />
-                </div>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <div
+            class="rounded-lg border bg-green-50/50 border-green-100 px-3 py-1.5 flex flex-col justify-center min-w-[100px] shrink-0"
+          >
+            <div class="flex items-center gap-1.5 mb-0.5">
+              <CheckCircle class="w-3 h-3 text-green-600" />
+              <span
+                class="text-[0.6rem] text-green-600 font-bold uppercase tracking-wider whitespace-nowrap"
+                >{{ t('truckScale.stats.checkedIn') || 'Checked In' }}</span
+              >
+            </div>
+            <span class="text-lg font-black text-green-950 leading-none">{{
+              stats.checkedIn
+            }}</span>
+          </div>
+
+          <div
+            class="rounded-lg border bg-orange-50/50 border-orange-100 px-3 py-1.5 flex flex-col justify-center min-w-[100px] shrink-0"
+          >
+            <div class="flex items-center gap-1.5 mb-0.5">
+              <Clock class="w-3 h-3 text-orange-600" />
+              <span
+                class="text-[0.6rem] text-orange-600 font-bold uppercase tracking-wider whitespace-nowrap"
+                >{{ t('truckScale.stats.pending') || 'Pending' }}</span
+              >
+            </div>
+            <span class="text-lg font-black text-orange-950 leading-none">{{ stats.pending }}</span>
+          </div>
         </div>
       </div>
 
-      <!-- Persistent Controls & Stats -->
-      <div v-if="activeTab !== 'dashboard'">
-        <!-- Controls & Stats -->
-        <Card class="border-none shadow-sm bg-card/50 backdrop-blur-sm">
-          <CardContent class="p-6 space-y-6">
-            <!-- Filters & Stats Combined Row -->
-            <!-- Filters & Stats Combined Row -->
-            <div class="flex flex-col xl:flex-row gap-4 items-end justify-between w-full">
-              <!-- Filters Group -->
-              <div class="flex flex-col md:flex-row gap-3 items-end w-full xl:w-auto shrink-0">
-                <div class="flex items-center">
-                  <Popover>
-                    <PopoverTrigger as-child>
-                      <Button variant="outline" size="icon" class="w-10 h-10 shrink-0">
-                        <Search class="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent class="w-80" align="start" side="bottom">
-                      <div class="grid gap-4">
-                        <div class="space-y-2">
-                          <h4 class="font-medium leading-none">{{ t('common.search') }}</h4>
-                          <p class="text-sm text-muted-foreground">
-                            {{ t('truckScale.searchPlaceholder') }}
-                          </p>
-                        </div>
-                        <div class="relative">
-                          <Search class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            v-model="searchQuery"
-                            :placeholder="t('truckScale.searchPlaceholder')"
-                            class="pl-9"
-                            @keydown.enter="fetchBookings"
-                          />
-                        </div>
-                        <Button class="w-full" @click="fetchBookings">
-                          {{ t('common.search') }}
-                        </Button>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
+      <div
+        v-else-if="activeTab === 'dashboard'"
+        class="flex flex-col xl:flex-row gap-4 items-end justify-between w-full xl:w-auto xl:ml-auto mt-4 md:mt-0 relative z-10"
+      >
+        <!-- Dashboard Filters -->
+        <div class="flex flex-col md:flex-row gap-3 items-end w-full xl:w-auto shrink-0">
+          <!-- Search Popover -->
+          <div class="grid gap-1.5 w-full md:w-auto">
+            <Label class="text-xs font-semibold text-muted-foreground ml-0.5">Search</Label>
+            <Popover>
+              <PopoverTrigger as-child>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  class="h-9 w-9 bg-white/50 backdrop-blur-sm border-slate-200 hover:bg-white transition-all shadow-sm shrink-0"
+                >
+                  <Search class="h-4 w-4 text-slate-500" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent class="w-80 p-3" align="start" side="bottom">
+                <div class="relative group/search">
+                  <Search
+                    class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within/search:text-primary transition-colors"
+                  />
+                  <Input
+                    v-model="searchQuery"
+                    type="text"
+                    placeholder="Search..."
+                    class="pl-10 h-9 border-slate-200 focus:ring-2 focus:ring-primary/20 rounded-lg transition-all"
+                  />
                 </div>
-                <div class="grid gap-1.5 w-full md:w-auto">
-                  <Label class="text-xs font-semibold text-muted-foreground ml-0.5">{{
-                    t('truckScale.date')
-                  }}</Label>
-                  <Popover v-model:open="isDatePopoverOpen">
-                    <PopoverTrigger as-child>
-                      <Button
-                        variant="outline"
-                        :class="
-                          cn(
-                            'w-full md:w-[200px] justify-start text-left font-normal h-10',
-                            !selectedDate && 'text-muted-foreground'
-                          )
-                        "
-                      >
-                        <CalendarIcon class="mr-2 h-4 w-4 text-muted-foreground" />
-                        <span>{{
-                          selectedDate
-                            ? format(new Date(selectedDate), 'dd-MMM-yyyy')
-                            : t('truckScale.pickDate')
-                        }}</span>
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent class="w-auto p-0">
-                      <Calendar
-                        :model-value="selectedDateObject"
-                        @update:model-value="handleDateSelect"
-                        mode="single"
-                        initial-focus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div class="grid gap-1.5 w-full md:w-auto">
+            <Label class="text-xs font-semibold text-muted-foreground ml-0.5">{{
+              t('booking.selectDate')
+            }}</Label>
+            <Popover v-model:open="isDatePopoverOpen">
+              <PopoverTrigger as-child>
+                <Button
+                  variant="outline"
+                  :class="
+                    cn(
+                      'w-full md:w-[150px] justify-start text-left font-bold h-9 bg-white/50 backdrop-blur-sm',
+                      !selectedDate && 'text-muted-foreground'
+                    )
+                  "
+                >
+                  <CalendarIcon class="mr-2 h-4 w-4 text-muted-foreground" />
+                  <span>{{
+                    selectedDate
+                      ? format(new Date(selectedDate), 'dd-MMM-yyyy')
+                      : t('truckScale.pickDate')
+                  }}</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent class="w-auto p-0">
+                <Calendar
+                  :model-value="selectedDateObject"
+                  @update:model-value="handleDateSelect"
+                  mode="single"
+                  initial-focus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
 
-              <!-- Stats Cards Group (Right Aligned) -->
-              <div
-                class="grid grid-cols-1 md:grid-cols-[200px_200px_200px] gap-3 w-full xl:w-auto mt-4 xl:mt-0"
+        <!-- Dashboard Stats -->
+        <div class="flex flex-row gap-2 w-full xl:w-auto overflow-x-auto pb-1 xl:pb-0">
+          <div
+            class="rounded-lg border bg-blue-50/50 border-blue-100 px-3 py-1.5 flex flex-col justify-center min-w-[100px] shrink-0"
+          >
+            <div class="flex items-center gap-1.5 mb-0.5">
+              <Truck class="w-3 h-3 text-blue-600" />
+              <span
+                class="text-[0.6rem] text-blue-600 font-bold uppercase tracking-wider whitespace-nowrap"
+                >{{ t('truckScale.stats.totalTrips') || 'Total Trips' }}</span
               >
-                <div
-                  class="rounded-xl border bg-blue-50/50 border-blue-100 px-4 py-2 flex items-center justify-between shadow-sm w-full min-h-[56px]"
-                >
-                  <div class="flex items-center gap-2">
-                    <Truck class="w-4 h-4 text-blue-600" />
-                    <span
-                      class="text-[0.6875rem] text-blue-600 font-bold uppercase tracking-wider"
-                      >{{ t('truckScale.totalExpected') || 'Total Expected' }}</span
-                    >
-                  </div>
-                  <span class="text-2xl font-black text-blue-950 leading-none">{{
-                    stats.total
-                  }}</span>
-                </div>
-
-                <div
-                  class="rounded-xl border bg-green-50/50 border-green-100 px-4 py-2 flex items-center justify-between shadow-sm w-full min-h-[56px]"
-                >
-                  <div class="flex items-center gap-2">
-                    <CheckCircle class="w-4 h-4 text-green-600" />
-                    <span
-                      class="text-[0.6875rem] text-green-600 font-bold uppercase tracking-wider"
-                      >{{ t('truckScale.stats.checkedIn') }}</span
-                    >
-                  </div>
-                  <span class="text-2xl font-black text-green-950 leading-none">{{
-                    stats.checkedIn
-                  }}</span>
-                </div>
-
-                <div
-                  class="rounded-xl border bg-orange-50/50 border-orange-100 px-4 py-2 flex items-center justify-between shadow-sm w-full min-h-[56px]"
-                >
-                  <div class="flex items-center gap-2">
-                    <Clock class="w-4 h-4 text-orange-600" />
-                    <span
-                      class="text-[0.6875rem] text-orange-600 font-bold uppercase tracking-wider"
-                      >{{ t('truckScale.stats.pending') }}</span
-                    >
-                  </div>
-                  <span class="text-2xl font-black text-orange-950 leading-none">{{
-                    stats.pending
-                  }}</span>
-                </div>
-              </div>
             </div>
-          </CardContent>
-        </Card>
+            <span class="text-lg font-black text-blue-950 leading-none">{{
+              dashboardStats.count
+            }}</span>
+          </div>
+
+          <div
+            class="rounded-lg border bg-green-50/50 border-green-100 px-3 py-1.5 flex flex-col justify-center min-w-[120px] shrink-0"
+          >
+            <div class="flex items-center gap-1.5 mb-0.5">
+              <Circle class="w-2 h-2 fill-current text-green-500" />
+              <span
+                class="text-[0.6rem] text-green-600 font-bold uppercase tracking-wider whitespace-nowrap"
+                >{{ t('truckScale.stats.totalGrossWeight') || 'Gross' }}</span
+              >
+            </div>
+            <div class="flex items-baseline gap-1">
+              <span class="text-lg font-black text-green-950 leading-none">{{
+                (dashboardStats.net / 1000).toLocaleString(undefined, {
+                  minimumFractionDigits: 1,
+                  maximumFractionDigits: 1,
+                })
+              }}</span>
+              <span class="text-[0.6rem] font-bold text-green-600/70">Ton</span>
+            </div>
+          </div>
+
+          <div
+            class="rounded-lg border bg-indigo-50/50 border-indigo-100 px-3 py-1.5 flex flex-col justify-center min-w-[120px] shrink-0"
+          >
+            <div class="flex items-center gap-1.5 mb-0.5">
+              <Weight class="w-3 h-3 text-indigo-600" />
+              <span
+                class="text-[0.6rem] text-indigo-600 font-bold uppercase tracking-wider whitespace-nowrap"
+                >{{ t('truckScale.stats.totalWeightIn') || 'Weight In' }}</span
+              >
+            </div>
+            <div class="flex items-baseline gap-1">
+              <span class="text-lg font-black text-indigo-950 leading-none">{{
+                (dashboardStats.gross / 1000).toLocaleString(undefined, {
+                  minimumFractionDigits: 1,
+                  maximumFractionDigits: 1,
+                })
+              }}</span>
+              <span class="text-[0.6rem] font-bold text-indigo-600/70">Ton</span>
+            </div>
+          </div>
+
+          <div
+            class="rounded-lg border bg-orange-50/50 border-orange-100 px-3 py-1.5 flex flex-col justify-center min-w-[140px] shrink-0"
+          >
+            <div class="flex items-center gap-1.5 mb-0.5">
+              <Circle class="w-2 h-2 fill-current text-orange-500" />
+              <span
+                class="text-[0.6rem] text-orange-600 font-bold uppercase tracking-wider whitespace-nowrap"
+                >{{ t('truckScale.stats.inOut') || 'In / Out' }}</span
+              >
+            </div>
+            <div class="flex items-baseline gap-1">
+              <span class="text-lg font-black text-orange-950">{{
+                (dashboardStats.weightIn / 1000).toLocaleString(undefined, {
+                  minimumFractionDigits: 1,
+                  maximumFractionDigits: 1,
+                })
+              }}</span>
+              <span class="text-orange-400 font-light mx-0.5">/</span>
+              <span class="text-lg font-bold text-orange-800">{{
+                (dashboardStats.weightOut / 1000).toLocaleString(undefined, {
+                  minimumFractionDigits: 1,
+                  maximumFractionDigits: 1,
+                })
+              }}</span>
+              <span class="text-[0.6rem] font-bold text-orange-600/70 ml-0.5">Ton</span>
+            </div>
+          </div>
+        </div>
       </div>
+    </div>
+
+    <!-- Tabs -->
+    <Tabs :model-value="activeTab" class="w-full flex flex-col space-y-6">
+      <!-- Header & Tabs List Row (Removed Title) -->
+      <!-- Removed old header container -->
 
       <TabsContent value="checkin" class="space-y-6 mt-0">
         <!-- DataTable -->
@@ -1719,177 +1854,6 @@ onUnmounted(() => {
       </TabsContent>
 
       <TabsContent value="dashboard" class="space-y-6 mt-0">
-        <!-- Controls & Stats (Dashboard) -->
-        <Card class="border-none shadow-sm bg-card/50 backdrop-blur-sm">
-          <CardContent class="p-6 space-y-6">
-            <!-- Toolbar & Stats Row -->
-            <div class="flex flex-col xl:flex-row gap-4 items-end justify-between w-full">
-              <!-- Left: Filters -->
-              <div class="flex flex-col md:flex-row gap-3 items-end w-full xl:w-auto shrink-0">
-                <div class="flex items-center">
-                  <Popover>
-                    <PopoverTrigger as-child>
-                      <Button variant="outline" size="icon" class="w-10 h-10 shrink-0">
-                        <Search class="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent class="w-80" align="start" side="bottom">
-                      <div class="grid gap-4">
-                        <div class="space-y-2">
-                          <h4 class="font-medium leading-none">
-                            {{ t('truckScale.searchBooking') }}
-                          </h4>
-                          <p class="text-sm text-muted-foreground">
-                            {{ t('truckScale.searchPlaceholder') }}
-                          </p>
-                        </div>
-                        <div class="relative">
-                          <Search class="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            v-model="searchQuery"
-                            :placeholder="t('truckScale.searchPlaceholder')"
-                            class="pl-9"
-                            @keydown.enter="fetchBookings"
-                          />
-                        </div>
-                        <Button class="w-full" @click="fetchBookings">
-                          {{ t('common.search') }}
-                        </Button>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <div class="grid gap-1.5 w-full md:w-auto">
-                  <Label class="text-xs font-semibold text-muted-foreground ml-0.5">{{
-                    t('booking.selectDate')
-                  }}</Label>
-                  <Popover v-model:open="isDatePopoverOpen">
-                    <PopoverTrigger as-child>
-                      <Button
-                        variant="outline"
-                        :class="
-                          cn(
-                            'w-full md:w-[220px] justify-start text-left font-normal h-10',
-                            !selectedDate && 'text-muted-foreground'
-                          )
-                        "
-                      >
-                        <CalendarIcon class="mr-2 h-4 w-4 text-muted-foreground" />
-                        <span>{{
-                          selectedDate
-                            ? format(new Date(selectedDate), 'dd-MMM-yyyy')
-                            : t('truckScale.pickDate')
-                        }}</span>
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent class="w-auto p-0">
-                      <Calendar
-                        :model-value="selectedDateObject"
-                        @update:model-value="handleDateSelect"
-                        mode="single"
-                        initial-focus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </div>
-
-              <div
-                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[200px_1fr_1fr_1fr] gap-3 w-full xl:flex-1 mt-4 xl:mt-0"
-              >
-                <!-- Total Truck -->
-                <div
-                  class="rounded-xl border bg-blue-50/50 border-blue-100 px-4 py-2 flex items-center justify-between shadow-sm w-full min-h-[56px]"
-                >
-                  <div class="flex items-center gap-2">
-                    <Truck class="w-4 h-4 text-blue-600" />
-                    <span
-                      class="text-[0.6875rem] text-blue-600 font-bold uppercase tracking-wider"
-                      >{{ t('truckScale.stats.totalTrips') }}</span
-                    >
-                  </div>
-                  <span class="text-2xl font-black text-blue-950 leading-none">{{
-                    dashboardStats.count
-                  }}</span>
-                </div>
-
-                <!-- Gross Weight -->
-                <div
-                  class="rounded-xl border bg-green-50/50 border-green-100 px-4 py-2 flex items-center justify-between shadow-sm w-full min-h-[56px]"
-                >
-                  <div class="flex items-center gap-2">
-                    <Circle class="w-2 h-2 fill-current text-green-500" />
-                    <span
-                      class="text-[0.6875rem] text-green-600 font-bold uppercase tracking-wider"
-                      >{{ t('truckScale.stats.totalGrossWeight') || 'Total Gross Weight' }}</span
-                    >
-                  </div>
-                  <div class="flex items-baseline gap-1">
-                    <span class="text-2xl font-black text-green-950 leading-none">{{
-                      (dashboardStats.net / 1000).toLocaleString(undefined, {
-                        minimumFractionDigits: 1,
-                        maximumFractionDigits: 1,
-                      })
-                    }}</span>
-                    <span class="text-[0.625rem] font-bold text-green-600/70">Ton</span>
-                  </div>
-                </div>
-
-                <!-- Weight In -->
-                <div
-                  class="rounded-xl border bg-indigo-50/50 border-indigo-100 px-4 py-2 flex items-center justify-between shadow-sm w-full min-h-[56px]"
-                >
-                  <div class="flex items-center gap-2">
-                    <Weight class="w-4 h-4 text-indigo-600" />
-                    <span
-                      class="text-[0.6875rem] text-indigo-600 font-bold uppercase tracking-wider"
-                      >{{ t('truckScale.stats.totalWeightIn') || 'Total Weight In' }}</span
-                    >
-                  </div>
-                  <div class="flex items-baseline gap-1">
-                    <span class="text-2xl font-black text-indigo-950 leading-none">{{
-                      (dashboardStats.gross / 1000).toLocaleString(undefined, {
-                        minimumFractionDigits: 1,
-                        maximumFractionDigits: 1,
-                      })
-                    }}</span>
-                    <span class="text-[0.625rem] font-bold text-indigo-600/70">Ton</span>
-                  </div>
-                </div>
-
-                <!-- In / Out -->
-                <div
-                  class="rounded-xl border bg-orange-50/50 border-orange-100 px-4 py-2 flex items-center justify-between shadow-sm w-full min-h-[56px]"
-                >
-                  <div class="flex items-center gap-2">
-                    <Circle class="w-2 h-2 fill-current text-orange-500" />
-                    <span
-                      class="text-[0.6875rem] text-orange-600 font-bold uppercase tracking-wider"
-                      >{{ t('truckScale.stats.inOut') }}</span
-                    >
-                  </div>
-                  <div class="flex items-baseline gap-1">
-                    <span class="text-xl font-black text-orange-950">{{
-                      (dashboardStats.weightIn / 1000).toLocaleString(undefined, {
-                        minimumFractionDigits: 1,
-                        maximumFractionDigits: 1,
-                      })
-                    }}</span>
-                    <span class="text-orange-400 font-light mx-0.5">/</span>
-                    <span class="text-xl font-bold text-orange-800">{{
-                      (dashboardStats.weightOut / 1000).toLocaleString(undefined, {
-                        minimumFractionDigits: 1,
-                        maximumFractionDigits: 1,
-                      })
-                    }}</span>
-                    <span class="text-[0.625rem] font-bold text-orange-600/70 ml-0.5">Ton</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         <DataTable
           :columns="dashboardColumns"
           :data="filteredBookings"

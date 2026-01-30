@@ -320,10 +320,6 @@ function handleCreateBooking() {
 }
 
 function handleEdit(booking: any) {
-  console.log('[BookingQueue] Editing booking:', booking);
-  console.log('[BookingQueue] rubberType value:', booking.rubberType);
-  console.log('[BookingQueue] rubber_type value:', booking.rubber_type);
-  console.log('[BookingQueue] All booking keys:', Object.keys(booking));
   editingBooking.value = booking;
   sheetOpen.value = true;
 }
@@ -344,7 +340,6 @@ async function confirmDelete() {
     }
     fetchQueues();
   } catch (err) {
-    console.error('Delete error:', err);
     toast.error(t('bookingQueue.toast.deleteError'));
   } finally {
     deleteDialogOpen.value = false;
@@ -383,14 +378,12 @@ onMounted(async () => {
   if (code) {
     try {
       loading.value = true;
-      console.log(`[BookingQueue] Deep Linking for code: ${code}`);
       // Fetch booking by code to get date/slot
       // We use getAll with code filter
       const bookings = await bookingsApi.getAll({ code });
 
       if (bookings && bookings.length > 0) {
         const booking = bookings[0];
-        console.log(`[BookingQueue] Found booking:`, booking);
 
         // Set Date and Slot
         selectedDate.value = fromDate(new Date(booking.date), getLocalTimeZone());
@@ -403,7 +396,6 @@ onMounted(async () => {
         toast.error('Booking not found');
       }
     } catch (error) {
-      console.error('Deep link failed', error);
       toast.error('Failed to load linked booking');
     } finally {
       loading.value = false;
@@ -424,7 +416,6 @@ onMounted(async () => {
   }
 
   // Always fetch queues after setting state
-  console.log('[BookingQueue] Component Mounted. TIME_SLOTS:', TIME_SLOTS);
   fetchQueues();
 });
 
@@ -500,6 +491,7 @@ watch(selectedSlot, (newSlot) => {
           :disabled="isSlotFull"
           @click="handleCreateBooking"
           v-if="authStore.hasPermission('bookings:create')"
+          class="bg-emerald-500 hover:bg-emerald-600 text-white font-medium shadow-sm transition-all"
         >
           <Plus class="mr-2 h-4 w-4" />
           {{ isSlotFull ? t('bookingQueue.slotFull') : t('bookingQueue.addBooking') }}

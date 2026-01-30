@@ -1,11 +1,13 @@
 <script setup lang="ts">
+import Navbar from '@/components/layout/Navbar.vue';
 import { useRoute } from 'vue-router';
 
 const route = useRoute();
 </script>
 
 <template>
-  <div class="flex flex-1 overflow-hidden bg-transparent text-foreground font-sans">
+  <div class="flex flex-col h-screen bg-transparent text-foreground font-sans">
+    <Navbar />
     <!-- Main Content Area - Full Width No Sidebar -->
     <main class="flex-1 overflow-x-hidden overflow-y-auto p-0">
       <router-view v-slot="{ Component }">

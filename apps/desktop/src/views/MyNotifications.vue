@@ -418,86 +418,77 @@ onUnmounted(() => {
     <div class="space-y-6">
       <!-- Dynamic Header Card -->
       <div
-        class="rounded-xl border border-border/60 bg-card/40 backdrop-blur-xl p-6 relative overflow-hidden shadow-sm z-0"
+        class="rounded-xl border border-border bg-card shadow-sm p-4 px-6 flex flex-col md:flex-row items-center justify-between gap-4"
       >
-        <div class="absolute top-1/2 right-12 -translate-y-1/2 pointer-events-none opacity-[0.03]">
-          <Bell class="w-64 h-64 rotate-12" />
+        <div class="flex items-center gap-4">
+          <div
+            class="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary"
+          >
+            <Bell class="h-6 w-6" />
+          </div>
+          <div>
+            <h1 class="text-lg font-bold text-foreground">My Notifications</h1>
+          </div>
         </div>
 
-        <div class="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
-          <div class="flex items-center gap-4 w-full md:w-auto">
-            <div
-              class="h-12 w-12 flex items-center justify-center bg-blue-100/50 dark:bg-blue-900/30 rounded-lg text-blue-600 dark:text-blue-400 shadow-sm backdrop-blur-sm"
-            >
-              <Bell class="h-6 w-6" />
+        <!-- Stats & Actions -->
+        <div class="flex items-center gap-8 border-l pl-8 ml-4">
+          <div class="text-center">
+            <div class="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-1">
+              Total Notifications
             </div>
-            <div>
-              <h1 class="text-xl font-bold tracking-tight text-foreground">My Notifications</h1>
-              <p class="text-sm text-muted-foreground mt-0.5">
-                Stay updated with your latest system alerts and messages.
-              </p>
-            </div>
+            <div class="text-2xl font-bold text-foreground">{{ notifications.length }}</div>
           </div>
-
-          <!-- Stats & Actions -->
-          <div class="flex flex-1 items-center justify-end gap-8 md:gap-12 text-center">
-            <div>
-              <p class="text-[0.625rem] font-bold text-muted-foreground uppercase tracking-widest mb-1">
-                Total Notifications
-              </p>
-              <p class="text-2xl font-bold text-foreground">{{ notifications.length }}</p>
-            </div>
-
-            <div class="flex items-center gap-2">
-              <Button
-                class="gap-2 bg-green-600 hover:bg-green-700"
-                @click="confirmMarkAllAsRead"
-                :disabled="unreadCount === 0"
-              >
-                <CheckCheck class="w-4 h-4" />
-                Mark all as read
-              </Button>
-            </div>
+          <div class="text-center">
+            <div class="text-xs font-bold text-blue-500 uppercase tracking-wider mb-1">Unread</div>
+            <div class="text-2xl font-bold text-blue-600">{{ unreadCount }}</div>
           </div>
+        </div>
+
+        <div class="ml-auto flex-shrink-0 flex items-center gap-2">
+          <Button
+            class="gap-2 bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20"
+            @click="confirmMarkAllAsRead"
+            :disabled="unreadCount === 0"
+          >
+            <CheckCheck class="w-4 h-4" />
+            Mark all as read
+          </Button>
         </div>
       </div>
 
-      <!-- Content Card with Tabs -->
-      <div class="bg-card rounded-lg border relative z-0">
-        <div class="border-b px-6 py-3">
-          <div class="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              :class="{ 'bg-muted': filter === 'all' }"
-              @click="filter = 'all'"
-            >
-              All
-              <Badge variant="secondary" class="ml-2">{{ notifications.length }}</Badge>
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              :class="{ 'bg-muted': filter === 'unread' }"
-              @click="filter = 'unread'"
-            >
-              Unread
-              <Badge v-if="unreadCount > 0" class="ml-2 bg-primary text-primary-foreground">
-                {{ unreadCount }}
-              </Badge>
-            </Button>
-          </div>
-        </div>
+      <!-- Filter Toolbar -->
+      <div class="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          :class="{ 'bg-muted': filter === 'all' }"
+          @click="filter = 'all'"
+        >
+          All
+          <Badge variant="secondary" class="ml-2">{{ notifications.length }}</Badge>
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          :class="{ 'bg-muted': filter === 'unread' }"
+          @click="filter = 'unread'"
+        >
+          Unread
+          <Badge v-if="unreadCount > 0" class="ml-2 bg-primary text-primary-foreground">
+            {{ unreadCount }}
+          </Badge>
+        </Button>
+      </div>
 
-        <!-- Data Table -->
-        <div class="p-6">
-          <DataTable
-            :columns="notificationColumns"
-            :data="filteredNotifications"
-            enable-selection
-            @delete-selected="handleBulkDelete"
-          />
-        </div>
+      <!-- Data Table -->
+      <div>
+        <DataTable
+          :columns="notificationColumns"
+          :data="filteredNotifications"
+          enable-selection
+          @delete-selected="handleBulkDelete"
+        />
       </div>
     </div>
 

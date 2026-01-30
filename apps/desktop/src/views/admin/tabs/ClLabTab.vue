@@ -337,7 +337,8 @@ onMounted(() => {
 
 <template>
   <div class="space-y-4">
-    <div class="rounded-md border bg-card">
+    <!-- Data Table -->
+    <div>
       <DataTable
         :columns="columns"
         :data="filteredBookings"

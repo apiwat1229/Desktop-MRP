@@ -40,9 +40,14 @@ const routes = [
                 component: () => import('../views/Placeholder.vue'),
             },
             {
+                path: 'activity-center',
+                name: 'ActivityCenter',
+                component: () => import('../views/ActivityCenter.vue'),
+            },
+            {
                 path: 'my-notifications',
                 name: 'MyNotifications',
-                component: () => import('../views/MyNotifications.vue'),
+                redirect: '/activity-center#notifications',
             },
             {
                 path: 'profile',
@@ -157,14 +162,28 @@ const routes = [
                 component: () => import('../views/admin/Uss.vue'),
             },
             {
-                path: 'qa',
-                name: 'Quality Assurance',
+                path: 'qa/:tab?',
+                name: 'QualityAssurance',
                 component: () => import('../views/admin/QualityAssurance.vue'),
             },
             {
                 path: 'production',
-                name: 'Production',
-                component: () => import('../views/admin/Production.vue'),
+                children: [
+                    {
+                        path: '',
+                        redirect: '/admin/production/reports',
+                    },
+                    {
+                        path: 'reports',
+                        name: 'ProductionReports',
+                        component: () => import('../views/admin/Production.vue'),
+                    },
+                    {
+                        path: 'job-orders',
+                        name: 'JobOrders',
+                        component: () => import('../views/admin/Production.vue'),
+                    },
+                ]
             },
             {
                 path: 'uss/:id',
@@ -193,7 +212,7 @@ const routes = [
             {
                 path: '',
                 name: 'Approvals',
-                component: () => import('@/views/approvals/ApprovalsList.vue'),
+                redirect: '/activity-center#approvals',
             },
             {
                 path: ':id',
@@ -299,13 +318,53 @@ const routes = [
     },
     {
         path: '/admin/receiving',
-        component: () => import('@/components/layout/NavbarOnlyLayout.vue'),
+        component: () => import('@/components/layout/MainLayout.vue'),
         meta: { requiresAuth: true },
         children: [
             {
                 path: '',
-                name: 'Raw Material Receiving',
+                redirect: '/admin/receiving/cuplump',
+            },
+            {
+                path: 'cuplump',
+                name: 'ReceivingCuplump',
                 component: () => import('../views/admin/Receiving.vue'),
+            },
+            {
+                path: 'uss',
+                name: 'ReceivingUSS',
+                component: () => import('../views/admin/Receiving.vue'),
+            },
+        ]
+    },
+    {
+        path: '/admin/truck-scale',
+        component: () => import('@/components/layout/MainLayout.vue'),
+        meta: { requiresAuth: true },
+        children: [
+            {
+                path: '',
+                redirect: '/admin/truck-scale/check-in',
+            },
+            {
+                path: 'check-in',
+                name: 'TruckScaleCheckIn',
+                component: () => import('../views/admin/TruckScale.vue'),
+            },
+            {
+                path: 'scale-in',
+                name: 'TruckScaleScaleIn',
+                component: () => import('../views/admin/TruckScale.vue'),
+            },
+            {
+                path: 'scale-out',
+                name: 'TruckScaleScaleOut',
+                component: () => import('../views/admin/TruckScale.vue'),
+            },
+            {
+                path: 'dashboard',
+                name: 'TruckScaleDashboard',
+                component: () => import('../views/admin/TruckScale.vue'),
             },
         ]
     },

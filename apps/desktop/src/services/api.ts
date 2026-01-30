@@ -19,7 +19,6 @@ const getBaseUrl = () => {
 };
 
 const baseURL = getBaseUrl();
-console.log('[API] Initialized with Base URL:', baseURL);
 
 const api = axios.create({
     baseURL,
@@ -51,12 +50,10 @@ export const setAuthToken = (token: string | null) => {
     memoryToken = token;
     if (token) {
         api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        console.log('[API] Global Authorization header updated (Memory Sync)');
         // Also trigger socket connection when token is set/updated
         socketService.connect();
     } else {
         delete api.defaults.headers.common['Authorization'];
-        console.log('[API] Global Authorization header removed');
         socketService.disconnect();
     }
 };

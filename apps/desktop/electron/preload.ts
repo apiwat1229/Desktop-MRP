@@ -64,6 +64,17 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
     },
   },
 
+  // App Controls
+  app: {
+    reload: () => ipcRenderer.send('app-reload'),
+    forceReload: () => ipcRenderer.send('app-force-reload'),
+    toggleDevTools: () => ipcRenderer.send('app-toggle-devtools'),
+    zoomIn: () => ipcRenderer.send('app-zoom-in'),
+    zoomOut: () => ipcRenderer.send('app-zoom-out'),
+    zoomReset: () => ipcRenderer.send('app-zoom-reset'),
+    toggleFullScreen: () => ipcRenderer.send('app-toggle-fullscreen'),
+  },
+
   // You can expose other APTs you need here.
   // ...
 })

@@ -143,7 +143,7 @@ const getStatusVariant = (status: string) => {
     </div>
 
     <!-- Table Container -->
-    <div class="border rounded-lg bg-white shadow-sm overflow-hidden">
+    <div>
       <Table>
         <TableHeader class="bg-slate-50">
           <TableRow>

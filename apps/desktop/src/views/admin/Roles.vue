@@ -498,11 +498,15 @@ onMounted(() => {
 
         <div class="flex flex-col md:flex-row items-center justify-between gap-4 relative z-10">
           <div class="flex items-center gap-4 w-full md:w-auto">
+            <div
+              class="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary"
+            >
+              <Shield class="h-6 w-6" />
+            </div>
             <div>
               <h1 class="text-xl font-bold tracking-tight text-foreground">
                 {{ t('admin.roles.title') }}
               </h1>
-              <p class="text-sm text-muted-foreground mt-0.5">{{ t('admin.roles.subtitle') }}</p>
             </div>
           </div>
 

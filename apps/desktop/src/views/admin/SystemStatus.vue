@@ -145,12 +145,14 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="p-8 max-w-screen-2xl mx-auto space-y-8 bg-slate-50 min-h-[calc(100vh-4rem)]">
+  <div class="max-w-screen-2xl mx-auto space-y-8 min-h-[calc(100vh-4rem)]">
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
-        <h1 class="text-3xl font-bold tracking-tight text-slate-900">System Monitor</h1>
-        <p class="text-slate-500 mt-1">Real-time overview of system performance and activities.</p>
+        <h1 class="text-2xl font-bold tracking-tight text-foreground">System Monitor</h1>
+        <p class="text-sm text-muted-foreground mt-1">
+          Real-time overview of system performance and activities.
+        </p>
       </div>
       <div class="flex items-center gap-2">
         <div
@@ -172,38 +174,38 @@ onUnmounted(() => {
         <!-- Top Metrics Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <!-- Pending Approvals -->
-          <Card class="border shadow-none">
+          <Card class="border shadow-sm">
             <CardContent class="p-6">
-              <div class="flex items-center justify-between mb-4">
-                <span class="text-sm font-medium text-slate-600">Pending Approvals</span>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-muted-foreground">Pending Approvals</span>
                 <CheckCircle2 class="w-4 h-4 text-orange-500" />
               </div>
-              <div class="text-4xl font-bold text-orange-600">{{ pendingApprovals }}</div>
-              <p class="text-xs text-slate-400 mt-1">Require attention</p>
+              <div class="text-2xl font-bold text-orange-600">{{ pendingApprovals }}</div>
+              <p class="text-xs text-muted-foreground mt-1">Require attention</p>
             </CardContent>
           </Card>
 
           <!-- Unread Alerts -->
-          <Card class="border shadow-none">
+          <Card class="border shadow-sm">
             <CardContent class="p-6">
-              <div class="flex items-center justify-between mb-4">
-                <span class="text-sm font-medium text-slate-600">Unread Alerts</span>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-muted-foreground">Unread Alerts</span>
                 <AlertCircle class="w-4 h-4 text-blue-500" />
               </div>
-              <div class="text-4xl font-bold text-blue-600">{{ unreadAlerts }}</div>
-              <p class="text-xs text-slate-400 mt-1">System notifications</p>
+              <div class="text-2xl font-bold text-blue-600">{{ unreadAlerts }}</div>
+              <p class="text-xs text-muted-foreground mt-1">System notifications</p>
             </CardContent>
           </Card>
 
           <!-- Online Users -->
-          <Card class="border shadow-none">
+          <Card class="border shadow-sm">
             <CardContent class="p-6">
-              <div class="flex items-center justify-between mb-4">
-                <span class="text-sm font-medium text-slate-600">Online Users</span>
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium text-muted-foreground">Online Users</span>
                 <Users class="w-4 h-4 text-emerald-500" />
               </div>
-              <div class="text-4xl font-bold text-emerald-600">{{ onlineUsers }}</div>
-              <p class="text-xs text-slate-400 mt-1">Active now in system</p>
+              <div class="text-2xl font-bold text-emerald-600">{{ onlineUsers }}</div>
+              <p class="text-xs text-muted-foreground mt-1">Active now in system</p>
             </CardContent>
           </Card>
         </div>

@@ -98,14 +98,14 @@ const handleLogout = () => {
                 <UserIcon class="mr-2 h-4 w-4" />
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem @click="router.push('/my-notifications')">
+              <DropdownMenuItem @click="router.push('/activity-center')">
                 <Bell class="mr-2 h-4 w-4" />
-                My Notifications
+                Activity Center
               </DropdownMenuItem>
               <DialogTrigger as-child>
                 <DropdownMenuItem>
                   <Settings class="mr-2 h-4 w-4" />
-                  Settings
+                  Theme Settings
                 </DropdownMenuItem>
               </DialogTrigger>
             </DropdownMenuGroup>
@@ -116,12 +116,12 @@ const handleLogout = () => {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-        <DialogContent class="sm:max-w-[425px]">
+        <DialogContent class="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Theme Settings</DialogTitle>
             <DialogDescription>Customize the appearance of the application.</DialogDescription>
           </DialogHeader>
-          <div class="py-4">
+          <div class="py-4 max-h-[80vh] overflow-y-auto overflow-x-hidden px-1 scrollbar-hide">
             <AppearanceSettings />
           </div>
         </DialogContent>

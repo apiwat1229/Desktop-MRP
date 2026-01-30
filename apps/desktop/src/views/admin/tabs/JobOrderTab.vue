@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import {
   Table,
@@ -13,7 +12,7 @@ import {
 } from '@/components/ui/table';
 import { jobOrdersApi, type JobOrder } from '@/services/jobOrders';
 import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date';
-import { CheckCircle2, Clock, Edit, FileText, Package } from 'lucide-vue-next';
+import { CheckCircle2, Clock, Edit, FileText } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { toast } from 'vue-sonner';
@@ -139,65 +138,7 @@ onMounted(() => {
     <!-- Button removed as user requested moving Create to Tab -->
 
     <!-- Job Orders Table -->
-    <Card class="border shadow-sm overflow-hidden">
-      <div class="bg-gradient-to-r from-slate-50 to-slate-100 px-6 py-3 border-b">
-        <div class="flex items-center justify-between">
-          <h3 class="font-black text-slate-700 flex items-center gap-2">
-            <Package class="w-4 h-4" />
-            {{ t('qa.jobOrderMgmt.tableTitle') }}
-          </h3>
-
-          <div class="flex items-center gap-4">
-            <!-- Divider Line -->
-            <div class="h-8 w-px bg-slate-300"></div>
-
-            <!-- Summary Stats Cards -->
-            <div class="flex items-center gap-2">
-              <div
-                class="flex items-center gap-1.5 px-2 py-1 bg-blue-50 border-l-2 border-blue-500 rounded"
-              >
-                <FileText class="w-3.5 h-3.5 text-blue-600" />
-                <div class="flex items-center gap-1">
-                  <span class="text-[10px] font-bold text-slate-500 uppercase">{{
-                    t('qa.jobOrderMgmt.total')
-                  }}</span>
-                  <span class="text-sm font-black text-blue-600">{{
-                    filteredJobOrders.length
-                  }}</span>
-                </div>
-              </div>
-
-              <div
-                class="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 border-l-2 border-emerald-500 rounded"
-              >
-                <CheckCircle2 class="w-3.5 h-3.5 text-emerald-600" />
-                <div class="flex items-center gap-1">
-                  <span class="text-[10px] font-bold text-slate-500 uppercase">{{
-                    t('qa.jobOrderMgmt.completed')
-                  }}</span>
-                  <span class="text-sm font-black text-emerald-600">{{
-                    filteredJobOrders.filter((j) => j.isClosed).length
-                  }}</span>
-                </div>
-              </div>
-
-              <div
-                class="flex items-center gap-1.5 px-2 py-1 bg-amber-50 border-l-2 border-amber-500 rounded"
-              >
-                <Clock class="w-3.5 h-3.5 text-amber-600" />
-                <div class="flex items-center gap-1">
-                  <span class="text-[10px] font-bold text-slate-500 uppercase">{{
-                    t('qa.jobOrderMgmt.inProgress')
-                  }}</span>
-                  <span class="text-sm font-black text-amber-600">{{
-                    filteredJobOrders.filter((j) => !j.isClosed).length
-                  }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div>
       <div class="overflow-x-auto">
         <Table>
           <TableHeader class="bg-slate-50/50">
@@ -316,7 +257,7 @@ onMounted(() => {
           </TableBody>
         </Table>
       </div>
-    </Card>
+    </div>
 
     <!-- Form Dialog Removed -->
 

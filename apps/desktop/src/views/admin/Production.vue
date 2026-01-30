@@ -3,21 +3,15 @@ import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { usePermissions } from '@/composables/usePermissions';
 import { type JobOrder, jobOrdersApi } from '@/services/jobOrders';
-import { type ProductionReport } from '@/services/productionReports';
+import { type ProductionReport, productionReportsApi } from '@/services/productionReports';
 import { DateFormatter, getLocalTimeZone, today } from '@internationalized/date';
-import { CalendarIcon, Search, Shield } from 'lucide-vue-next';
-import { computed, ref, watch } from 'vue';
+import { CalendarIcon, Layers, LayoutGrid, Plus, Search, Shield } from 'lucide-vue-next';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
+import { useRoute } from 'vue-router';
 import { toast } from 'vue-sonner';
 import JobOrderDetails from './components/JobOrderDetails.vue';
 import JobOrderForm from './components/JobOrderForm.vue';
@@ -31,8 +25,15 @@ const { hasPermission, isAdmin } = usePermissions();
 const canRead = computed(() => isAdmin.value || hasPermission('production:read'));
 const canCreate = computed(() => isAdmin.value || hasPermission('production:create'));
 
+const route = useRoute();
+
 // Context: 'production' | 'job-order'
-const activeContext = ref('production');
+const activeContext = computed(() => {
+  if (route.name === 'JobOrders' || route.path.includes('job-orders')) {
+    return 'job-order';
+  }
+  return 'production';
+});
 // View: 'list' | 'create' | 'details'
 const activeTab = ref('list');
 
@@ -132,29 +133,170 @@ watch(activeTab, (newTab) => {
 const handleCreateClick = () => {
   selectedReport.value = undefined;
   selectedJobOrder.value = undefined;
+  activeTab.value = 'create';
 };
+
+// Header Computed
+const headerIcon = computed(() => (activeContext.value === 'production' ? LayoutGrid : Layers));
+const headerTitle = computed(() =>
+  activeContext.value === 'production' ? t('production.title') : t('production.jobOrderList')
+);
+
+// Stats State
+const stats = ref({
+  production: { reports: 0, pallets: 0, bales: 0 },
+  jobOrder: { total: 0, active: 0, closed: 0 },
+});
+
+const fetchStats = async () => {
+  try {
+    if (activeContext.value === 'production') {
+      const reports = await productionReportsApi.getAll();
+      let totalPallets = 0;
+      reports.forEach((r) => {
+        r.rows?.forEach((row) => {
+          if (Number(row.weight1) > 0) totalPallets++;
+          if (Number(row.weight2) > 0) totalPallets++;
+          if (Number(row.weight3) > 0) totalPallets++;
+          if (Number(row.weight4) > 0) totalPallets++;
+          if (Number(row.weight5) > 0) totalPallets++;
+        });
+      });
+      stats.value.production = {
+        reports: reports.length,
+        pallets: totalPallets,
+        bales: totalPallets * 35,
+      };
+    } else {
+      const jobs = await jobOrdersApi.getAll();
+      stats.value.jobOrder = {
+        total: jobs.length,
+        active: jobs.filter((j) => !j.isClosed).length,
+        closed: jobs.filter((j) => j.isClosed).length,
+      };
+    }
+  } catch (error) {
+    console.error('Failed to fetch stats:', error);
+  }
+};
+
+onMounted(fetchStats);
+watch(activeContext, fetchStats);
 </script>
 
 <template>
-  <div v-if="canRead" class="h-full flex flex-col space-y-6 p-8 max-w-[1600px] mx-auto w-full">
-    <Tabs v-model="activeTab" class="h-full flex flex-col">
-      <!-- Header -->
-      <div class="flex items-center justify-between mb-6">
-        <!-- Left Side: Search & Date -->
+  <div v-if="canRead" class="flex flex-col space-y-4 p-2 w-full">
+    <!-- Premium Header -->
+    <div
+      class="rounded-xl border bg-white shadow-sm p-4 px-6 relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-6"
+    >
+      <!-- Decorative Background Icon -->
+      <div class="absolute top-1/2 right-0 -translate-y-1/2 pointer-events-none opacity-[0.03]">
+        <component :is="headerIcon" class="w-64 h-64 rotate-12" />
+      </div>
+
+      <!-- Icon & Title -->
+      <div class="flex items-center gap-4 relative z-10">
+        <div
+          class="h-10 w-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner transition-transform duration-300"
+        >
+          <component :is="headerIcon" class="h-6 w-6" />
+        </div>
+        <div>
+          <h1 class="text-lg font-black text-gray-900 tracking-tight leading-none mb-1">
+            {{ headerTitle }}
+          </h1>
+        </div>
+      </div>
+
+      <!-- Right Side Actions & Stats -->
+      <div class="flex flex-col md:flex-row items-center gap-6 lg:gap-8 relative z-10 ml-auto">
+        <!-- Stats Section -->
+        <div class="flex items-center gap-8 border-l border-slate-200 pl-8">
+          <template v-if="activeContext === 'production'">
+            <div class="text-center group/stat">
+              <span
+                class="block text-[0.6rem] font-black text-muted-foreground uppercase tracking-widest mb-1 group-hover/stat:text-primary transition-colors"
+                >{{ t('production.stats.totalReports') }}</span
+              >
+              <span class="text-lg font-black text-slate-900 tabular-nums">{{
+                stats.production.reports
+              }}</span>
+            </div>
+            <div class="text-center group/stat">
+              <span
+                class="block text-[0.6rem] font-black text-emerald-500 uppercase tracking-widest mb-1 group-hover/stat:text-emerald-600 transition-colors"
+                >{{ t('production.stats.totalPallets') }}</span
+              >
+              <span class="text-lg font-black text-emerald-600 tabular-nums">{{
+                stats.production.pallets
+              }}</span>
+            </div>
+            <div class="text-center group/stat">
+              <span
+                class="block text-[0.6rem] font-black text-orange-500 uppercase tracking-widest mb-1 group-hover/stat:text-orange-600 transition-colors"
+                >{{ t('production.stats.totalBales') }}</span
+              >
+              <span class="text-lg font-black text-orange-600 tabular-nums">{{
+                stats.production.bales
+              }}</span>
+            </div>
+          </template>
+          <template v-else>
+            <div class="text-center group/stat">
+              <span
+                class="block text-[0.6rem] font-black text-muted-foreground uppercase tracking-widest mb-1 group-hover/stat:text-primary transition-colors"
+                >{{ t('production.stats.totalOrders') }}</span
+              >
+              <span class="text-lg font-black text-slate-900 tabular-nums">{{
+                stats.jobOrder.total
+              }}</span>
+            </div>
+            <div class="text-center group/stat">
+              <span
+                class="block text-[0.6rem] font-black text-blue-500 uppercase tracking-widest mb-1 group-hover/stat:text-blue-600 transition-colors"
+                >{{ t('production.stats.activeJobs') }}</span
+              >
+              <span class="text-lg font-black text-blue-600 tabular-nums">{{
+                stats.jobOrder.active
+              }}</span>
+            </div>
+            <div class="text-center group/stat">
+              <span
+                class="block text-[0.6rem] font-black text-emerald-500 uppercase tracking-widest mb-1 group-hover/stat:text-emerald-600 transition-colors"
+                >{{ t('production.stats.completed') }}</span
+              >
+              <span class="text-lg font-black text-emerald-600 tabular-nums">{{
+                stats.jobOrder.closed
+              }}</span>
+            </div>
+          </template>
+        </div>
+
+        <!-- Filters & Create Button -->
         <div v-if="activeTab === 'list'" class="flex items-center gap-3">
-          <!-- Search -->
+          <!-- Search Popover -->
           <Popover>
             <PopoverTrigger as-child>
-              <Button variant="outline" size="icon" class="h-10 w-10 bg-white border-slate-200">
-                <Search class="h-4 w-4 text-muted-foreground" />
+              <Button
+                variant="outline"
+                size="icon"
+                class="h-10 w-10 bg-slate-50 border-slate-200 hover:bg-white transition-all shadow-sm shrink-0 rounded-xl"
+              >
+                <Search class="h-4 w-4 text-slate-500" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent class="w-60 p-2" align="start">
-              <div class="relative w-full items-center">
-                <Input v-model="searchQuery" type="text" placeholder="Search..." class="pl-8 h-9" />
-                <span class="absolute start-0 inset-y-0 flex items-center justify-center px-2">
-                  <Search class="size-4 text-muted-foreground" />
-                </span>
+            <PopoverContent class="w-80 p-3" align="start" side="bottom">
+              <div class="relative group/search">
+                <Search
+                  class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within/search:text-primary transition-colors"
+                />
+                <Input
+                  v-model="searchQuery"
+                  type="text"
+                  placeholder="Search..."
+                  class="pl-10 h-10 border-slate-200 focus:ring-2 focus:ring-primary/20 rounded-xl transition-all"
+                />
               </div>
             </PopoverContent>
           </Popover>
@@ -164,66 +306,39 @@ const handleCreateClick = () => {
             <PopoverTrigger as-child>
               <Button
                 variant="outline"
-                class="w-[240px] justify-between text-left font-normal bg-white h-10 border-slate-200"
+                class="w-[180px] justify-between text-left font-bold bg-slate-50 h-10 border-slate-200 rounded-xl hover:bg-slate-100 transition-colors"
                 :class="!selectedDateObject && 'text-muted-foreground'"
               >
-                {{
-                  selectedDateObject
-                    ? df.format(selectedDateObject.toDate(getLocalTimeZone()))
-                    : 'Pick a date'
-                }}
-                <CalendarIcon class="ml-2 h-4 w-4 opacity-50" />
+                <div class="flex items-center gap-2">
+                  <CalendarIcon class="h-4 w-4 text-primary" />
+                  <span class="truncate">{{
+                    selectedDateObject
+                      ? df.format(selectedDateObject.toDate(getLocalTimeZone()))
+                      : 'Pick a date'
+                  }}</span>
+                </div>
               </Button>
             </PopoverTrigger>
-            <PopoverContent class="w-auto p-0">
+            <PopoverContent class="w-auto p-0 rounded-2xl overflow-hidden shadow-2xl border-none">
               <Calendar v-model="selectedDateObject as any" initial-focus />
             </PopoverContent>
           </Popover>
-        </div>
-        <div v-else class="flex-1" />
 
-        <!-- Right Side: Tabs & Select -->
-        <div class="flex items-center gap-4">
-          <TabsList class="bg-muted/50 p-1 h-10 rounded-lg gap-1">
-            <TabsTrigger
-              value="list"
-              class="px-6 h-9 text-xs font-black uppercase tracking-wide data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-2 data-[state=active]:border-primary transition-all rounded-md text-muted-foreground hover:text-foreground"
-            >
-              {{
-                activeContext === 'production'
-                  ? t('production.reportList')
-                  : t('qa.tabs.jobOrderList')
-              }}
-            </TabsTrigger>
-            <TabsTrigger
-              v-if="activeContext === 'production' && canCreate"
-              value="create"
-              class="px-6 h-9 text-xs font-black uppercase tracking-wide data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-2 data-[state=active]:border-primary transition-all rounded-md text-muted-foreground hover:text-foreground"
-              @click="handleCreateClick"
-            >
-              {{ selectedReport ? 'EDIT REPORT' : t('production.createReport') }}
-            </TabsTrigger>
-            <TabsTrigger
-              v-if="activeContext === 'job-order' && activeTab === 'details'"
-              value="details"
-              class="px-6 h-9 text-xs font-black uppercase tracking-wide data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm data-[state=active]:border-2 data-[state=active]:border-primary transition-all rounded-md text-muted-foreground hover:text-foreground"
-            >
-              JOB DETAILS
-            </TabsTrigger>
-          </TabsList>
-
-          <Select v-model="activeContext">
-            <SelectTrigger class="w-[220px] h-10 bg-white">
-              <SelectValue placeholder="Select context" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="production">Production & Quality</SelectItem>
-              <SelectItem value="job-order">Job Order</SelectItem>
-            </SelectContent>
-          </Select>
+          <!-- Create Button -->
+          <Button
+            v-if="canCreate"
+            @click="handleCreateClick"
+            class="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 shadow-primary/20 shadow-lg px-6 h-10 rounded-xl font-bold transition-all hover:scale-105 active:scale-95"
+          >
+            <Plus class="w-4 h-4" />
+            {{ activeContext === 'production' ? 'NEW REPORT' : 'NEW ORDER' }}
+          </Button>
         </div>
       </div>
+    </div>
 
+    <!-- Main Tabs -->
+    <Tabs v-model="activeTab" class="h-full flex flex-col">
       <!-- Content -->
       <div class="flex-1 overflow-hidden">
         <!-- List Tab -->

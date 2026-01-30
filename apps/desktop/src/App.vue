@@ -4,12 +4,17 @@ import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/sonner';
 import api from '@/services/api';
 import { useThemeStore } from '@/stores/theme';
+import { App as CapacitorApp } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
+import { StatusBar } from '@capacitor/status-bar';
 import { AlertCircle, Loader2, RefreshCw } from 'lucide-vue-next';
 import { onMounted, onUnmounted, ref } from 'vue';
+import { useRouter } from 'vue-router';
 import GlobalBackground from './components/layout/GlobalBackground.vue';
 import UpdateNotification from './components/UpdateNotification.vue';
 
 useThemeStore();
+const router = useRouter();
 
 const isLoading = ref(true);
 const error = ref<string | null>(null);
@@ -36,13 +41,78 @@ const handleRetry = async () => {
   isRetrying.value = false;
 };
 
+// Back Button Handling for Android
+const handleBackButton = () => {
+  CapacitorApp.addListener('backButton', ({ canGoBack }) => {
+    if (!canGoBack) {
+      CapacitorApp.exitApp();
+    } else {
+      router.back();
+    }
+  });
+};
+
+// Full Screen / Immersive Mode
+const setFullScreen = async () => {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      await StatusBar.hide();
+      await StatusBar.setOverlaysWebView({ overlay: true });
+    } catch (err) {
+      console.warn('Could not set full screen:', err);
+    }
+  }
+};
+
+// Swipe Back Logic
+const touchStart = ref({ x: 0, y: 0 });
+const SWIPE_THRESHOLD = 50; // Minimum distance for swipe
+const SWIPE_EDGE_AREA = 50; // Only allow swipe starting from the left edge
+
+const handleTouchStart = (e: TouchEvent) => {
+  touchStart.value = {
+    x: e.changedTouches[0].screenX,
+    y: e.changedTouches[0].screenY,
+  };
+};
+
+const handleTouchEnd = (e: TouchEvent) => {
+  const touchEnd = {
+    x: e.changedTouches[0].screenX,
+    y: e.changedTouches[0].screenY,
+  };
+
+  // Check if swipe started from the left edge
+  if (touchStart.value.x > SWIPE_EDGE_AREA) return;
+
+  const deltaX = touchEnd.x - touchStart.value.x;
+  const deltaY = Math.abs(touchEnd.y - touchStart.value.y);
+
+  // Check for horizontal swipe (right direction)
+  if (deltaX > SWIPE_THRESHOLD && deltaY < SWIPE_THRESHOLD) {
+    router.back();
+  }
+};
+
 onMounted(() => {
   checkHealth();
-  // socketService managed in Navbar
+
+  if (Capacitor.isNativePlatform()) {
+    handleBackButton();
+    setFullScreen();
+
+    // Add Swipe Listeners
+    window.addEventListener('touchstart', handleTouchStart);
+    window.addEventListener('touchend', handleTouchEnd);
+  }
 });
 
 onUnmounted(() => {
-  // socketService managed in Navbar
+  if (Capacitor.isNativePlatform()) {
+    CapacitorApp.removeAllListeners();
+    window.removeEventListener('touchstart', handleTouchStart);
+    window.removeEventListener('touchend', handleTouchEnd);
+  }
 });
 </script>
 
@@ -55,6 +125,11 @@ onUnmounted(() => {
         v-if="isLoading || error"
         class="absolute inset-0 z-50 flex flex-col items-center justify-center p-4 bg-background/20 backdrop-blur-[2px]"
       >
+        <!-- Window Controls for Splash/Error Screens -->
+        <div class="absolute top-0 right-0 p-2 z-50">
+          <WindowControls />
+        </div>
+
         <!-- Loading State -->
         <div
           v-if="isLoading"

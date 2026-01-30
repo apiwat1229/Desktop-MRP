@@ -3,7 +3,9 @@ import {
     Bell,
     Calendar,
     Factory,
+    FlaskConical,
     Layers,
+    Package,
     Server,
     Shield,
     Truck,
@@ -17,49 +19,6 @@ export function useSidebarMenu() {
     const { t } = useI18n();
 
     const allMenuGroups = computed(() => [
-        {
-            title: t('admin.sidebar.main'),
-            items: [
-
-                {
-                    name: t('admin.sidebar.roles'),
-                    path: '/admin/roles',
-                    icon: Shield,
-                    permission: 'roles:read',
-                },
-                {
-                    name: t('admin.sidebar.users'),
-                    path: '/admin/users',
-                    icon: Users,
-                    permission: 'users:read',
-                },
-                {
-                    name: t('admin.sidebar.suppliers'),
-                    path: '/admin/suppliers',
-                    icon: Truck,
-                    permission: 'suppliers:read',
-                },
-                {
-                    name: t('admin.sidebar.rubberTypes'),
-                    path: '/admin/rubber-types',
-                    icon: Layers,
-                    permission: 'rubberTypes:read',
-                },
-                {
-                    name: t('admin.sidebar.notifications'),
-                    path: '/admin/notifications',
-                    icon: Bell,
-                    permission: 'notifications:read',
-                },
-                {
-                    name: 'Production Reports',
-                    path: '/admin/production',
-                    icon: Layers,
-                    permission: 'production:read',
-                },
-
-            ],
-        },
         {
             title: t('services.title'),
             items: [
@@ -76,13 +35,90 @@ export function useSidebarMenu() {
                     name: t('services.mrp.name'),
                     path: '/mrp',
                     icon: Factory,
+                    items: [
+                        { name: 'Cuplump Pool', path: '/cuplump-pool' },
+                    ]
+                },
+                {
+                    name: t('services.qa.name'),
+                    path: '/admin/qa',
+                    icon: FlaskConical, // Ensure FlaskConical is imported
+                    items: [
+                        { name: 'Cuplump', type: 'label' as const },
+                        { name: t('services.qa.menu.poP30Pri'), path: '/admin/qa/cl-po-pri' },
+                        { name: t('services.qa.menu.lab'), path: '/admin/qa/cl-lab' },
+                        { name: 'Cuplump Incoming', path: '/admin/qa/cl-summary' },
+                        { type: 'separator' as const },
+                        { name: 'USS', type: 'label' as const },
+                        { name: t('services.qa.menu.poP30Pri'), path: '/admin/qa/uss-po-pri' },
+                        { name: 'USS Incoming', path: '/admin/qa/uss-summary' },
+                    ],
+                },
+                {
+                    name: 'Production',
+                    path: '/admin/production',
+                    icon: Layers,
+                    items: [
+                        { name: t('production.reportList'), path: '/admin/production/reports' },
+                        { name: t('production.jobOrderList'), path: '/admin/production/job-orders' },
+                    ],
+                },
+                {
+                    name: t('admin.departments.rawMaterial'),
+                    path: '/admin/receiving',
+                    icon: Package,
+                    items: [
+                        { name: t('services.cuplump.name'), path: '/admin/receiving/cuplump' },
+                        { name: 'USS', path: '/admin/receiving/uss' },
+                    ],
+                },
+                {
+                    name: t('admin.truckScale.name'),
+                    path: '/admin/truck-scale',
+                    icon: Truck,
+                    items: [
+                        { name: t('admin.truckScale.checkIn'), path: '/admin/truck-scale/check-in' },
+                        { name: t('admin.truckScale.scaleIn'), path: '/admin/truck-scale/scale-in' },
+                        { name: t('admin.truckScale.scaleOut'), path: '/admin/truck-scale/scale-out' },
+                        { name: t('admin.truckScale.dashboard'), path: '/admin/truck-scale/dashboard' },
+                    ],
                 },
             ],
         },
         {
             title: t('admin.sidebar.system'),
             items: [
+                {
+                    name: t('admin.sidebar.notifications'),
+                    path: '/admin/notifications',
+                    icon: Bell,
+                    permission: 'notifications:read',
+                },
+                {
+                    name: t('admin.sidebar.roles'),
+                    path: '/admin/roles',
+                    icon: Shield,
+                    permission: 'roles:read',
+                },
+                {
+                    name: t('admin.sidebar.rubberTypes'),
+                    path: '/admin/rubber-types',
+                    icon: Layers,
+                    permission: 'rubberTypes:read',
+                },
+                {
+                    name: t('admin.sidebar.suppliers'),
+                    path: '/admin/suppliers',
+                    icon: Truck,
+                    permission: 'suppliers:read',
+                },
                 { name: t('admin.systemStatus.title'), path: '/admin/system-status', icon: Server },
+                {
+                    name: t('admin.sidebar.users'),
+                    path: '/admin/users',
+                    icon: Users,
+                    permission: 'users:read',
+                },
             ],
         },
     ]);

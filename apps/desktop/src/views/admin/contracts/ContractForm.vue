@@ -204,7 +204,7 @@ const endDateObj = computed({
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col max-w-[1600px] mx-auto p-6 space-y-6 pb-32">
+  <div class="min-h-screen flex flex-col p-6 space-y-6 pb-32">
     <!-- Loading State -->
     <div v-if="loading" class="flex items-center justify-center py-32">
       <div class="flex flex-col items-center gap-4">

@@ -22,8 +22,9 @@ defineProps<{
       icon?: LucideIcon;
       permission?: string;
       items?: {
-        name: string;
-        path: string;
+        name?: string;
+        path?: string;
+        type?: 'separator' | 'label';
       }[];
     }[];
   }[];
@@ -49,9 +50,9 @@ defineProps<{
             <CollapsibleTrigger as-child v-if="item.items?.length">
               <SidebarMenuButton :tooltip="item.name">
                 <component :is="item.icon" v-if="item.icon" />
-                <span>{{ item.name }}</span>
+                <span class="group-data-[collapsible=icon]:hidden">{{ item.name }}</span>
                 <ChevronRight
-                  class="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90"
+                  class="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90 group-data-[collapsible=icon]:hidden"
                 />
               </SidebarMenuButton>
             </CollapsibleTrigger>
@@ -65,10 +66,23 @@ defineProps<{
             <!-- Submenu Items -->
             <CollapsibleContent v-if="item.items?.length">
               <SidebarMenuSub>
-                <SidebarMenuSubItem v-for="subItem in item.items" :key="subItem.name">
-                  <SidebarMenuSubButton as-child>
+                <SidebarMenuSubItem
+                  v-for="(subItem, index) in item.items"
+                  :key="subItem.name || index"
+                >
+                  <div
+                    v-if="subItem.type === 'separator'"
+                    class="h-px bg-border/50 mx-2 my-1"
+                  ></div>
+                  <div
+                    v-else-if="subItem.type === 'label'"
+                    class="px-2 py-1.5 text-xs font-medium text-muted-foreground/70"
+                  >
+                    {{ subItem.name }}
+                  </div>
+                  <SidebarMenuSubButton as-child v-else>
                     <router-link
-                      :to="subItem.path"
+                      :to="subItem.path || '#'"
                       active-class="bg-primary/10 text-primary font-medium"
                     >
                       <span>{{ subItem.name }}</span>

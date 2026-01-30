@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import ChangePasswordDialog from '@/components/auth/ChangePasswordDialog.vue';
+import WindowControls from '@/components/layout/WindowControls.vue';
 import LoginForm from '@/components/LoginForm.vue';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-vue-next';
@@ -97,8 +98,15 @@ function handlePasswordChangeSuccess() {
 </script>
 
 <template>
-  <div class="flex min-h-svh w-full items-center justify-center p-6 md:p-10 app-drag-region">
-    <div class="w-full max-w-sm app-no-drag">
+  <div
+    class="relative min-h-svh w-full flex items-center justify-center p-6 md:p-10 app-drag-region overflow-hidden"
+  >
+    <!-- Top Bar for Frameless Window -->
+    <div class="absolute top-0 right-0 p-2 z-50 app-no-drag">
+      <WindowControls />
+    </div>
+
+    <div class="w-full max-w-sm app-no-drag relative z-10">
       <!-- Error Alert -->
       <Alert v-if="loginError" variant="destructive" class="mb-4">
         <AlertCircle class="h-4 w-4" />
