@@ -49,7 +49,7 @@ export const useAuthStore = defineStore('auth', {
         clearTempToken() {
             this.tempToken = null;
         },
-        async login(credentials: any, remember: boolean) {
+        async login(credentials: any) {
             try {
                 const response = await api.post('/auth/login', {
                     email: credentials.email,
@@ -69,8 +69,6 @@ export const useAuthStore = defineStore('auth', {
                 // Load preferences
                 const themeStore = useThemeStore();
                 themeStore.loadFromUser(this.user);
-
-                console.log(`[Auth] Login success. Remember me (form): ${remember}`);
             } catch (error: any) {
                 if (error.response && error.response.data && error.response.data.code === 'MUST_CHANGE_PASSWORD') {
                     this.tempToken = error.response.data.tempToken;

@@ -171,7 +171,6 @@ watch(
           supplierName: props.editingBooking.supplierName || '',
           estimatedWeight: props.editingBooking.estimatedWeight || '',
         };
-        console.log('[BookingSheet] Edit mode - rubberType:', form.value.rubberType);
       } else {
         // Reset form
         form.value = {

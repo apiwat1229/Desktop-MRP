@@ -126,14 +126,9 @@ onMounted(() => {
 const sortedModules = computed(() => {
   let list = [...modules.value];
 
-  console.log('[Home] User permissions:', authStore.userPermissions);
-  console.log('[Home] User object:', authStore.user);
-  console.log('[Home] Total modules before filter:', list.length);
-
   // If user is not loaded yet (no user object), show all modules temporarily
   // This prevents modules from disappearing during page reload
   if (!authStore.user) {
-    console.log('[Home] User not loaded yet, showing all modules');
     return list;
   }
 
@@ -141,16 +136,12 @@ const sortedModules = computed(() => {
   list = list.filter((m) => {
     // If no permission required, show the module
     if (!m.permission) {
-      console.log(`[Home] Module "${m.id}" - no permission required, showing`);
       return true;
     }
     // Otherwise check if user has the required permission
     const hasAccess = authStore.hasPermission(m.permission);
-    console.log(`[Home] Module "${m.id}" - requires "${m.permission}", has access: ${hasAccess}`);
     return hasAccess;
   });
-
-  console.log('[Home] Total modules after filter:', list.length);
 
   // Filter by search query
   if (searchQuery.value) {

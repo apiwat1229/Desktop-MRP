@@ -198,7 +198,6 @@ async function handleUpload() {
     clearInterval(progressInterval);
     uploadProgress.value = 100;
     uploadStatus.value = 'success';
-    console.log('eBook uploaded successfully');
     emit('uploaded');
     // Don't close automatically so user sees success message
   } catch (error: any) {

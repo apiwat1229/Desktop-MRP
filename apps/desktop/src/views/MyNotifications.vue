@@ -90,7 +90,6 @@ const fetchNotifications = async () => {
   isLoading.value = true;
   try {
     const response = await notificationsApi.getAll();
-    console.log('[MyNotifications] Fetched notifications:', response.data);
     notifications.value = response.data;
   } catch (error) {
     console.error('Failed to fetch notifications:', error);
@@ -133,13 +132,11 @@ const handleDelete = async (id: string) => {
 };
 
 const handleBulkDelete = async (selectedNotifications: NotificationDto[]) => {
-  console.log('[handleBulkDelete] Called with:', selectedNotifications.length, 'notifications');
   if (selectedNotifications.length === 0) return;
 
   // Store selected notifications and open confirmation dialog
   notificationsToBulkDelete.value = selectedNotifications;
   bulkDeleteDialogOpen.value = true;
-  console.log('[handleBulkDelete] Dialog opened');
 };
 
 const executeBulkDelete = async () => {
@@ -181,7 +178,7 @@ const handleNotificationClick = async (notification: NotificationDto) => {
           }
         }
       } catch (error) {
-        console.warn('Failed to fetch booking preview:', error);
+        console.error('Failed to fetch booking preview:', error);
       }
 
       if (booking) {
@@ -401,7 +398,6 @@ onMounted(() => {
 
   // Real-time listener
   socketService.on('notification', (newNotification: any) => {
-    console.log('[MyNotifications] Real-time update received:', newNotification);
     if (newNotification) {
       notifications.value.unshift(newNotification);
     }

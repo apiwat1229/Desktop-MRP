@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import TicketDialog from '@/components/booking/TicketDialog.vue';
-import LanguageSwitcher from '@/components/LanguageSwitcher.vue';
 import AppearanceSettings from '@/components/settings/AppearanceSettings.vue';
 import {
   AlertDialog,
@@ -28,6 +27,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useSidebar } from '@/components/ui/sidebar';
 import { usePermissions } from '@/composables/usePermissions';
 import approvalsApi from '@/services/approvals';
 import { bookingsApi } from '@/services/bookings';
@@ -41,10 +41,9 @@ import {
   ArrowRight,
   Bell,
   BellOff,
-  Home,
   LayoutDashboard,
   LogOut,
-  RotateCw,
+  Menu,
   Settings,
   User,
 } from 'lucide-vue-next';
@@ -52,7 +51,6 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
-import MobileSidebar from './MobileSidebar.vue';
 
 const authStore = useAuthStore();
 const router = useRouter();
@@ -63,6 +61,8 @@ const previewTicket = ref<any>(null);
 const isErrorDialogOpen = ref(false);
 const errorDialogMessage = ref('');
 const isCloseConfirmOpen = ref(false);
+
+const { toggleSidebar } = useSidebar();
 
 const { isAdmin, hasPermission } = usePermissions();
 
@@ -85,6 +85,7 @@ const pageTitle = computed(() => {
   if (name === 'Home') return 'Dashboard';
   if (name === 'AdminDashboard') return 'Admin Panel';
   if (name === 'ProjectTimeline') return t('services.projectTimeline.name');
+  if (name === 'ActivityCenter') return 'Activity Center';
   return name;
 });
 
@@ -177,7 +178,7 @@ const handleNotificationClick = async (notification: NotificationDto) => {
           }
         }
       } catch (error) {
-        console.warn('Failed to fetch booking preview:', error);
+        console.error('Failed to fetch booking preview:', error);
       }
 
       if (booking) {
@@ -234,13 +235,7 @@ const handleNotificationClick = async (notification: NotificationDto) => {
   } */
 
 const lastNotification = ref<{ title: string; message: string; time: number } | null>(null);
-const instanceId = Math.random().toString(36).substring(7);
-
-console.log(`[Navbar] Mounted instance: ${instanceId}`);
-
 const handleNotificationSocket = (newNotification: any) => {
-  console.log(`[Navbar ${instanceId}] Received socket notification:`, newNotification);
-
   // Frontend Deduplication Safeguard
   // Prevent duplicate notifications (same title/message) within 2 seconds, even if IDs differ
   const now = Date.now();
@@ -251,7 +246,6 @@ const handleNotificationSocket = (newNotification: any) => {
     const isRecent = now - lastNotification.value.time < 2000; // 2000ms window
 
     if (isSameContent && isRecent) {
-      console.warn('[Navbar] Duplicate notification suppressed:', newNotification.title);
       return;
     }
   }
@@ -385,29 +379,38 @@ onUnmounted(() => {
 
 <template>
   <header
-    class="h-12 border-b border-border bg-card/80 backdrop-blur px-6 flex items-center justify-between sticky top-0 z-50 draggable-region"
+    class="h-12 border-b border-border bg-card/80 backdrop-blur pr-6 flex items-center justify-between sticky top-0 z-50 draggable-region"
   >
-    <div class="flex items-center gap-4 no-drag">
-      <MobileSidebar />
-      <!-- Navigation Controls -->
-      <div class="flex items-center gap-1">
-        <Button variant="ghost" size="icon" class="h-8 w-8" @click="router.back()" title="Back">
+    <div class="flex items-center gap-0 no-drag">
+      <div class="w-12 flex justify-center">
+        <Button
+          variant="ghost"
+          size="icon"
+          class="h-9 w-9 text-muted-foreground hover:text-foreground"
+          @click="toggleSidebar"
+        >
+          <Menu class="w-5 h-5" />
+        </Button>
+      </div>
+
+      <div class="flex items-center gap-1 border-l pl-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          class="h-8 w-8 text-muted-foreground hover:text-foreground disabled:opacity-30"
+          :disabled="!router.options.history.state.back"
+          @click="router.back()"
+        >
           <ArrowLeft class="w-4 h-4" />
         </Button>
         <Button
           variant="ghost"
           size="icon"
-          class="h-8 w-8"
+          class="h-8 w-8 text-muted-foreground hover:text-foreground disabled:opacity-30"
+          :disabled="!router.options.history.state.forward"
           @click="router.forward()"
-          title="Forward"
         >
           <ArrowRight class="w-4 h-4" />
-        </Button>
-        <Button variant="ghost" size="icon" class="h-8 w-8" @click="router.go(0)" title="Refresh">
-          <RotateCw class="w-4 h-4" />
-        </Button>
-        <Button variant="ghost" size="icon" class="h-8 w-8" @click="router.push('/')" title="Home">
-          <Home class="w-4 h-4" />
         </Button>
       </div>
     </div>
@@ -421,7 +424,8 @@ onUnmounted(() => {
       </span>
     </div>
 
-    <div class="flex items-center gap-4 no-drag">
+    <!-- Window Controls -->
+    <div class="flex items-center gap-2 border-l pl-2 ml-4 no-drag">
       <!-- User Profile -->
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
@@ -558,7 +562,9 @@ onUnmounted(() => {
                       </span>
                       <span class="text-[9px] text-muted-foreground whitespace-nowrap opacity-60">
                         {{
-                          formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })
+                          formatDistanceToNow(new Date(notification.createdAt), {
+                            addSuffix: true,
+                          })
                         }}
                       </span>
                     </div>
@@ -613,86 +619,69 @@ onUnmounted(() => {
           </div>
         </DropdownMenuContent>
       </DropdownMenu>
-
-      <!-- Window Controls -->
-      <div class="flex items-center gap-1 border-l pl-2 ml-2">
-        <LanguageSwitcher />
-        <Button
-          variant="ghost"
-          size="icon"
-          class="h-8 w-8"
-          title="Minimize"
-          @click="handleMinimize"
+      <Button variant="ghost" size="icon" class="h-8 w-8" title="Minimize" @click="handleMinimize">
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 15 15"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          class="w-4 h-4"
         >
-          <svg
-            width="15"
-            height="15"
-            viewBox="0 0 15 15"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            class="w-4 h-4"
-          >
-            <path
-              d="M2.25 7.5H12.75"
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          class="h-8 w-8"
-          title="Maximize"
-          @click="handleMaximize"
+          <path
+            d="M2.25 7.5H12.75"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </Button>
+      <Button variant="ghost" size="icon" class="h-8 w-8" title="Maximize" @click="handleMaximize">
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 15 15"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          class="w-3.5 h-3.5"
         >
-          <svg
-            width="15"
-            height="15"
-            viewBox="0 0 15 15"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            class="w-3.5 h-3.5"
-          >
-            <path
-              d="M2.5 2.5H12.5V12.5H2.5V2.5Z"
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-        </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          class="h-8 w-8 hover:bg-red-500 hover:text-white"
-          title="Close"
-          @click="handleClose"
+          <path
+            d="M2.5 2.5H12.5V12.5H2.5V2.5Z"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        class="h-8 w-8 hover:bg-red-500 hover:text-white"
+        title="Close"
+        @click="handleClose"
+      >
+        <svg
+          width="15"
+          height="15"
+          viewBox="0 0 15 15"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          class="w-4 h-4"
         >
-          <svg
-            width="15"
-            height="15"
-            viewBox="0 0 15 15"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            class="w-4 h-4"
-          >
-            <path
-              d="M3.75 3.75L11.25 11.25"
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-            <path
-              d="M11.25 3.75L3.75 11.25"
-              stroke="currentColor"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-        </Button>
-      </div>
+          <path
+            d="M3.75 3.75L11.25 11.25"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M11.25 3.75L3.75 11.25"
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </Button>
     </div>
     <!-- Theme Settings Dialog -->
     <Dialog v-model:open="showThemeSettings">

@@ -10,9 +10,9 @@ const route = useRoute();
 
 <template>
   <div class="flex flex-col h-screen overflow-hidden">
-    <Navbar />
-    <div class="flex flex-1 overflow-hidden relative">
-      <SidebarProvider class="min-h-0">
+    <SidebarProvider class="min-h-0 flex flex-col">
+      <Navbar />
+      <div class="flex flex-1 overflow-hidden relative">
         <AppSidebar class="!top-12 !h-[calc(100vh-3rem)]" />
         <SidebarInset>
           <div class="flex flex-1 flex-col gap-4 p-4 h-full overflow-y-auto">
@@ -23,8 +23,8 @@ const route = useRoute();
             </router-view>
           </div>
         </SidebarInset>
-      </SidebarProvider>
-    </div>
+      </div>
+    </SidebarProvider>
   </div>
 </template>
 

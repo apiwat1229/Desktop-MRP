@@ -780,7 +780,6 @@ const saveWeightIn = async () => {
     !weightInData.value.rubberType ||
     !weightInData.value.weightIn
   ) {
-    console.warn('Main truck validation failed');
     toast.error(t('common.fillAllRequiredFields') || 'Please fill all required fields');
     return;
   }
@@ -789,12 +788,10 @@ const saveWeightIn = async () => {
     // If NOT same rubber type, trailer MUST have its own weight and type/source
     if (!sameRubberType) {
       if (!weightInData.value.trailerWeightIn) {
-        console.warn('Trailer weight validation failed (not same type)');
         toast.error(t('common.fillAllRequiredFields') || 'Please fill all required fields');
         return;
       }
       if (!weightInData.value.trailerRubberSource || !weightInData.value.trailerRubberType) {
-        console.warn('Trailer source/type validation failed');
         toast.error(t('common.fillAllRequiredFields') || 'Please fill all required fields');
         return;
       }
@@ -802,7 +799,7 @@ const saveWeightIn = async () => {
       // If same rubber type, we allow trailerWeightIn to be 0 or empty
       // (assuming it might be already included in the mainWeightIn if user prefers)
       // But we still log it for clarity
-      console.log('Same rubber type detected, trailer weight is optional');
+      // Same rubber type detected, trailer weight is optional
     }
   }
 
@@ -1461,7 +1458,6 @@ const handleSocketNotification = () => {
   // Only refresh if autoRefresh is on
   if (settings.value.autoRefresh) {
     // Debounce slightly or just fetch
-    console.log('[TruckScale] Notification received, refreshing data...');
     fetchBookings();
   }
 

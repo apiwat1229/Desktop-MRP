@@ -14,17 +14,13 @@ const error = ref<string | null>(null);
 const fetchRepairData = async () => {
   try {
     loading.value = true;
-    console.log('[API] Fetching repair log for ID:', route.params.id);
 
     // Get Base API URL and ensure it has /api prefix
     let apiUrl = import.meta.env.VITE_API_URL || 'https://app.ytrc.co.th';
     if (apiUrl.endsWith('/')) apiUrl = apiUrl.slice(0, -1);
     if (!apiUrl.endsWith('/api')) apiUrl += '/api';
 
-    console.log('[API] Using URL:', `${apiUrl}/mymachine/public/repairs/${route.params.id}`);
-
     const response = await axios.get(`${apiUrl}/mymachine/public/repairs/${route.params.id}`);
-    console.log('[API] Response Received:', response.data);
     repair.value = response.data;
   } catch (e: any) {
     console.error('[API] Failed to fetch repair data:', e);

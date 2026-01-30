@@ -670,10 +670,6 @@ const handleSendBroadcast = async () => {
   }
 
   try {
-    console.log(
-      '[Frontend] Sending Broadcast payload:',
-      JSON.parse(JSON.stringify(broadcastForm.value))
-    );
     await notificationsApi.broadcast(broadcastForm.value);
     toast.success(t('admin.notifications.notificationCreated'));
     isBroadcastDialogOpen.value = false;
@@ -698,12 +694,10 @@ const resetBroadcastForm = () => {
 };
 
 const handleBulkDeleteBroadcasts = async (selectedBroadcasts: BroadcastDto[]) => {
-  console.log('[handleBulkDeleteBroadcasts] Called with:', selectedBroadcasts.length, 'broadcasts');
   if (selectedBroadcasts.length === 0) return;
 
   broadcastsToBulkDelete.value = selectedBroadcasts;
   bulkDeleteDialogOpen.value = true;
-  console.log('[handleBulkDeleteBroadcasts] Dialog opened');
 };
 
 const executeBulkDeleteBroadcasts = async () => {

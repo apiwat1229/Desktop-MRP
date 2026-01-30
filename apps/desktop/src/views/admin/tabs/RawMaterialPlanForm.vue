@@ -372,8 +372,6 @@ const handleSave = async () => {
       })),
     };
 
-    console.log('[RawMaterialPlanForm] Saving payload:', payload);
-
     if (props.initialData?.id) {
       await api.patch(`/raw-material-plans/${props.initialData.id}`, payload);
       toast.success('Successfully updated Raw Material Plan');

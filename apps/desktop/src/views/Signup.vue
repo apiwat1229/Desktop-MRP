@@ -37,11 +37,6 @@ async function handleSignup({ email, username, password, firstName, lastName }: 
     }, 2000);
   } catch (err: any) {
     console.error('Signup failed:', err);
-    console.log('Error Config:', {
-      baseURL: err.config?.baseURL,
-      url: err.config?.url,
-      method: err.config?.method,
-    });
 
     // Construct a more helpful error message
     const failedUrl = err.config?.url

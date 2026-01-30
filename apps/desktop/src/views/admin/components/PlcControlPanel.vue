@@ -70,8 +70,6 @@ const loadData = async () => {
       plcApi.getLineUse(),
       plcApi.getDb54(),
     ]);
-    console.log('PLC Status:', statusRes);
-    console.log('PLC DB54 Data (Full):', JSON.stringify(dbRes, null, 2));
 
     status.value = statusRes;
     lineUse.value = lineRes;

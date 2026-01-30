@@ -59,7 +59,7 @@ const setFullScreen = async () => {
       await StatusBar.hide();
       await StatusBar.setOverlaysWebView({ overlay: true });
     } catch (err) {
-      console.warn('Could not set full screen:', err);
+      console.error('Could not set full screen:', err);
     }
   }
 };
@@ -123,7 +123,7 @@ onUnmounted(() => {
       <!-- Loading & Error States -->
       <div
         v-if="isLoading || error"
-        class="absolute inset-0 z-50 flex flex-col items-center justify-center p-4 bg-background/20 backdrop-blur-[2px]"
+        class="absolute inset-0 z-50 flex flex-col items-center justify-center p-4 bg-background/40 backdrop-blur-sm"
       >
         <!-- Window Controls for Splash/Error Screens -->
         <div class="absolute top-0 right-0 p-2 z-50">
@@ -133,36 +133,57 @@ onUnmounted(() => {
         <!-- Loading State -->
         <div
           v-if="isLoading"
-          class="flex flex-col items-center justify-center p-8 rounded-2xl bg-background/60 backdrop-blur-md border border-border/50 shadow-sm transition-all duration-500 animate-in fade-in zoom-in"
+          class="flex flex-col items-center justify-center p-12 rounded-3xl bg-background/80 backdrop-blur-xl border border-border/50 shadow-2xl transition-all duration-700 animate-in fade-in zoom-in"
         >
-          <div class="relative mb-6">
-            <Loader2 class="h-12 w-12 animate-spin text-primary" />
-            <div class="absolute inset-0 h-12 w-12 rounded-full border-2 border-primary/20"></div>
+          <div class="relative mb-8 group">
+            <div class="absolute -inset-4 bg-primary/20 rounded-full blur-xl animate-pulse"></div>
+            <img
+              src="/logo-dark.png"
+              alt="YTRC Logo"
+              class="relative h-20 w-20 object-contain drop-shadow-2xl transition-transform duration-500 group-hover:scale-110"
+            />
+            <div
+              class="absolute -bottom-2 -right-2 h-6 w-6 bg-background rounded-full flex items-center justify-center border border-border shadow-sm"
+            >
+              <Loader2 class="h-4 w-4 animate-spin text-primary" />
+            </div>
           </div>
-          <p class="text-xl font-semibold text-foreground mb-1">Connecting to app.ytrc.co.th</p>
-          <p class="text-sm text-muted-foreground animate-pulse">
-            Establishing secure connection...
-          </p>
+
+          <div class="text-center space-y-2">
+            <h2 class="text-2xl font-bold tracking-tight text-foreground">YTRC CENTER</h2>
+            <div class="flex items-center justify-center gap-2">
+              <span class="flex h-2 w-2 rounded-full bg-primary animate-ping"></span>
+              <p class="text-sm font-medium text-muted-foreground uppercase tracking-widest">
+                Connecting To Server
+              </p>
+            </div>
+          </div>
+
+          <div class="mt-8 w-48 h-1 bg-muted rounded-full overflow-hidden">
+            <div
+              class="h-full bg-primary animate-[loading_2s_ease-in-out_infinite] origin-left"
+            ></div>
+          </div>
         </div>
 
         <!-- Error State -->
         <div
           v-else-if="error"
-          class="flex flex-col items-center max-w-md text-center p-8 rounded-2xl bg-background/80 backdrop-blur-md border border-destructive/20 shadow-xl animate-in fade-in slide-in-from-bottom-4"
+          class="flex flex-col items-center max-w-md text-center p-10 rounded-3xl bg-background/95 backdrop-blur-xl border border-destructive/20 shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-500"
         >
-          <div class="rounded-full bg-destructive/10 p-4 mb-6">
-            <AlertCircle class="h-12 w-12 text-destructive" />
+          <div class="rounded-full bg-destructive/10 p-5 mb-6 ring-8 ring-destructive/5">
+            <AlertCircle class="h-16 w-16 text-destructive" />
           </div>
           <h2 class="text-2xl font-bold mb-3">Connection Failed</h2>
-          <p class="text-muted-foreground mb-8">{{ error }}</p>
+          <p class="text-muted-foreground mb-8 leading-relaxed">{{ error }}</p>
           <Button
             @click="handleRetry"
             :disabled="isRetrying"
             size="lg"
-            class="w-full sm:w-auto min-w-[160px] rounded-xl shadow-lg shadow-primary/20"
+            class="w-full sm:w-auto min-w-[200px] rounded-2xl shadow-xl shadow-primary/20 h-14 text-lg font-semibold"
           >
-            <RefreshCw class="mr-2 h-4 w-4" :class="{ 'animate-spin': isRetrying }" />
-            {{ isRetrying ? 'Retrying Connection...' : 'Retry Connection' }}
+            <RefreshCw class="mr-3 h-5 w-5" :class="{ 'animate-spin': isRetrying }" />
+            {{ isRetrying ? 'Retrying...' : 'Try Again' }}
           </Button>
         </div>
       </div>
@@ -184,4 +205,15 @@ onUnmounted(() => {
 
 <style>
 /* Global Styles handled by style.css */
+@keyframes loading {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
 </style>

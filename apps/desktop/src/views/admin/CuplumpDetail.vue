@@ -103,12 +103,11 @@ const drcActualRef = ref<any>(null);
 
 const onDrcKeydown = (e: KeyboardEvent, nextField: 'req' | 'actual' | 'save') => {
   if (e.key === 'Enter') {
-    console.log('DRC Keydown Enter (CuplumpDetail.vue) triggered for:', nextField);
     e.preventDefault();
     e.stopPropagation();
 
     if (nextField === 'save') {
-      handleSaveDrc('enter_key');
+      handleSaveDrc();
       return;
     }
 
@@ -117,11 +116,8 @@ const onDrcKeydown = (e: KeyboardEvent, nextField: 'req' | 'actual' | 'save') =>
       const el =
         targetRef.value.$el?.querySelector('input') || targetRef.value.$el || targetRef.value;
       if (el) {
-        console.log('Shifting focus to:', nextField);
         el.focus();
         if (el.select) el.select();
-      } else {
-        console.warn('Input element not found for focus shift');
       }
     }
   }
@@ -351,7 +347,6 @@ const displayNetWeight = computed(() => {
 
 // Fetch Data
 const fetchData = async () => {
-  console.log('Fetching data for Booking ID:', bookingId.value);
   if (!bookingId.value) return;
   isLoading.value = true;
   try {
@@ -643,8 +638,7 @@ const handleUpdateLotNo = async () => {
   await saveBookingInfo();
 };
 
-const handleSaveDrc = async (source = 'button_click') => {
-  console.log('handleSaveDrc (CuplumpDetail.vue) called from source:', source);
+const handleSaveDrc = async () => {
   if (!booking.value) return;
 
   try {
@@ -1117,7 +1111,7 @@ onMounted(async () => {
                         type="button"
                         size="sm"
                         class="h-8 gap-1.5 bg-teal-600 hover:bg-teal-700 text-white"
-                        @click="handleSaveDrc('button_click')"
+                        @click="handleSaveDrc()"
                       >
                         <Save class="w-3.5 h-3.5" />
                         {{ t('common.save') }}

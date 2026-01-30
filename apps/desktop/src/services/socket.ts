@@ -15,7 +15,6 @@ class SocketService {
         // Allow connection if token exists, but we might need to wait for user ID for room joining
         const token = storage.get('accessToken') || authStore.accessToken;
         if (!token) {
-            console.warn('SocketService: No token found, aborting connection.');
             return;
         }
 
@@ -59,7 +58,6 @@ class SocketService {
         if (this.socket && this.isConnected) {
             this.socket.emit('join', userId);
         } else {
-            console.log(`SocketService: Socket or connection not ready, buffering joinRoom for user:${userId}`);
             this.pendingRoomUserId = userId;
         }
     }

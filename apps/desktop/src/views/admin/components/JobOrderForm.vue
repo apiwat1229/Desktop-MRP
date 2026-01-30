@@ -83,7 +83,6 @@ const handleSave = () => {
 };
 
 const handleDelete = () => {
-  console.log('[JobOrderForm] Delete requested for ID:', form.value.id);
   if (form.value.id) {
     emit('delete', form.value.id);
   } else {

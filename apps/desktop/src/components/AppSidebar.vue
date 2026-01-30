@@ -18,7 +18,7 @@ const { menuGroups } = useSidebarMenu();
 </script>
 
 <template>
-  <Sidebar collapsible="icon" :class="props.class">
+  <Sidebar collapsible="offcanvas" :class="props.class">
     <SidebarHeader class="flex flex-row items-center gap-2">
       <TeamSwitcher class="flex-1" />
     </SidebarHeader>

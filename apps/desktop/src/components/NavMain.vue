@@ -10,6 +10,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { ChevronRight, type LucideIcon } from 'lucide-vue-next';
 
@@ -29,6 +30,13 @@ defineProps<{
     }[];
   }[];
 }>();
+
+const { setOpen } = useSidebar();
+
+const handleItemClick = () => {
+  // Always close sidebar on item click as requested (auto-hide behavior)
+  setOpen(false);
+};
 </script>
 
 <template>
@@ -58,7 +66,11 @@ defineProps<{
             </CollapsibleTrigger>
             <!-- Standard Item -->
             <SidebarMenuButton as-child :tooltip="item.name" v-else>
-              <router-link :to="item.path" active-class="bg-primary/10 text-primary font-medium">
+              <router-link
+                :to="item.path"
+                active-class="bg-primary/10 text-primary font-medium"
+                @click="handleItemClick"
+              >
                 <component :is="item.icon" v-if="item.icon" />
                 <span class="group-data-[collapsible=icon]:hidden">{{ item.name }}</span>
               </router-link>
@@ -84,6 +96,7 @@ defineProps<{
                     <router-link
                       :to="subItem.path || '#'"
                       active-class="bg-primary/10 text-primary font-medium"
+                      @click="handleItemClick"
                     >
                       <span>{{ subItem.name }}</span>
                     </router-link>

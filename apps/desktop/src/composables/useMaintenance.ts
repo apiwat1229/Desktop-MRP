@@ -106,7 +106,6 @@ export function useMaintenance() {
             // If empty, trigger seed (One-time auto setup)
             // Check if any main data is empty. Backend handles partial seeding safely.
             if (machines.value.length === 0 || repairs.value.length === 0 || stocks.value.length === 0) {
-                console.log('Detected missing data (machines, repairs, or stocks), triggering seed check...');
                 await api.post('/maintenance/seed');
 
                 // Reload after seed
@@ -173,14 +172,11 @@ export function useMaintenance() {
 
     const addRepair = async (repair: Omit<Repair, 'id' | 'timestamp'>) => {
         try {
-            console.log('[addRepair] Sending repair data:', repair);
-            const res = await api.post('/maintenance/repairs', repair);
-            console.log('[addRepair] Received response:', res.data);
+            await api.post('/maintenance/repairs', repair);
 
             // Refetch all repairs to ensure UI is in sync
             const repairsRes = await api.get('/maintenance/repairs');
             repairs.value = repairsRes.data;
-            console.log('[addRepair] Refetched repairs, total:', repairs.value.length);
 
             // Best to re-fetch stocks to get updated quantities
             const sRes = await api.get('/maintenance/stocks');

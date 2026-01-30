@@ -65,7 +65,7 @@ const fetchRequest = async () => {
           bookingContext.value = booking;
         }
       } catch (err) {
-        console.warn('Failed to fetch booking context:', err);
+        console.error('Failed to fetch booking context:', err);
       }
     }
   } catch (error: any) {
