@@ -1445,7 +1445,8 @@
     "estimatedWeightPlaceholder": "Enter weight in Kg.",
     "validation": {
       "estimatedWeightRequired": "Please enter Estimated Weight",
-      "rubberTypeRequired": "Please select Rubber Type"
+      "rubberTypeRequired": "Please select Rubber Type",
+      "supplierNameRequired": "Please select Supplier"
     }
   },
   "admin": {

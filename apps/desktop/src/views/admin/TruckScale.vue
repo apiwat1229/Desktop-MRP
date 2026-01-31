@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
 import Combobox from '@/components/ui/combobox/Combobox.vue';
 import DataTable from '@/components/ui/data-table/DataTable.vue';
 import {
@@ -47,7 +46,6 @@ import {
   AlertCircle,
   ArrowRightLeft,
   ArrowUpDown,
-  Calendar as CalendarIcon,
   CheckCircle,
   Circle,
   ClipboardList,
@@ -55,7 +53,6 @@ import {
   LayoutDashboard,
   Play,
   Scale,
-  Search,
   Square,
   Timer,
   Truck,
@@ -1544,75 +1541,29 @@ onUnmounted(() => {
         <component :is="headerIcon" class="w-64 h-64 rotate-12" />
       </div>
 
-      <div class="flex items-center gap-4 relative z-10">
-        <div
-          class="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary"
-        >
-          <component :is="headerIcon" class="h-6 w-6" />
-        </div>
-        <div>
-          <h1 class="text-lg font-bold text-gray-900">{{ headerTitle }}</h1>
-          <p v-if="headerSubtitle" class="text-sm text-gray-500">{{ headerSubtitle }}</p>
-        </div>
-      </div>
-
       <div
         v-if="activeTab !== 'dashboard'"
-        class="flex flex-col xl:flex-row gap-4 items-end justify-between w-full xl:w-auto xl:ml-auto mt-4 md:mt-0 relative z-10"
+        class="flex items-center justify-between w-full relative z-10 gap-4"
       >
-        <!-- Filters Group -->
-        <div class="flex flex-col md:flex-row gap-3 items-end w-full xl:w-auto shrink-0">
-          <!-- Search Popover -->
-          <div class="grid gap-1.5 w-full md:w-auto">
-            <Label class="text-xs font-semibold text-muted-foreground ml-0.5">Search</Label>
-            <Popover>
-              <PopoverTrigger as-child>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  class="h-9 w-9 bg-white/50 backdrop-blur-sm border-slate-200 hover:bg-white transition-all shadow-sm shrink-0"
-                >
-                  <Search class="h-4 w-4 text-slate-500" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent class="w-80 p-3" align="start" side="bottom">
-                <div class="relative group/search">
-                  <Search
-                    class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within/search:text-primary transition-colors"
-                  />
-                  <Input
-                    v-model="searchQuery"
-                    type="text"
-                    placeholder="Search..."
-                    class="pl-10 h-9 border-slate-200 focus:ring-2 focus:ring-primary/20 rounded-lg transition-all"
-                  />
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-
-          <!-- Date moved to Navbar -->
-
-          <!-- Category Filter -->
-          <div class="grid gap-1.5 w-full md:w-[130px]">
-            <Label class="text-xs font-semibold text-muted-foreground ml-0.5">{{
-              t('truckScale.rubberType')
-            }}</Label>
-            <Select v-model="selectedCategory">
-              <SelectTrigger class="h-9 font-bold bg-white/50 backdrop-blur-sm">
-                <SelectValue :placeholder="t('truckScale.rubberType')" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">ALL</SelectItem>
-                <SelectItem value="cuplump">CUPLUMP</SelectItem>
-                <SelectItem value="uss">USS</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <!-- Rubber Type Filter on the Left -->
+        <div class="grid gap-1.5 w-[130px] shrink-0">
+          <Label class="text-xs font-semibold text-muted-foreground ml-0.5">{{
+            t('truckScale.rubberType')
+          }}</Label>
+          <Select v-model="selectedCategory">
+            <SelectTrigger class="h-9 font-bold bg-white/50 backdrop-blur-sm">
+              <SelectValue :placeholder="t('truckScale.rubberType')" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">ALL</SelectItem>
+              <SelectItem value="cuplump">CUPLUMP</SelectItem>
+              <SelectItem value="uss">USS</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
-        <!-- Stats Cards Group -->
-        <div class="flex flex-row gap-2 w-full xl:w-auto overflow-x-auto pb-1 xl:pb-0">
+        <!-- Stats on the Right -->
+        <div class="flex flex-row gap-2 overflow-x-auto pb-1 xl:pb-0">
           <div
             class="rounded-lg border bg-blue-50/50 border-blue-100 px-3 py-1.5 flex flex-col justify-center min-w-[100px] shrink-0"
           >
@@ -1657,76 +1608,11 @@ onUnmounted(() => {
       </div>
 
       <div
-        v-else-if="activeTab === 'dashboard'"
-        class="flex flex-col xl:flex-row gap-4 items-end justify-between w-full xl:w-auto xl:ml-auto mt-4 md:mt-0 relative z-10"
+        v-if="activeTab === 'dashboard'"
+        class="flex items-center justify-center w-full mt-4 md:mt-0 relative z-10"
       >
-        <!-- Dashboard Filters -->
-        <div class="flex flex-col md:flex-row gap-3 items-end w-full xl:w-auto shrink-0">
-          <!-- Search Popover -->
-          <div class="grid gap-1.5 w-full md:w-auto">
-            <Label class="text-xs font-semibold text-muted-foreground ml-0.5">Search</Label>
-            <Popover>
-              <PopoverTrigger as-child>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  class="h-9 w-9 bg-white/50 backdrop-blur-sm border-slate-200 hover:bg-white transition-all shadow-sm shrink-0"
-                >
-                  <Search class="h-4 w-4 text-slate-500" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent class="w-80 p-3" align="start" side="bottom">
-                <div class="relative group/search">
-                  <Search
-                    class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within/search:text-primary transition-colors"
-                  />
-                  <Input
-                    v-model="searchQuery"
-                    type="text"
-                    placeholder="Search..."
-                    class="pl-10 h-9 border-slate-200 focus:ring-2 focus:ring-primary/20 rounded-lg transition-all"
-                  />
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-          <div class="grid gap-1.5 w-full md:w-auto">
-            <Label class="text-xs font-semibold text-muted-foreground ml-0.5">{{
-              t('booking.selectDate')
-            }}</Label>
-            <Popover v-model:open="isDatePopoverOpen">
-              <PopoverTrigger as-child>
-                <Button
-                  variant="outline"
-                  :class="
-                    cn(
-                      'w-full md:w-[150px] justify-start text-left font-bold h-9 bg-white/50 backdrop-blur-sm',
-                      !selectedDate && 'text-muted-foreground'
-                    )
-                  "
-                >
-                  <CalendarIcon class="mr-2 h-4 w-4 text-muted-foreground" />
-                  <span>{{
-                    selectedDate
-                      ? format(new Date(selectedDate), 'dd-MMM-yyyy')
-                      : t('truckScale.pickDate')
-                  }}</span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent class="w-auto p-0">
-                <Calendar
-                  :model-value="selectedDateObject"
-                  @update:model-value="handleDateSelect"
-                  mode="single"
-                  initial-focus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-        </div>
-
         <!-- Dashboard Stats -->
-        <div class="flex flex-row gap-2 w-full xl:w-auto overflow-x-auto pb-1 xl:pb-0">
+        <div class="flex flex-row gap-2 overflow-x-auto pb-1 xl:pb-0 items-center">
           <div
             class="rounded-lg border bg-blue-50/50 border-blue-100 px-3 py-1.5 flex flex-col justify-center min-w-[100px] shrink-0"
           >

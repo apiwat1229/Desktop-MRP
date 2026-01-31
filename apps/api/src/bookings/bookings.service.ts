@@ -4,13 +4,13 @@ import { PrismaService } from '../prisma/prisma.service';
 const SLOT_QUEUE_CONFIG: Record<string, { start: number; limit: number | null }> = {
     '08:00-09:00': { start: 1, limit: 4 },
     '09:00-10:00': { start: 5, limit: 4 },
-    '10:00-11:00': { start: 9, limit: 4 },
+    '10:00-11:00': { start: 9, limit: null }, // Unlimited
     '11:00-12:00': { start: 13, limit: 4 },
     '13:00-14:00': { start: 17, limit: null }, // Unlimited
 };
 
 function getSlotConfig(slot: string, date: Date) {
-    const dayOfWeek = new Date(date).getDay();
+    const dayOfWeek = new Date(date).getUTCDay();
     // Saturday special rule: 10:00-11:00 becomes unlimited
     if (dayOfWeek === 6 && slot === '10:00-11:00') {
         return { start: 9, limit: null };

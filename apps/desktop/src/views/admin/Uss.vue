@@ -206,6 +206,13 @@ const processedBookings = computed(() => {
     );
   }
 
+  if (props.selectedDate) {
+    data = data.filter((item) => {
+      const itemDate = item.date ? item.date.split('T')[0] : '';
+      return itemDate === props.selectedDate;
+    });
+  }
+
   return data;
 });
 
@@ -213,7 +220,10 @@ const stats = computed(() => {
   const total = processedBookings.value.length;
   const complete = processedBookings.value.filter((i) => i.isComplete).length;
   const incomplete = total - complete;
-  const grossWeight = processedBookings.value.reduce((sum, i) => sum + (i.displayWeightIn || 0), 0);
+  const grossWeight = processedBookings.value.reduce(
+    (sum, i) => sum + Math.max(0, (i.weightIn || 0) - (i.weightOut || 0)),
+    0
+  );
   const netWeight = processedBookings.value.reduce((sum, i) => sum + (i.displayNetWeight || 0), 0);
 
   return { total, complete, incomplete, grossWeight, netWeight };

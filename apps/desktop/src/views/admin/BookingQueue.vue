@@ -38,7 +38,7 @@ import BookingQueueCard from './components/BookingQueueCard.vue';
 const TIME_SLOTS: any[] = [
   { label: '08:00-09:00', value: '08:00-09:00', startTime: '08:00', endTime: '09:00', limit: 4 },
   { label: '09:00-10:00', value: '09:00-10:00', startTime: '09:00', endTime: '10:00', limit: 4 },
-  { label: '10:00-11:00', value: '10:00-11:00', startTime: '10:00', endTime: '11:00', limit: 4 },
+  { label: '10:00-11:00', value: '10:00-11:00', startTime: '10:00', endTime: '11:00', limit: null },
   { label: '11:00-12:00', value: '11:00-12:00', startTime: '11:00', endTime: '12:00', limit: 4 },
   { label: '13:00-14:00', value: '13:00-14:00', startTime: '13:00', endTime: '14:00', limit: null },
 ];
@@ -67,7 +67,7 @@ const DAY_COLORS = [
 const SLOT_QUEUE_CONFIG: Record<string, { start: number; limit: number | null }> = {
   '08:00-09:00': { start: 1, limit: 4 },
   '09:00-10:00': { start: 5, limit: 4 },
-  '10:00-11:00': { start: 9, limit: 4 },
+  '10:00-11:00': { start: 9, limit: null },
   '11:00-12:00': { start: 13, limit: 4 },
   '13:00-14:00': { start: 17, limit: null },
 };

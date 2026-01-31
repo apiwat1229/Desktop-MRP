@@ -327,12 +327,12 @@ const routes = [
             },
             {
                 path: 'cuplump',
-                name: 'ReceivingCuplump',
+                name: 'Receiving Cuplump',
                 component: () => import('../views/admin/Receiving.vue'),
             },
             {
                 path: 'uss',
-                name: 'ReceivingUSS',
+                name: 'Receiving USS',
                 component: () => import('../views/admin/Receiving.vue'),
             },
         ]

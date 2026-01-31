@@ -206,6 +206,13 @@ const processedBookings = computed(() => {
     );
   }
 
+  if (props.selectedDate) {
+    data = data.filter((item) => {
+      const itemDate = item.date ? item.date.split('T')[0] : '';
+      return itemDate === props.selectedDate;
+    });
+  }
+
   return data;
 });
 

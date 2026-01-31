@@ -151,7 +151,17 @@ const stats = ref({
 const fetchStats = async () => {
   try {
     if (activeContext.value === 'production') {
-      const reports = await productionReportsApi.getAll();
+      let reports = await productionReportsApi.getAll();
+
+      // Filter by date
+      if (selectedDate.value) {
+        reports = reports.filter((r) => {
+          const dateVal =
+            r.productionDate instanceof Date ? r.productionDate.toISOString() : r.productionDate;
+          return dateVal?.split('T')[0] === selectedDate.value;
+        });
+      }
+
       let totalPallets = 0;
       reports.forEach((r) => {
         r.rows?.forEach((row) => {
@@ -168,7 +178,13 @@ const fetchStats = async () => {
         bales: totalPallets * 35,
       };
     } else {
-      const jobs = await jobOrdersApi.getAll();
+      let jobs = await jobOrdersApi.getAll();
+
+      // Filter by date
+      if (selectedDate.value) {
+        jobs = jobs.filter((j) => j.qaDate?.split('T')[0] === selectedDate.value);
+      }
+
       stats.value.jobOrder = {
         total: jobs.length,
         active: jobs.filter((j) => !j.isClosed).length,
@@ -191,7 +207,7 @@ onMounted(() => {
     navigationStore.date = today(getLocalTimeZone());
   }
 });
-watch(activeContext, fetchStats);
+watch([activeContext, selectedDate], fetchStats);
 
 // Sync Title
 watch(
@@ -216,95 +232,78 @@ import { onUnmounted } from 'vue';
         <component :is="headerIcon" class="w-64 h-64 rotate-12" />
       </div>
 
-      <!-- Icon & Title -->
-      <div class="flex items-center gap-4 relative z-10">
-        <div
-          class="h-10 w-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner transition-transform duration-300"
-        >
-          <component :is="headerIcon" class="h-6 w-6" />
-        </div>
-        <div>
-          <h1 class="text-lg font-black text-gray-900 tracking-tight leading-none mb-1">
-            {{ headerTitle }}
-          </h1>
-        </div>
+      <!-- Stats Section -->
+      <div class="flex items-center gap-8 relative z-10">
+        <template v-if="activeContext === 'production'">
+          <div class="text-center group/stat">
+            <span
+              class="block text-[0.6rem] font-black text-muted-foreground uppercase tracking-widest mb-1 group-hover/stat:text-primary transition-colors"
+              >{{ t('production.stats.totalReports') }}</span
+            >
+            <span class="text-lg font-black text-slate-900 tabular-nums">{{
+              stats.production.reports
+            }}</span>
+          </div>
+          <div class="text-center group/stat">
+            <span
+              class="block text-[0.6rem] font-black text-emerald-500 uppercase tracking-widest mb-1 group-hover/stat:text-emerald-600 transition-colors"
+              >{{ t('production.stats.totalPallets') }}</span
+            >
+            <span class="text-lg font-black text-emerald-600 tabular-nums">{{
+              stats.production.pallets
+            }}</span>
+          </div>
+          <div class="text-center group/stat">
+            <span
+              class="block text-[0.6rem] font-black text-orange-500 uppercase tracking-widest mb-1 group-hover/stat:text-orange-600 transition-colors"
+              >{{ t('production.stats.totalBales') }}</span
+            >
+            <span class="text-lg font-black text-orange-600 tabular-nums">{{
+              stats.production.bales
+            }}</span>
+          </div>
+        </template>
+        <template v-else>
+          <div class="text-center group/stat">
+            <span
+              class="block text-[0.6rem] font-black text-muted-foreground uppercase tracking-widest mb-1 group-hover/stat:text-primary transition-colors"
+              >{{ t('production.stats.totalOrders') }}</span
+            >
+            <span class="text-lg font-black text-slate-900 tabular-nums">{{
+              stats.jobOrder.total
+            }}</span>
+          </div>
+          <div class="text-center group/stat">
+            <span
+              class="block text-[0.6rem] font-black text-blue-500 uppercase tracking-widest mb-1 group-hover/stat:text-blue-600 transition-colors"
+              >{{ t('production.stats.activeJobs') }}</span
+            >
+            <span class="text-lg font-black text-blue-600 tabular-nums">{{
+              stats.jobOrder.active
+            }}</span>
+          </div>
+          <div class="text-center group/stat">
+            <span
+              class="block text-[0.6rem] font-black text-emerald-500 uppercase tracking-widest mb-1 group-hover/stat:text-emerald-600 transition-colors"
+              >{{ t('production.stats.completed') }}</span
+            >
+            <span class="text-lg font-black text-emerald-600 tabular-nums">{{
+              stats.jobOrder.closed
+            }}</span>
+          </div>
+        </template>
       </div>
 
-      <!-- Right Side Actions & Stats -->
-      <div class="flex flex-col md:flex-row items-center gap-6 lg:gap-8 relative z-10 ml-auto">
-        <!-- Stats Section -->
-        <div class="flex items-center gap-8 border-l border-slate-200 pl-8">
-          <template v-if="activeContext === 'production'">
-            <div class="text-center group/stat">
-              <span
-                class="block text-[0.6rem] font-black text-muted-foreground uppercase tracking-widest mb-1 group-hover/stat:text-primary transition-colors"
-                >{{ t('production.stats.totalReports') }}</span
-              >
-              <span class="text-lg font-black text-slate-900 tabular-nums">{{
-                stats.production.reports
-              }}</span>
-            </div>
-            <div class="text-center group/stat">
-              <span
-                class="block text-[0.6rem] font-black text-emerald-500 uppercase tracking-widest mb-1 group-hover/stat:text-emerald-600 transition-colors"
-                >{{ t('production.stats.totalPallets') }}</span
-              >
-              <span class="text-lg font-black text-emerald-600 tabular-nums">{{
-                stats.production.pallets
-              }}</span>
-            </div>
-            <div class="text-center group/stat">
-              <span
-                class="block text-[0.6rem] font-black text-orange-500 uppercase tracking-widest mb-1 group-hover/stat:text-orange-600 transition-colors"
-                >{{ t('production.stats.totalBales') }}</span
-              >
-              <span class="text-lg font-black text-orange-600 tabular-nums">{{
-                stats.production.bales
-              }}</span>
-            </div>
-          </template>
-          <template v-else>
-            <div class="text-center group/stat">
-              <span
-                class="block text-[0.6rem] font-black text-muted-foreground uppercase tracking-widest mb-1 group-hover/stat:text-primary transition-colors"
-                >{{ t('production.stats.totalOrders') }}</span
-              >
-              <span class="text-lg font-black text-slate-900 tabular-nums">{{
-                stats.jobOrder.total
-              }}</span>
-            </div>
-            <div class="text-center group/stat">
-              <span
-                class="block text-[0.6rem] font-black text-blue-500 uppercase tracking-widest mb-1 group-hover/stat:text-blue-600 transition-colors"
-                >{{ t('production.stats.activeJobs') }}</span
-              >
-              <span class="text-lg font-black text-blue-600 tabular-nums">{{
-                stats.jobOrder.active
-              }}</span>
-            </div>
-            <div class="text-center group/stat">
-              <span
-                class="block text-[0.6rem] font-black text-emerald-500 uppercase tracking-widest mb-1 group-hover/stat:text-emerald-600 transition-colors"
-                >{{ t('production.stats.completed') }}</span
-              >
-              <span class="text-lg font-black text-emerald-600 tabular-nums">{{
-                stats.jobOrder.closed
-              }}</span>
-            </div>
-          </template>
-        </div>
-
-        <!-- Create Button (Right Side) -->
-        <div class="flex items-center gap-3 relative z-10 ml-auto">
-          <Button
-            v-if="canCreate"
-            @click="handleCreateClick"
-            class="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 shadow-primary/20 shadow-lg px-6 h-10 rounded-xl font-bold transition-all hover:scale-105 active:scale-95"
-          >
-            <Plus class="w-4 h-4" />
-            {{ activeContext === 'production' ? 'NEW REPORT' : 'NEW ORDER' }}
-          </Button>
-        </div>
+      <!-- Create Button (Right Side) -->
+      <div class="flex items-center gap-3 relative z-10 ml-auto">
+        <Button
+          v-if="canCreate"
+          @click="handleCreateClick"
+          class="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 shadow-primary/20 shadow-lg px-6 h-10 rounded-xl font-bold transition-all hover:scale-105 active:scale-95"
+        >
+          <Plus class="w-4 h-4" />
+          {{ activeContext === 'production' ? 'NEW REPORT' : 'NEW ORDER' }}
+        </Button>
       </div>
     </div>
 
