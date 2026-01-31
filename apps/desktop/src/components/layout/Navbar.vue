@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar/index';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import {
   Dialog,
   DialogContent,
@@ -27,6 +28,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useSidebar } from '@/components/ui/sidebar';
 import { usePermissions } from '@/composables/usePermissions';
 import approvalsApi from '@/services/approvals';
@@ -34,6 +37,8 @@ import { bookingsApi } from '@/services/bookings';
 import { notificationsApi } from '@/services/notifications';
 import { socketService } from '@/services/socket';
 import { useAuthStore } from '@/stores/auth';
+import { useNavigationStore } from '@/stores/navigation';
+import { DateFormatter, getLocalTimeZone } from '@internationalized/date';
 import type { NotificationDto } from '@my-app/types';
 import { formatDistanceToNow } from 'date-fns';
 import {
@@ -41,9 +46,12 @@ import {
   ArrowRight,
   Bell,
   BellOff,
+  Calendar as CalendarIcon,
   LayoutDashboard,
   LogOut,
   Menu,
+  RotateCw,
+  Search as SearchIcon,
   Settings,
   User,
 } from 'lucide-vue-next';
@@ -53,6 +61,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
 
 const authStore = useAuthStore();
+const navigationStore = useNavigationStore();
 const router = useRouter();
 const route = useRoute();
 const showThemeSettings = ref(false);
@@ -61,6 +70,7 @@ const previewTicket = ref<any>(null);
 const isErrorDialogOpen = ref(false);
 const errorDialogMessage = ref('');
 const isCloseConfirmOpen = ref(false);
+const isCalendarOpen = ref(false);
 
 const { toggleSidebar } = useSidebar();
 
@@ -81,12 +91,23 @@ const userInitials = () => {
 };
 
 const pageTitle = computed(() => {
+  if (navigationStore.title) return navigationStore.title;
   const name = route.name?.toString() || '';
   if (name === 'Home') return 'Dashboard';
   if (name === 'AdminDashboard') return 'Admin Panel';
   if (name === 'ProjectTimeline') return t('services.projectTimeline.name');
   if (name === 'ActivityCenter') return 'Activity Center';
   return name;
+});
+
+// Date Handling
+const df = new DateFormatter('en-GB', {
+  dateStyle: 'medium',
+});
+
+const formattedDate = computed(() => {
+  if (!navigationStore.date) return '-';
+  return df.format(navigationStore.date.toDate(getLocalTimeZone()));
 });
 
 const { t } = useI18n();
@@ -151,6 +172,10 @@ const handleClose = () => {
 const confirmClose = () => {
   (window as any).ipcRenderer?.window?.close();
   isCloseConfirmOpen.value = false;
+};
+
+const handleRefresh = () => {
+  window.location.reload();
 };
 
 const handleNotificationClick = async (notification: NotificationDto) => {
@@ -406,6 +431,14 @@ onUnmounted(() => {
         <Button
           variant="ghost"
           size="icon"
+          class="h-8 w-8 text-muted-foreground hover:text-foreground"
+          @click="handleRefresh"
+        >
+          <RotateCw class="w-4 h-4" />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
           class="h-8 w-8 text-muted-foreground hover:text-foreground disabled:opacity-30"
           :disabled="!router.options.history.state.forward"
           @click="router.forward()"
@@ -417,15 +450,70 @@ onUnmounted(() => {
 
     <!-- Centered Title -->
     <div
-      class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center"
+      class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center pointer-events-none"
     >
-      <span class="text-lg text-foreground font-semibold">
+      <span class="text-lg text-foreground font-bold tracking-tight">
         {{ pageTitle }}
       </span>
     </div>
 
-    <!-- Window Controls -->
-    <div class="flex items-center gap-2 border-l pl-2 ml-4 no-drag">
+    <!-- Right Section (Controls + Profile) -->
+    <div class="flex items-center gap-2 ml-4 no-drag shrink-0">
+      <!-- Global Search/Date Controls -->
+      <div v-if="navigationStore.showControls" class="flex items-center gap-2">
+        <!-- Search Popover -->
+        <Popover>
+          <PopoverTrigger as-child>
+            <Button
+              variant="ghost"
+              size="icon"
+              class="h-8 w-8 text-muted-foreground hover:text-primary transition-colors"
+            >
+              <SearchIcon class="h-4 w-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent class="w-80 p-2" align="end" :side-offset="12">
+            <div class="flex items-center gap-2">
+              <SearchIcon class="h-4 w-4 text-muted-foreground" />
+              <Input
+                v-model="navigationStore.searchQuery"
+                placeholder="Search items..."
+                class="h-8 border-none focus-visible:ring-0 shadow-none"
+                auto-focus
+              />
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        <!-- Date Popover -->
+        <Popover v-model:open="isCalendarOpen">
+          <PopoverTrigger as-child>
+            <Button
+              variant="outline"
+              size="sm"
+              class="h-8 min-w-[140px] px-3 justify-center text-foreground font-semibold bg-primary/5 hover:bg-primary/10 transition-all border-primary/20 hover:border-primary/30 rounded-lg shadow-none"
+            >
+              <span class="text-xs">{{ formattedDate }}</span>
+              <CalendarIcon class="ml-2 h-3.5 w-3.5 text-primary" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent class="w-auto p-0" align="end" :side-offset="12">
+            <Calendar
+              :model-value="navigationStore.date as any"
+              @update:model-value="
+                (date: any) => {
+                  navigationStore.date = date;
+                  isCalendarOpen = false;
+                }
+              "
+              mode="single"
+            />
+          </PopoverContent>
+        </Popover>
+
+        <div class="h-4 w-px bg-border/60 mx-1"></div>
+      </div>
+
       <!-- User Profile -->
       <DropdownMenu>
         <DropdownMenuTrigger as-child>

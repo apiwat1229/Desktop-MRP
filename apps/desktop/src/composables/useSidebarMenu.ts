@@ -45,13 +45,13 @@ export function useSidebarMenu() {
                     icon: FlaskConical, // Ensure FlaskConical is imported
                     items: [
                         { name: 'Cuplump', type: 'label' as const },
-                        { name: t('services.qa.menu.poP30Pri'), path: '/admin/qa/cl-po-pri' },
-                        { name: t('services.qa.menu.lab'), path: '/admin/qa/cl-lab' },
-                        { name: 'Cuplump Incoming', path: '/admin/qa/cl-summary' },
+                        { name: t('services.qa.menu.clPoPri'), path: '/admin/qa/cl-po-pri' },
+                        { name: t('services.qa.menu.clLab'), path: '/admin/qa/cl-lab' },
+                        { name: t('services.qa.menu.clIncoming'), path: '/admin/qa/cl-summary' },
                         { type: 'separator' as const },
                         { name: 'USS', type: 'label' as const },
-                        { name: t('services.qa.menu.poP30Pri'), path: '/admin/qa/uss-po-pri' },
-                        { name: 'USS Incoming', path: '/admin/qa/uss-summary' },
+                        { name: t('services.qa.menu.ussPoPri'), path: '/admin/qa/uss-po-pri' },
+                        { name: t('services.qa.menu.ussIncoming'), path: '/admin/qa/uss-summary' },
                     ],
                 },
                 {

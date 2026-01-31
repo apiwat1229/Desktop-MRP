@@ -49,7 +49,7 @@ export const useAuthStore = defineStore('auth', {
         clearTempToken() {
             this.tempToken = null;
         },
-        async login(credentials: any) {
+        async login(credentials: any, _rememberMe: boolean = false) {
             try {
                 const response = await api.post('/auth/login', {
                     email: credentials.email,

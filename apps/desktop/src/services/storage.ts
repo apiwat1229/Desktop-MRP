@@ -1,7 +1,7 @@
 export const storage = {
     get(key: string) {
-        if (window.ipcRenderer && window.ipcRenderer.storage) {
-            return window.ipcRenderer.storage.get(key);
+        if ((window as any).ipcRenderer && (window as any).ipcRenderer.storage) {
+            return (window as any).ipcRenderer.storage.get(key);
         }
         // Fallback for non-electron env (e.g. browser dev)
         const val = localStorage.getItem(key);
@@ -13,16 +13,20 @@ export const storage = {
     },
     set(key: string, value: any) {
         // Ensure value is serializable and not a Proxy
+        if (value === undefined) {
+            this.delete(key);
+            return;
+        }
         const cleanValue = JSON.parse(JSON.stringify(value));
-        if (window.ipcRenderer && window.ipcRenderer.storage) {
-            window.ipcRenderer.storage.set(key, cleanValue);
+        if ((window as any).ipcRenderer && (window as any).ipcRenderer.storage) {
+            (window as any).ipcRenderer.storage.set(key, cleanValue);
         } else {
             localStorage.setItem(key, JSON.stringify(cleanValue));
         }
     },
     delete(key: string) {
-        if (window.ipcRenderer && window.ipcRenderer.storage) {
-            window.ipcRenderer.storage.delete(key);
+        if ((window as any).ipcRenderer && (window as any).ipcRenderer.storage) {
+            (window as any).ipcRenderer.storage.delete(key);
         } else {
             localStorage.removeItem(key);
         }

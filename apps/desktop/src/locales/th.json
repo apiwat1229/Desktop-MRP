@@ -109,9 +109,9 @@
     "rawMaterialPlan": "แผนรับวัตถุดิบ",
     "productionPlanningAllocation": "การวางแผนและจัดสรรการผลิต",
     "tabs": {
-      "clPoPri": "PO P30 PRI",
-      "clLab": "LAB TEST",
-      "clSummary": "INCOMING",
+      "clPoPri": "Cuplump PO / P30 / PRI",
+      "clLab": "Cuplump Lab",
+      "clSummary": "Cuplump Incoming",
       "cuplumpPool": "บ่อยางก้อนถ้วย",
       "planList": "รายการแผน",
       "createPlan": "สร้างแผน",
@@ -625,8 +625,15 @@
       }
     },
     "qa": {
-      "name": "การตรวจสอบคุณภาพ",
-      "description": "QR ติดตามตัวอย่าง, ผลการตรวจสอบ & การอนุมัติ"
+      "name": "การประกันคุณภาพ",
+      "description": "กระบวนการทดสอบในห้องแล็บและการควบคุมคุณภาพ",
+      "menu": {
+        "clPoPri": "Cuplump PO / P30 / PRI",
+        "ussPoPri": "USS PO / PRI",
+        "clIncoming": "Cuplump Incoming",
+        "ussIncoming": "USS Incoming",
+        "clLab": "Cuplump Lab"
+      }
     },
     "myMachine": {
       "name": "เครื่องจักรของฉัน",
@@ -2175,6 +2182,9 @@
   },
   "bookingQueue": {
     "title": "คิวการจอง",
+    "ussQueue": "คิวยางแผ่น",
+    "cuplumpQueue": "คิวบ่อยางก้อนถ้วย",
+    "clickToBook": "กดเพื่อจองคิวส่งยางใหม่",
     "manageQueue": "จัดการคิวการจองในวันที่",
     "dailySummary": "สรุปคิวทั้งวัน",
     "addBooking": "เพิ่มการจอง",

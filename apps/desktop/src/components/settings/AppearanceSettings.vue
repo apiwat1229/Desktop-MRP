@@ -15,8 +15,10 @@ import {
   ZoomOut,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
+import { useI18n } from 'vue-i18n';
 
 const themeStore = useThemeStore();
+const { locale } = useI18n();
 
 const colors = [
   { name: 'Teal', value: 'teal', bg: 'bg-teal-500' },
@@ -36,9 +38,14 @@ const fontSizes = [
 
 // Slider Bridge
 const fontSizeIndex = computed({
-  get: () => fontSizes.findIndex((s) => s.id === themeStore.fontSize),
+  get: () => {
+    const index = fontSizes.findIndex((s) => s.id === themeStore.fontSize);
+    return index >= 0 ? index : 1; // Default to 'medium' (index 1) if not found
+  },
   set: (index: number) => {
-    themeStore.fontSize = fontSizes[index].id;
+    if (fontSizes[index]) {
+      themeStore.fontSize = fontSizes[index].id;
+    }
   },
 });
 
@@ -54,22 +61,19 @@ const fontFamilies = [
   },
 ];
 
-import { useI18n } from 'vue-i18n';
-const { locale } = useI18n();
-
 const changeLocale = (newLocale: string) => {
   locale.value = newLocale;
   localStorage.setItem('language', newLocale);
 };
 
 // Window/App Controls
-const handleReload = () => window.ipcRenderer?.app?.reload?.();
-const handleForceReload = () => window.ipcRenderer?.app?.forceReload?.();
-const handleToggleDevTools = () => window.ipcRenderer?.app?.toggleDevTools?.();
-const handleZoomIn = () => window.ipcRenderer?.app?.zoomIn?.();
-const handleZoomOut = () => window.ipcRenderer?.app?.zoomOut?.();
-const handleZoomReset = () => window.ipcRenderer?.app?.zoomReset?.();
-const handleToggleFullScreen = () => window.ipcRenderer?.app?.toggleFullScreen?.();
+const handleReload = () => (window as any).ipcRenderer?.app?.reload?.();
+const handleForceReload = () => (window as any).ipcRenderer?.app?.forceReload?.();
+const handleToggleDevTools = () => (window as any).ipcRenderer?.app?.toggleDevTools?.();
+const handleZoomIn = () => (window as any).ipcRenderer?.app?.zoomIn?.();
+const handleZoomOut = () => (window as any).ipcRenderer?.app?.zoomOut?.();
+const handleZoomReset = () => (window as any).ipcRenderer?.app?.zoomReset?.();
+const handleToggleFullScreen = () => (window as any).ipcRenderer?.app?.toggleFullScreen?.();
 </script>
 
 <template>

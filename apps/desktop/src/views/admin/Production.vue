@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { usePermissions } from '@/composables/usePermissions';
 import { type JobOrder, jobOrdersApi } from '@/services/jobOrders';
 import { type ProductionReport, productionReportsApi } from '@/services/productionReports';
-import { DateFormatter, getLocalTimeZone, today } from '@internationalized/date';
-import { CalendarIcon, Layers, LayoutGrid, Plus, Search, Shield } from 'lucide-vue-next';
+import { useNavigationStore } from '@/stores/navigation';
+import { getLocalTimeZone, today } from '@internationalized/date';
+import { Layers, LayoutGrid, Plus, Shield } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
@@ -38,16 +36,18 @@ const activeContext = computed(() => {
 const activeTab = ref('list');
 
 // Filters
-const searchQuery = ref('');
-const selectedDateObject = ref<any>(today(getLocalTimeZone()));
-
-const df = new DateFormatter('en-GB', {
-  dateStyle: 'medium',
+const navigationStore = useNavigationStore();
+const searchQuery = computed({
+  get: () => navigationStore.searchQuery,
+  set: (val) => (navigationStore.searchQuery = val),
+});
+const selectedDateObject = computed({
+  get: () => navigationStore.date,
+  set: (val) => (navigationStore.date = val),
 });
 
-const selectedDate = computed({
-  get: () => (selectedDateObject.value ? selectedDateObject.value.toString() : undefined),
-  set: (val) => (selectedDateObject.value = val),
+const selectedDate = computed(() => {
+  return selectedDateObject.value ? selectedDateObject.value.toString() : undefined;
 });
 
 // Production Report State
@@ -180,8 +180,29 @@ const fetchStats = async () => {
   }
 };
 
-onMounted(fetchStats);
+onUnmounted(() => {
+  navigationStore.reset();
+});
+
+onMounted(() => {
+  fetchStats();
+  navigationStore.showControls = true;
+  if (!navigationStore.date) {
+    navigationStore.date = today(getLocalTimeZone());
+  }
+});
 watch(activeContext, fetchStats);
+
+// Sync Title
+watch(
+  headerTitle,
+  (newTitle) => {
+    navigationStore.setTitle(newTitle);
+  },
+  { immediate: true }
+);
+
+import { onUnmounted } from 'vue';
 </script>
 
 <template>
@@ -273,58 +294,8 @@ watch(activeContext, fetchStats);
           </template>
         </div>
 
-        <!-- Filters & Create Button -->
-        <div v-if="activeTab === 'list'" class="flex items-center gap-3">
-          <!-- Search Popover -->
-          <Popover>
-            <PopoverTrigger as-child>
-              <Button
-                variant="outline"
-                size="icon"
-                class="h-10 w-10 bg-slate-50 border-slate-200 hover:bg-white transition-all shadow-sm shrink-0 rounded-xl"
-              >
-                <Search class="h-4 w-4 text-slate-500" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent class="w-80 p-3" align="start" side="bottom">
-              <div class="relative group/search">
-                <Search
-                  class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within/search:text-primary transition-colors"
-                />
-                <Input
-                  v-model="searchQuery"
-                  type="text"
-                  placeholder="Search..."
-                  class="pl-10 h-10 border-slate-200 focus:ring-2 focus:ring-primary/20 rounded-xl transition-all"
-                />
-              </div>
-            </PopoverContent>
-          </Popover>
-
-          <!-- Date Picker -->
-          <Popover>
-            <PopoverTrigger as-child>
-              <Button
-                variant="outline"
-                class="w-[180px] justify-between text-left font-bold bg-slate-50 h-10 border-slate-200 rounded-xl hover:bg-slate-100 transition-colors"
-                :class="!selectedDateObject && 'text-muted-foreground'"
-              >
-                <div class="flex items-center gap-2">
-                  <CalendarIcon class="h-4 w-4 text-primary" />
-                  <span class="truncate">{{
-                    selectedDateObject
-                      ? df.format(selectedDateObject.toDate(getLocalTimeZone()))
-                      : 'Pick a date'
-                  }}</span>
-                </div>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent class="w-auto p-0 rounded-2xl overflow-hidden shadow-2xl border-none">
-              <Calendar v-model="selectedDateObject as any" initial-focus />
-            </PopoverContent>
-          </Popover>
-
-          <!-- Create Button -->
+        <!-- Create Button (Right Side) -->
+        <div class="flex items-center gap-3 relative z-10 ml-auto">
           <Button
             v-if="canCreate"
             @click="handleCreateClick"

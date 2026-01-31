@@ -39,6 +39,7 @@ import { masterApi } from '@/services/master';
 import { rubberTypesApi } from '@/services/rubberTypes';
 import { socketService } from '@/services/socket';
 import { useAuthStore } from '@/stores/auth';
+import { useNavigationStore } from '@/stores/navigation';
 import { getLocalTimeZone, today } from '@internationalized/date';
 import type { ColumnDef } from '@tanstack/vue-table';
 import { format } from 'date-fns';
@@ -110,7 +111,11 @@ const headerIcon = computed(() => {
 });
 const bookings = ref<any[]>([]);
 const isLoading = ref(false);
-const searchQuery = ref('');
+const navigationStore = useNavigationStore();
+const searchQuery = computed({
+  get: () => navigationStore.searchQuery,
+  set: (val) => (navigationStore.searchQuery = val),
+});
 const selectedCategory = ref('all'); // all, cuplump, uss
 const settings = ref({
   autoRefresh: true,
@@ -191,7 +196,10 @@ watch(
 );
 
 // Date Handling
-const selectedDateObject = ref<any>(today(getLocalTimeZone()));
+const selectedDateObject = computed({
+  get: () => navigationStore.date as any,
+  set: (val) => (navigationStore.date = val),
+});
 const isDatePopoverOpen = ref(false);
 const selectedDate = computed(() => {
   return selectedDateObject.value ? selectedDateObject.value.toString() : '';
@@ -299,6 +307,29 @@ const fetchBookings = async () => {
     isLoading.value = false;
   }
 };
+
+onUnmounted(() => {
+  navigationStore.reset();
+});
+
+onMounted(() => {
+  fetchBookings();
+  fetchMasterData();
+  loadSettings();
+  navigationStore.showControls = true;
+  if (!navigationStore.date) {
+    navigationStore.date = today(getLocalTimeZone());
+  }
+});
+
+// Sync Title
+watch(
+  headerTitle,
+  (newTitle) => {
+    navigationStore.setTitle(newTitle);
+  },
+  { immediate: true }
+);
 
 const { isAdmin } = usePermissions();
 
@@ -1560,39 +1591,7 @@ onUnmounted(() => {
             </Popover>
           </div>
 
-          <div class="grid gap-1.5 w-full md:w-auto">
-            <Label class="text-xs font-semibold text-muted-foreground ml-0.5">{{
-              t('truckScale.date')
-            }}</Label>
-            <Popover v-model:open="isDatePopoverOpen">
-              <PopoverTrigger as-child>
-                <Button
-                  variant="outline"
-                  :class="
-                    cn(
-                      'w-full md:w-[150px] justify-start text-left font-bold h-9 bg-white/50 backdrop-blur-sm',
-                      !selectedDate && 'text-muted-foreground'
-                    )
-                  "
-                >
-                  <CalendarIcon class="mr-2 h-4 w-4 text-muted-foreground" />
-                  <span>{{
-                    selectedDate
-                      ? format(new Date(selectedDate), 'dd-MMM-yyyy')
-                      : t('truckScale.pickDate')
-                  }}</span>
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent class="w-auto p-0">
-                <Calendar
-                  :model-value="selectedDateObject"
-                  @update:model-value="handleDateSelect"
-                  mode="single"
-                  initial-focus
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
+          <!-- Date moved to Navbar -->
 
           <!-- Category Filter -->
           <div class="grid gap-1.5 w-full md:w-[130px]">

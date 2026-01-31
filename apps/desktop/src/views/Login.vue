@@ -3,13 +3,13 @@ import ChangePasswordDialog from '@/components/auth/ChangePasswordDialog.vue';
 import WindowControls from '@/components/layout/WindowControls.vue';
 import LoginForm from '@/components/LoginForm.vue';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { storage } from '@/services/storage';
+import { useAuthStore } from '@/stores/auth';
 import { AlertCircle } from 'lucide-vue-next';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
-import { storage } from '../services/storage';
-import { useAuthStore } from '../stores/auth';
 
 const loginError = ref('');
 const showChangePasswordDialog = ref(false);

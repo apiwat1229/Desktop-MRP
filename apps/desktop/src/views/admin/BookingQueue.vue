@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { bookingsApi } from '@/services/bookings';
-import { fromDate, getLocalTimeZone, type DateValue } from '@internationalized/date';
+import { fromDate, getLocalTimeZone } from '@internationalized/date';
 import { format } from 'date-fns';
-import { Calendar as CalendarIcon, FileText, Plus, Search as SearchIcon } from 'lucide-vue-next';
-import { computed, onMounted, ref, watch, type Ref } from 'vue';
+import { FileText } from 'lucide-vue-next';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { toast } from 'vue-sonner';
 
@@ -19,8 +19,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
 import { Card } from '@/components/ui/card';
 import {
   Carousel,
@@ -29,10 +27,11 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
-import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuthStore } from '@/stores/auth';
+import { useNavigationStore } from '@/stores/navigation';
 import { useRoute, useRouter } from 'vue-router';
+import AddBookingCard from './components/AddBookingCard.vue';
 import BookingQueueCard from './components/BookingQueueCard.vue';
 
 // --- Constants ---
@@ -80,13 +79,20 @@ const authStore = useAuthStore();
 const route = useRoute();
 const router = useRouter();
 
-const selectedDate = ref(fromDate(new Date(), getLocalTimeZone())) as Ref<DateValue>;
+const navigationStore = useNavigationStore();
+const selectedDate = computed({
+  get: () => navigationStore.date as any,
+  set: (val) => (navigationStore.date = val as any),
+});
 const selectedSlot = ref<string>('08:00-09:00'); // Default slot
 const queues = ref<any[]>([]);
 const dailyQueues = ref<any[]>([]); // All bookings for the day
 const loading = ref(false);
 const calendarPopoverOpen = ref(false); // Add popover state
-const searchQuery = ref(''); // Add search query state
+const searchQuery = computed({
+  get: () => navigationStore.searchQuery,
+  set: (val) => (navigationStore.searchQuery = val),
+});
 
 const queueMode = ref<'Cuplump' | 'USS'>('Cuplump'); // Booking Mode
 
@@ -100,7 +106,31 @@ const updateModeFromRoute = () => {
 
 onMounted(() => {
   updateModeFromRoute();
+  navigationStore.showControls = true;
+  if (!navigationStore.date) {
+    navigationStore.date = fromDate(new Date(), getLocalTimeZone());
+  }
 });
+
+onUnmounted(() => {
+  navigationStore.reset();
+});
+
+const headerTitle = computed(() => {
+  return queueMode.value === 'USS'
+    ? t('bookingQueue.ussQueue') || 'USS Booking Queue'
+    : t('bookingQueue.cuplumpQueue') || 'Cuplump Booking Queue';
+});
+
+watch(
+  headerTitle,
+  (newTitle) => {
+    navigationStore.setTitle(newTitle);
+  },
+  { immediate: true }
+);
+
+import { onUnmounted } from 'vue';
 
 watch(
   () => route.path,
@@ -441,61 +471,11 @@ watch(selectedSlot, (newSlot) => {
     <!-- Header -->
     <div class="flex items-center justify-between space-y-2">
       <div class="flex items-center gap-3">
-        <!-- Search Popover -->
-        <Popover>
-          <PopoverTrigger as-child>
-            <Button
-              variant="outline"
-              size="icon"
-              class="h-9 w-9 text-muted-foreground hover:text-primary bg-white/50 hover:bg-white shadow-sm border-slate-200"
-            >
-              <SearchIcon class="h-4 w-4" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent class="w-80 p-2" align="start">
-            <div class="flex items-center gap-2">
-              <SearchIcon class="h-4 w-4 text-muted-foreground" />
-              <Input
-                v-model="searchQuery"
-                placeholder="Search items..."
-                class="h-8 border-none focus-visible:ring-0 shadow-none"
-                auto-focus
-              />
-            </div>
-          </PopoverContent>
-        </Popover>
-
-        <!-- Date Popover -->
-        <Popover v-model:open="calendarPopoverOpen">
-          <PopoverTrigger as-child>
-            <Button
-              variant="outline"
-              size="sm"
-              class="h-9 w-[180px] justify-center text-foreground font-normal bg-white/50 hover:bg-white shadow-sm transition-all border-slate-200"
-            >
-              <span class="text-xs font-medium">{{
-                selectedDate ? format(selectedDateJS, 'dd MMM yyyy') : t('bookingQueue.pickDate')
-              }}</span>
-              <CalendarIcon class="ml-3 h-4 w-4 text-muted-foreground" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent class="w-auto p-0" align="start">
-            <Calendar v-model="selectedDate" class="rounded-md border shadow-sm" initial-focus />
-          </PopoverContent>
-        </Popover>
+        <!-- Controls moved to Navbar -->
       </div>
 
       <div class="flex items-center space-x-2">
-        <Button
-          size="sm"
-          :disabled="isSlotFull"
-          @click="handleCreateBooking"
-          v-if="authStore.hasPermission('bookings:create')"
-          class="bg-emerald-500 hover:bg-emerald-600 text-white font-medium shadow-sm transition-all"
-        >
-          <Plus class="mr-2 h-4 w-4" />
-          {{ isSlotFull ? t('bookingQueue.slotFull') : t('bookingQueue.addBooking') }}
-        </Button>
+        <!-- Add Booking button moved to list -->
       </div>
     </div>
 
@@ -598,7 +578,7 @@ watch(selectedSlot, (newSlot) => {
     </div>
 
     <div
-      v-else-if="queues.length === 0"
+      v-else-if="filteredQueues.length === 0 && !authStore.hasPermission('bookings:create')"
       class="flex flex-col items-center justify-center p-12 text-center border-2 border-dashed border-border rounded-xl bg-background/50 min-h-[300px]"
     >
       <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
@@ -628,9 +608,17 @@ watch(selectedSlot, (newSlot) => {
                 class="h-full"
               />
             </CarouselItem>
+
+            <!-- Add Booking Card -->
+            <CarouselItem
+              v-if="authStore.hasPermission('bookings:create')"
+              class="pl-4 md:basis-1/2 lg:basis-1/3 xl:basis-1/4 2xl:basis-1/5 pt-1 pb-2"
+            >
+              <AddBookingCard :isFull="isSlotFull" @click="handleCreateBooking" class="h-full" />
+            </CarouselItem>
           </CarouselContent>
-          <CarouselPrevious />
-          <CarouselNext />
+          <CarouselPrevious v-if="filteredQueues.length > 0" />
+          <CarouselNext v-if="filteredQueues.length > 0" />
         </Carousel>
       </div>
     </div>

@@ -3,13 +3,13 @@ import { bookingsApi } from '@/services/bookings';
 import { jobOrdersApi, type JobOrder } from '@/services/jobOrders';
 import { rubberTypesApi, type RubberType } from '@/services/rubberTypes';
 import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date';
-import { ClipboardList, List, TestTubes } from 'lucide-vue-next';
-import { computed, onMounted, ref, watch } from 'vue';
+import { List } from 'lucide-vue-next';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
 
-import QaHeader from './components/QaHeader.vue';
+import { useNavigationStore } from '@/stores/navigation';
 
 import JobOrderForm from './components/JobOrderForm.vue';
 import CuplumpPoolManagement from './CuplumpPoolManagement.vue';
@@ -22,15 +22,32 @@ import RawMaterialPlanList from './tabs/RawMaterialPlanList.vue';
 import UssPoPriTab from './tabs/UssPoPriTab.vue';
 
 const { t } = useI18n();
+const route = useRoute();
+const router = useRouter();
+const navigationStore = useNavigationStore();
 
 const isLoading = ref(false);
 const bookings = ref<any[]>([]);
 const rubberTypes = ref<RubberType[]>([]);
-
-// Filters
-const searchQuery = ref('');
 const statusFilter = ref('ALL');
 const currentStats = ref({ total: 0, complete: 0, incomplete: 0 });
+const currentTab = ref('cl-po-pri');
+const selectedJobOrder = ref<JobOrder | undefined>(undefined);
+const selectedRawMaterialPlan = ref<any>(undefined);
+
+const searchQuery = computed({
+  get: () => navigationStore.searchQuery,
+  set: (val) => (navigationStore.searchQuery = val),
+});
+
+const selectedDateObject = computed({
+  get: () => navigationStore.date,
+  set: (val) => (navigationStore.date = val),
+});
+
+const selectedDate = computed(() => {
+  return selectedDateObject.value ? selectedDateObject.value.toString() : '';
+});
 
 // Date Persistence Logic
 const getInitialDate = () => {
@@ -39,19 +56,15 @@ const getInitialDate = () => {
   const storedTodayStr = localStorage.getItem('qa_last_accessed_today');
   const currentTodayStr = now.toString();
 
-  // If we haven't stored today yet, or if today has changed since last visit
   if (!storedTodayStr || storedTodayStr !== currentTodayStr) {
     localStorage.setItem('qa_last_accessed_today', currentTodayStr);
-    localStorage.removeItem('qa_selected_date'); // Clear old choice from previous day
+    localStorage.removeItem('qa_selected_date');
     return now;
   }
 
-  // If we have a stored choice for the SAME day
   if (storedDateStr) {
     try {
       const d = JSON.parse(storedDateStr);
-      // Safety: check if the stored date is actually valid and for the current year
-      // This prevents very old choices from sticking around
       if (d.year === now.year && d.month === now.month && d.day === now.day) {
         return new CalendarDate(d.year, d.month, d.day);
       } else {
@@ -66,17 +79,8 @@ const getInitialDate = () => {
   return now;
 };
 
-const selectedDateObject = ref<any>(getInitialDate());
-const isDatePopoverOpen = ref(false);
-const selectedDate = computed(() => {
-  return selectedDateObject.value ? selectedDateObject.value.toString() : '';
-});
-
-const handleDateSelect = (newDate: any) => {
-  selectedDateObject.value = newDate;
-  isDatePopoverOpen.value = false;
-
-  // Store the intentional selection
+// Watchers
+watch(selectedDateObject, (newDate) => {
   if (newDate) {
     localStorage.setItem(
       'qa_selected_date',
@@ -89,20 +93,8 @@ const handleDateSelect = (newDate: any) => {
   } else {
     localStorage.removeItem('qa_selected_date');
   }
-};
+});
 
-const handleStatsUpdate = (stats: { total: number; complete: number; incomplete: number }) => {
-  currentStats.value = stats;
-};
-
-const currentTab = ref('cl-po-pri');
-const route = useRoute();
-const router = useRouter();
-
-const selectedCategory = ref<'CL' | 'USS' | 'JOB_ORDER' | 'RAW_MATERIAL_PLAN'>('CL');
-
-// Sync tab with query query
-// Sync tab with route params
 watch(
   () => route.params.tab,
   (newTab) => {
@@ -115,41 +107,37 @@ watch(
   { immediate: true }
 );
 
-// Watch category changes from header
-const handleCategoryUpdate = (newCat: 'CL' | 'USS' | 'JOB_ORDER' | 'RAW_MATERIAL_PLAN') => {
-  selectedCategory.value = newCat;
+watch(
+  currentTab,
+  (newTab) => {
+    if (newTab !== 'raw-material-plan-create') {
+      selectedRawMaterialPlan.value = undefined;
+    }
+    if (newTab !== 'job-order-create') {
+      selectedJobOrder.value = undefined;
+    }
 
-  // If selecting Raw Material Plan from header, ensure currentTab updates if needed
-  if (newCat === 'RAW_MATERIAL_PLAN' && !currentTab.value.startsWith('raw-material-plan')) {
-    router.push({ name: 'QualityAssurance', params: { tab: 'raw-material-plan-list' } });
-  } else if (newCat === 'JOB_ORDER' && !currentTab.value.startsWith('job-order')) {
-    router.push({ name: 'QualityAssurance', params: { tab: 'job-order-list' } });
-  }
+    // Update Navbar Title to match current tab
+    const titleKey = `qa.tabs.${newTab.replace(/-([a-z])/g, (g) => g[1].toUpperCase())}`;
+    navigationStore.setTitle(t(titleKey));
+  },
+  { immediate: true }
+);
+
+// Handlers
+const handleStatsUpdate = (stats: { total: number; complete: number; incomplete: number }) => {
+  currentStats.value = stats;
 };
-
-const selectedJobOrder = ref<JobOrder | undefined>(undefined);
 
 const handleJobOrderEdit = (order: JobOrder) => {
   selectedJobOrder.value = order;
   router.push({ name: 'QualityAssurance', params: { tab: 'job-order-create' } });
 };
 
-const selectedRawMaterialPlan = ref<any>(undefined);
-
 const handleRawMaterialPlanEdit = (plan: any) => {
   selectedRawMaterialPlan.value = plan;
   router.push({ name: 'QualityAssurance', params: { tab: 'raw-material-plan-create' } });
 };
-
-// Clear selection when switching away from create/edit tabs
-watch(currentTab, (newTab) => {
-  if (newTab !== 'raw-material-plan-create') {
-    selectedRawMaterialPlan.value = undefined;
-  }
-  if (newTab !== 'job-order-create') {
-    selectedJobOrder.value = undefined;
-  }
-});
 
 const handleJobOrderSave = async (formData: JobOrder) => {
   try {
@@ -174,8 +162,6 @@ const handleJobOrderDelete = async (id: string) => {
     toast.success(t('common.deleteSuccess') || 'Job order deleted successfully');
     router.push({ name: 'QualityAssurance', params: { tab: 'job-order-list' } });
     selectedJobOrder.value = undefined;
-    // Refresh list if needed, but switching tab usually re-mounts or we might need to refresh data
-    // Ideally JobOrderTab fetches on mount, so switching back should suffice.
   } catch (error: any) {
     console.error('Failed to delete job order:', error);
     toast.error(error.response?.data?.message || t('common.errorDelete'));
@@ -189,8 +175,6 @@ const fetchData = async () => {
       bookingsApi.getAll(),
       rubberTypesApi.getAll(),
     ]);
-    // Filter for bookings that are relevant to QA (e.g., Checked In, Weight In, etc.)
-    // For now, showing all or those that have lab data potential
     bookings.value = bookingsData;
     rubberTypes.value = typesData;
   } catch (error) {
@@ -201,32 +185,20 @@ const fetchData = async () => {
   }
 };
 
+// Lifecycle Hooks
+onUnmounted(() => {
+  navigationStore.reset();
+});
+
 onMounted(() => {
   fetchData();
+  navigationStore.showControls = true;
+  navigationStore.date = getInitialDate();
 });
 </script>
 
 <template>
-  <div class="h-full flex flex-col space-y-6">
-    <QaHeader
-      :active-tab="currentTab"
-      :search-query="searchQuery"
-      :date="selectedDate"
-      @update:active-tab="currentTab = $event"
-      @update:search-query="searchQuery = $event"
-      @update:date="handleDateSelect"
-      @update:category="handleCategoryUpdate"
-    >
-      <template #icon>
-        <List class="h-6 w-6" v-if="currentTab.includes('summary')" />
-        <TestTubes class="h-6 w-6" v-else-if="currentTab.includes('lab')" />
-        <ClipboardList class="h-6 w-6" v-else />
-      </template>
-      <template #title>
-        {{ t(`qa.tabs.${currentTab.replace(/-([a-z])/g, (g) => g[1].toUpperCase())}`) }}
-      </template>
-    </QaHeader>
-
+  <div class="h-full flex flex-col">
     <!-- Tab Content -->
     <!-- Tab Content Area -->
     <div

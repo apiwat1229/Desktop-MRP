@@ -109,8 +109,8 @@
     "rawMaterialPlan": "Raw Material Plan",
     "productionPlanningAllocation": "Production Planning & Allocation",
     "tabs": {
-      "clPoPri": "CL PO / P30 / PRI",
-      "clLab": "CL Lab",
+      "clPoPri": "Cuplump PO / P30 / PRI",
+      "clLab": "Cuplump Lab",
       "clSummary": "Cuplump Incoming",
       "ussPoPri": "USS PO / PRI",
       "ussSummary": "USS Incoming",
@@ -323,9 +323,11 @@
       "name": "Quality Assurance",
       "description": "Lab testing and quality control processes.",
       "menu": {
-        "poP30Pri": "PO P30 PRI",
-        "lab": "Lab",
-        "incoming": "Incoming"
+        "clPoPri": "Cuplump PO / P30 / PRI",
+        "ussPoPri": "USS PO / PRI",
+        "clIncoming": "Cuplump Incoming",
+        "ussIncoming": "USS Incoming",
+        "clLab": "Cuplump Lab"
       }
     },
     "shipping": {
@@ -2336,6 +2338,9 @@
   },
   "bookingQueue": {
     "title": "Booking Queue",
+    "ussQueue": "USS Booking Queue",
+    "cuplumpQueue": "Cuplump Booking Queue",
+    "clickToBook": "Click to schedule a new delivery",
     "manageQueue": "Manage booking queue on",
     "dailySummary": "Daily Queue Summary",
     "addBooking": "Add Booking",

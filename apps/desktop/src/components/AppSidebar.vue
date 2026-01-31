@@ -7,8 +7,12 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import { useSidebarMenu } from '@/composables/useSidebarMenu';
+import { ChevronLeft } from 'lucide-vue-next';
+
+const { toggleSidebar } = useSidebar();
 
 const props = defineProps<{
   class?: string;
@@ -21,6 +25,14 @@ const { menuGroups } = useSidebarMenu();
   <Sidebar collapsible="offcanvas" :class="props.class">
     <SidebarHeader class="flex flex-row items-center gap-2">
       <TeamSwitcher class="flex-1" />
+      <button
+        class="flex size-8 items-center justify-center rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:hidden"
+        @click="toggleSidebar"
+      >
+        <ChevronLeft
+          class="size-4 opacity-50 transition-transform group-data-[state=collapsed]:rotate-180"
+        />
+      </button>
     </SidebarHeader>
     <SidebarContent class="scrollbar-hide">
       <NavMain :items="menuGroups" />

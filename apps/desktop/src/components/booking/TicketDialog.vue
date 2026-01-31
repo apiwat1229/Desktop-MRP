@@ -27,6 +27,14 @@ defineEmits(['update:open']);
 const { t } = useI18n();
 const ticketRef = ref<HTMLDivElement | null>(null);
 
+const handleOpenAutoFocus = (e: Event) => {
+  e.preventDefault();
+  const title = (e.currentTarget as HTMLElement)?.querySelector('[data-dialog-title]');
+  if (title instanceof HTMLElement) {
+    title.focus();
+  }
+};
+
 // --- Constants ---
 const RUBBER_TYPE_MAP: Record<string, string> = {
   EUDR_CL: 'EUDR CL',
@@ -159,10 +167,12 @@ const handleCopyTicketImage = async () => {
 
 <template>
   <Dialog :open="open" @update:open="$emit('update:open', $event)">
-    <DialogContent class="max-w-md">
+    <DialogContent class="max-w-md" @open-auto-focus="handleOpenAutoFocus">
       <DialogHeader>
         <div class="flex items-center justify-between pr-8">
-          <DialogTitle>{{ t('ticketDialog.title') }}</DialogTitle>
+          <DialogTitle tabindex="-1" class="focus:outline-none" data-dialog-title>
+            {{ t('ticketDialog.title') }}
+          </DialogTitle>
           <div class="flex gap-1" v-if="ticket">
             <TooltipProvider :delayDuration="300">
               <Tooltip>

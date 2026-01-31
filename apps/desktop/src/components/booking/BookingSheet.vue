@@ -245,6 +245,7 @@ async function handleSubmit() {
     rubberType: form.value.rubberType,
     estimatedWeight: props.queueMode === 'Cuplump' ? 0 : form.value.estimatedWeight,
     recorder: authStore.user?.username || authStore.user?.email || 'System',
+    slot: props.selectedSlot,
   };
 
   try {
