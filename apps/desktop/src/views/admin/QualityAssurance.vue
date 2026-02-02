@@ -3,7 +3,6 @@ import { bookingsApi } from '@/services/bookings';
 import { jobOrdersApi, type JobOrder } from '@/services/jobOrders';
 import { rubberTypesApi, type RubberType } from '@/services/rubberTypes';
 import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date';
-import { List } from 'lucide-vue-next';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
@@ -198,12 +197,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="h-full flex flex-col">
-    <!-- Tab Content -->
+  <div class="space-y-6">
     <!-- Tab Content Area -->
-    <div
-      class="flex-1 h-full overflow-y-auto pr-2 -mr-2 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent"
-    >
+    <div class="pr-2 -mr-2">
       <!-- DEBUG: Current Tab = {{ currentTab }} -->
       <div v-if="currentTab === 'cl-po-pri'" key="tab-cl-po-pri">
         <ClPoPriTab
@@ -242,16 +238,18 @@ onMounted(() => {
           @update:stats="handleStatsUpdate"
         />
       </div>
-      <div v-else-if="currentTab === 'uss-summary'">
-        <div
-          class="flex items-center justify-center h-64 border rounded-lg bg-muted/20 border-dashed"
-        >
-          <div class="text-center">
-            <List class="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-            <h3 class="text-lg font-medium text-foreground">{{ t('qa.tabs.ussSummary') }}</h3>
-            <p class="text-muted-foreground mt-1">{{ t('qa.comingSoon') }}</p>
-          </div>
-        </div>
+      <div v-else-if="currentTab === 'uss-summary'" class="space-y-4">
+        <DataTable
+          :columns="[
+            { accessorKey: 'date', header: t('qa.columns.date') },
+            { accessorKey: 'lotNo', header: t('qa.columns.lotNumber') },
+            { accessorKey: 'supplier', header: t('qa.columns.supplier') },
+            { accessorKey: 'weight', header: t('qa.columns.weight') },
+            { accessorKey: 'grade', header: t('qa.columns.grade') },
+          ]"
+          :data="[]"
+          :loading="false"
+        />
       </div>
       <div v-else-if="currentTab === 'job-order-list'" key="tab-job-order-list">
         <JobOrderTab

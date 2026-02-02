@@ -167,6 +167,11 @@ const routes = [
                 component: () => import('../views/admin/QualityAssurance.vue'),
             },
             {
+                path: 'qa/job-orders',
+                name: 'QaJobOrders',
+                component: () => import('../views/admin/Production.vue'),
+            },
+            {
                 path: 'production',
                 children: [
                     {

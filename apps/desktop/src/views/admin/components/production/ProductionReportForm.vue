@@ -141,19 +141,8 @@ const totalSample = computed(() => {
   );
 });
 
-const accum1 = computed(() => Math.round((totalSample.value * 4) / 18));
-const accum2 = computed(() => Math.round((totalSample.value * 7) / 18));
-const accum3 = computed(() => Math.round((totalSample.value * 11) / 18));
-const accum4 = computed(() => Math.round((totalSample.value * 14) / 18));
-const accum5 = computed(() => totalSample.value);
-
-watch([accum1, accum2, accum3, accum4, accum5], ([a1, a2, a3, a4, a5]) => {
-  form.sampleAccum1 = a1;
-  form.sampleAccum2 = a2;
-  form.sampleAccum3 = a3;
-  form.sampleAccum4 = a4;
-  form.sampleAccum5 = a5;
-});
+// Manual Accumulated Samples editing is now enabled.
+// Removing the auto-calculation logic based on totalSample.
 
 const totalPallets = computed(() => {
   return form.rows.reduce((sum, row) => {
@@ -274,18 +263,33 @@ onMounted(() => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1st">First Shift (กะที่ 1)</SelectItem>
-                  <SelectItem value="2nd">Second Shift (กะที่ 2)</SelectItem>
+                  <SelectItem value="1st">{{ t('production.shifts.first') }}</SelectItem>
+                  <SelectItem value="2nd">{{ t('production.shifts.second') }}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div class="space-y-2">
               <Label>{{ t('production.grade') }}</Label>
-              <Input v-model="form.grade" placeholder="e.g. H0276" />
+              <Select v-model="form.grade" :disabled="isReadOnly">
+                <SelectTrigger>
+                  <SelectValue placeholder="e.g. H0276" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="P0263">P0263</SelectItem>
+                  <SelectItem value="P0251">P0251</SelectItem>
+                  <SelectItem value="H0276">H0276</SelectItem>
+                  <SelectItem value="P0241">P0241</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div class="space-y-2">
               <Label>{{ t('production.weightPalletRemained') }}</Label>
-              <Input type="number" v-model.number="form.weightPalletRemained" />
+              <KeypadInput
+                v-model="form.weightPalletRemained"
+                :title="t('production.weightPalletRemained')"
+                unit="kg"
+                :disabled="isReadOnly"
+              />
             </div>
           </div>
 
@@ -294,24 +298,36 @@ onMounted(() => {
             <div class="space-y-4 bg-white p-6 rounded-xl border shadow-sm">
               <h3 class="font-medium flex items-center gap-2 text-primary">
                 <div class="w-1 h-5 bg-primary rounded-full" />
-                Ratio (อัตราส่วน)
+                {{ t('production.ratio') }}
               </h3>
               <div class="grid grid-cols-3 gap-4">
                 <div class="space-y-1">
                   <Label class="text-xs text-muted-foreground">{{ t('production.ratioCL') }}</Label>
-                  <Input type="number" v-model.number="form.ratioCL" />
+                  <KeypadInput
+                    v-model="form.ratioCL"
+                    :title="t('production.ratioCL')"
+                    :disabled="isReadOnly"
+                  />
                 </div>
                 <div class="space-y-1">
                   <Label class="text-xs text-muted-foreground">{{
                     t('production.ratioUSS')
                   }}</Label>
-                  <Input type="number" v-model.number="form.ratioUSS" />
+                  <KeypadInput
+                    v-model="form.ratioUSS"
+                    :title="t('production.ratioUSS')"
+                    :disabled="isReadOnly"
+                  />
                 </div>
                 <div class="space-y-1">
                   <Label class="text-xs text-muted-foreground">{{
                     t('production.ratioCutting')
                   }}</Label>
-                  <Input type="number" v-model.number="form.ratioCutting" />
+                  <KeypadInput
+                    v-model="form.ratioCutting"
+                    :title="t('production.ratioCutting')"
+                    :disabled="isReadOnly"
+                  />
                 </div>
               </div>
             </div>
@@ -319,52 +335,57 @@ onMounted(() => {
             <div class="space-y-4 bg-white p-6 rounded-xl border shadow-sm">
               <h3 class="font-medium flex items-center gap-2 text-primary">
                 <div class="w-1 h-5 bg-primary rounded-full" />
-                Accumulated Samples (จำนวนตัวอย่างสะสม)
+                {{ t('production.accumulatedSamples') }}
               </h3>
               <div class="grid grid-cols-5 gap-2">
                 <div class="space-y-1">
-                  <Label class="text-[10px] text-muted-foreground uppercase">Pallet 1</Label>
-                  <Input
-                    type="number"
-                    v-model.number="form.sampleAccum1"
-                    class="text-center"
-                    readonly
+                  <Label class="text-[10px] text-muted-foreground uppercase">{{
+                    t('production.pallet', { n: 1 })
+                  }}</Label>
+                  <KeypadInput
+                    v-model="form.sampleAccum1"
+                    :title="t('production.pallet', { n: 1 })"
+                    :disabled="isReadOnly"
                   />
                 </div>
                 <div class="space-y-1">
-                  <Label class="text-[10px] text-muted-foreground uppercase">Pallet 2</Label>
-                  <Input
-                    type="number"
-                    v-model.number="form.sampleAccum2"
-                    class="text-center"
-                    readonly
+                  <Label class="text-[10px] text-muted-foreground uppercase">{{
+                    t('production.pallet', { n: 2 })
+                  }}</Label>
+                  <KeypadInput
+                    v-model="form.sampleAccum2"
+                    :title="t('production.pallet', { n: 2 })"
+                    :disabled="isReadOnly"
                   />
                 </div>
                 <div class="space-y-1">
-                  <Label class="text-[10px] text-muted-foreground uppercase">Pallet 3</Label>
-                  <Input
-                    type="number"
-                    v-model.number="form.sampleAccum3"
-                    class="text-center"
-                    readonly
+                  <Label class="text-[10px] text-muted-foreground uppercase">{{
+                    t('production.pallet', { n: 3 })
+                  }}</Label>
+                  <KeypadInput
+                    v-model="form.sampleAccum3"
+                    :title="t('production.pallet', { n: 3 })"
+                    :disabled="isReadOnly"
                   />
                 </div>
                 <div class="space-y-1">
-                  <Label class="text-[10px] text-muted-foreground uppercase">Pallet 4</Label>
-                  <Input
-                    type="number"
-                    v-model.number="form.sampleAccum4"
-                    class="text-center"
-                    readonly
+                  <Label class="text-[10px] text-muted-foreground uppercase">{{
+                    t('production.pallet', { n: 4 })
+                  }}</Label>
+                  <KeypadInput
+                    v-model="form.sampleAccum4"
+                    :title="t('production.pallet', { n: 4 })"
+                    :disabled="isReadOnly"
                   />
                 </div>
                 <div class="space-y-1">
-                  <Label class="text-[10px] text-muted-foreground uppercase">Pallet 5</Label>
-                  <Input
-                    type="number"
-                    v-model.number="form.sampleAccum5"
-                    class="text-center"
-                    readonly
+                  <Label class="text-[10px] text-muted-foreground uppercase">{{
+                    t('production.pallet', { n: 5 })
+                  }}</Label>
+                  <KeypadInput
+                    v-model="form.sampleAccum5"
+                    :title="t('production.pallet', { n: 5 })"
+                    :disabled="isReadOnly"
                   />
                 </div>
               </div>
@@ -385,9 +406,9 @@ onMounted(() => {
                   <TableHead class="w-40 whitespace-nowrap">{{
                     t('production.table.lotNo')
                   }}</TableHead>
-                  <TableHead v-for="i in 5" :key="i" class="text-center w-24 whitespace-nowrap"
-                    >Pallet {{ i }}</TableHead
-                  >
+                  <TableHead v-for="i in 5" :key="i" class="text-center w-24 whitespace-nowrap">{{
+                    t('production.pallet', { n: i })
+                  }}</TableHead>
                   <TableHead class="w-24 text-center whitespace-nowrap">{{
                     t('production.table.sampleCount')
                   }}</TableHead>
@@ -413,25 +434,61 @@ onMounted(() => {
                     </Select>
                   </TableCell>
                   <TableCell>
-                    <Input v-model="row.lotNo" class="h-8 w-full" />
+                    <KeypadInput
+                      v-model="row.lotNo"
+                      :title="t('production.table.lotNo')"
+                      button-class="h-8"
+                      mode="lot-number"
+                      :disabled="isReadOnly"
+                    />
                   </TableCell>
                   <TableCell>
-                    <Input type="number" v-model.number="row.weight1" class="h-8 text-center" />
+                    <KeypadInput
+                      v-model="row.weight1"
+                      :title="t('production.pallet', { n: 1 })"
+                      button-class="h-8 text-center"
+                      :disabled="isReadOnly"
+                    />
                   </TableCell>
                   <TableCell>
-                    <Input type="number" v-model.number="row.weight2" class="h-8 text-center" />
+                    <KeypadInput
+                      v-model="row.weight2"
+                      :title="t('production.pallet', { n: 2 })"
+                      button-class="h-8 text-center"
+                      :disabled="isReadOnly"
+                    />
                   </TableCell>
                   <TableCell>
-                    <Input type="number" v-model.number="row.weight3" class="h-8 text-center" />
+                    <KeypadInput
+                      v-model="row.weight3"
+                      :title="t('production.pallet', { n: 3 })"
+                      button-class="h-8 text-center"
+                      :disabled="isReadOnly"
+                    />
                   </TableCell>
                   <TableCell>
-                    <Input type="number" v-model.number="row.weight4" class="h-8 text-center" />
+                    <KeypadInput
+                      v-model="row.weight4"
+                      :title="t('production.pallet', { n: 4 })"
+                      button-class="h-8 text-center"
+                      :disabled="isReadOnly"
+                    />
                   </TableCell>
                   <TableCell>
-                    <Input type="number" v-model.number="row.weight5" class="h-8 text-center" />
+                    <KeypadInput
+                      v-model="row.weight5"
+                      :title="t('production.pallet', { n: 5 })"
+                      button-class="h-8 text-center"
+                      :disabled="isReadOnly"
+                    />
                   </TableCell>
                   <TableCell>
-                    <Input type="number" v-model.number="row.sampleCount" class="h-8 text-center" />
+                    <KeypadInput
+                      v-model="row.sampleCount"
+                      :title="t('production.table.sampleCount')"
+                      button-class="h-8 text-center"
+                      :disabled="isReadOnly"
+                    />
                   </TableCell>
                   <TableCell>
                     <AlertDialog v-if="!isReadOnly">
@@ -474,7 +531,7 @@ onMounted(() => {
                 class="gap-2 text-muted-foreground hover:text-primary"
               >
                 <Plus class="h-4 w-4" />
-                Add Row
+                {{ t('common.add') }}
               </Button>
             </div>
           </div>
@@ -485,7 +542,13 @@ onMounted(() => {
               <div class="space-y-4">
                 <div class="space-y-2">
                   <Label>{{ t('production.footer.baleBagLotNo') }}</Label>
-                  <Input v-model="form.baleBagLotNo" placeholder="PE 9.12.67, 25.1.68..." />
+                  <KeypadInput
+                    v-model="form.baleBagLotNo"
+                    :title="t('production.footer.baleBagLotNo')"
+                    placeholder="PE 9.12.67, 25.1.68..."
+                    mode="lot-number"
+                    :disabled="isReadOnly"
+                  />
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div
@@ -497,8 +560,9 @@ onMounted(() => {
                       {{ totalSample }}
                     </div>
                     <div>
-                      <div class="text-[10px] font-bold text-foreground">TOTAL SAMPLES</div>
-                      <div class="text-[9px] text-muted-foreground">รวมจำนวนตัวอย่าง</div>
+                      <div class="text-[10px] font-bold text-foreground">
+                        {{ t('production.totalSamples') }}
+                      </div>
                     </div>
                   </div>
 
@@ -511,8 +575,9 @@ onMounted(() => {
                       {{ totalPallets }}
                     </div>
                     <div>
-                      <div class="text-[10px] font-bold text-foreground">TOTAL PALLETS</div>
-                      <div class="text-[9px] text-muted-foreground">รวมจำนวนพาเลท</div>
+                      <div class="text-[10px] font-bold text-foreground">
+                        {{ t('production.stats.totalPallets') }}
+                      </div>
                     </div>
                   </div>
 
@@ -525,8 +590,9 @@ onMounted(() => {
                       {{ totalBales }}
                     </div>
                     <div>
-                      <div class="text-[10px] font-bold text-foreground">TOTAL BALES</div>
-                      <div class="text-[9px] text-muted-foreground">รวมจำนวนก้อน</div>
+                      <div class="text-[10px] font-bold text-foreground">
+                        {{ t('production.stats.totalBales') }}
+                      </div>
                     </div>
                   </div>
                 </div>

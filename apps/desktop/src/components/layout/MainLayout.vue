@@ -10,7 +10,7 @@ const route = useRoute();
 
 <template>
   <div class="flex flex-col h-screen overflow-hidden">
-    <SidebarProvider class="min-h-0 flex flex-col">
+    <SidebarProvider :default-open="false" class="min-h-0 flex flex-col">
       <Navbar />
       <div class="flex flex-1 overflow-hidden relative">
         <AppSidebar class="!top-12 !h-[calc(100vh-3rem)]" />

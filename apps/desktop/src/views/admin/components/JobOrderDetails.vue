@@ -346,21 +346,21 @@ onMounted(() => {
             <div class="px-6 py-4 bg-white flex items-center justify-between border-b">
               <h3 class="font-black text-slate-700 flex items-center gap-2">
                 <LinkIcon class="w-4 h-4 text-primary" />
-                PRODUCTION MAPPINGS
+                {{ t('qa.jobOrderDetails.productionAllocation') }}
               </h3>
 
               <Dialog v-model:open="isAddDialogOpen">
                 <DialogTrigger as-child>
                   <Button size="sm" class="font-black gap-2 shadow-lg h-9 px-4">
                     <Plus class="w-4 h-4" />
-                    MAP PRODUCTION DATA
+                    {{ t('qa.jobOrderDetails.mapBatch') }}
                   </Button>
                 </DialogTrigger>
-                <DialogContent class="max-w-3xl">
+                <DialogContent class="max-w-6xl">
                   <DialogHeader>
                     <DialogTitle class="font-black text-2xl flex items-center gap-2">
                       <FileText class="w-6 h-6 text-primary" />
-                      Select Production Report
+                      {{ t('qa.jobOrderDetails.selectBatch') }}
                     </DialogTitle>
                     <DialogDescription class="font-bold text-slate-500">
                       Listing completed (Submitted) reports for
@@ -442,7 +442,7 @@ onMounted(() => {
                               variant="outline"
                               @click="handleMapReport(report)"
                             >
-                              Map
+                              {{ t('qa.jobOrderDetails.map') }}
                             </Button>
                           </TableCell>
                         </TableRow>
@@ -457,12 +457,18 @@ onMounted(() => {
               <Table>
                 <TableHeader class="bg-slate-50/50">
                   <TableRow>
-                    <TableHead class="font-black text-[10px] uppercase">Mapped Date</TableHead>
-                    <TableHead class="font-black text-[10px] uppercase">Shift</TableHead>
-                    <TableHead class="font-black text-[10px] uppercase">Lot Reference</TableHead>
-                    <TableHead class="font-black text-[10px] uppercase text-center"
-                      >Pallets</TableHead
-                    >
+                    <TableHead class="font-black text-[10px] uppercase">{{
+                      t('qa.jobOrderDetails.mappedDate')
+                    }}</TableHead>
+                    <TableHead class="font-black text-[10px] uppercase">{{
+                      t('production.shift')
+                    }}</TableHead>
+                    <TableHead class="font-black text-[10px] uppercase">{{
+                      t('production.table.lotNo')
+                    }}</TableHead>
+                    <TableHead class="font-black text-[10px] uppercase text-center">{{
+                      t('production.stats.totalPallets')
+                    }}</TableHead>
                     <TableHead class="w-[60px]"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -472,7 +478,7 @@ onMounted(() => {
                       <div class="flex flex-col items-center justify-center gap-3 text-slate-300">
                         <LinkIcon class="w-10 h-10 opacity-20" />
                         <p class="font-bold text-slate-400">
-                          No production data mapped to this job.
+                          {{ t('qa.jobOrderDetails.noAllocation') }}
                         </p>
                       </div>
                     </TableCell>

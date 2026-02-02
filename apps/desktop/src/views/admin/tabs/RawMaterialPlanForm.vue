@@ -476,43 +476,43 @@ const handleSave = async () => {
       </div>
 
       <!-- Main Entry Grid -->
-      <div class="overflow-x-auto rounded-lg border border-slate-200 shadow-sm">
+      <div class="overflow-x-auto overflow-y-visible rounded-lg border border-slate-200 shadow-sm">
         <Table class="border-collapse text-[11px]">
           <TableHeader>
             <!-- Primary Header Rows -->
             <TableRow class="bg-slate-800 hover:bg-slate-800 border-none">
               <TableHead
                 colspan="4"
-                class="text-center text-white font-black border-r border-slate-700 h-8 uppercase tracking-widest bg-amber-500/90"
+                class="text-center text-white font-black border-r border-slate-700 h-7 uppercase tracking-widest bg-amber-500/90"
                 >{{ t('qa.headers.productionPlan') }}</TableHead
               >
               <TableHead
                 colspan="3"
-                class="text-center text-white font-black border-r border-slate-700 h-8 uppercase tracking-widest bg-slate-400/90"
+                class="text-center text-white font-black border-r border-slate-700 h-7 uppercase tracking-widest bg-slate-400/90"
                 >{{ t('qa.headers.ratios') }}</TableHead
               >
               <TableHead
                 colspan="3"
-                class="text-center text-white font-black border-r border-slate-700 h-8 uppercase tracking-widest bg-slate-500/90"
+                class="text-center text-white font-black border-r border-slate-700 h-7 uppercase tracking-widest bg-slate-500/90"
                 >{{ t('qa.headers.productionTargets') }}</TableHead
               >
               <TableHead
                 colspan="6"
-                class="text-center text-white font-black border-r border-slate-700 h-8 uppercase tracking-widest bg-blue-500/90"
+                class="text-center text-white font-black border-r border-slate-700 h-7 uppercase tracking-widest bg-blue-500/90"
                 >{{ t('qa.headers.clAllocationPlan') }}</TableHead
               >
               <TableHead
                 colspan="2"
-                class="text-center text-white font-black border-r border-slate-700 h-8 uppercase tracking-widest bg-indigo-500/90"
+                class="text-center text-white font-black border-r border-slate-700 h-7 uppercase tracking-widest bg-indigo-500/90"
                 >{{ t('qa.headers.cutting') }}</TableHead
               >
-              <TableHead class="text-center text-white font-black h-8 bg-slate-600/90">{{
+              <TableHead class="text-center text-white font-black h-7 bg-slate-600/90">{{
                 t('qa.headers.docs')
               }}</TableHead>
             </TableRow>
 
             <TableRow
-              class="bg-slate-50 hover:bg-slate-50 text-[10px] font-black text-slate-500 align-middle"
+              class="bg-slate-50 hover:bg-slate-50 text-[10px] font-black text-slate-500 align-middle h-7"
             >
               <TableHead class="border-r border-slate-200 w-20 text-center">Date</TableHead>
               <TableHead class="border-r border-slate-200 w-10 text-center px-0.5">Day</TableHead>
@@ -528,17 +528,17 @@ const handleSave = async () => {
               <TableHead class="border-r border-slate-200 w-16 text-center">Ratio B/C</TableHead>
 
               <TableHead colspan="2" class="border-r border-slate-200 text-center bg-blue-50/50">
-                <div class="flex flex-col items-center justify-center leading-tight py-1">
+                <div class="flex flex-col items-center justify-center leading-tight py-0.5">
                   <span class="font-black text-[10px]">#1 (P/S)</span>
                 </div>
               </TableHead>
               <TableHead colspan="2" class="border-r border-slate-200 text-center bg-blue-50/50">
-                <div class="flex flex-col items-center justify-center leading-tight py-1">
+                <div class="flex flex-col items-center justify-center leading-tight py-0.5">
                   <span class="font-black text-[10px]">#2 (P/S)</span>
                 </div>
               </TableHead>
               <TableHead colspan="2" class="border-r border-slate-200 text-center bg-blue-50/50">
-                <div class="flex flex-col items-center justify-center leading-tight py-1">
+                <div class="flex flex-col items-center justify-center leading-tight py-0.5">
                   <span class="font-black text-[10px]">#3 (P/S)</span>
                 </div>
               </TableHead>
@@ -546,7 +546,7 @@ const handleSave = async () => {
               <TableHead class="border-r border-slate-200 w-20 text-center">%</TableHead>
               <TableHead class="border-r border-slate-200 w-20 text-center">Pallet/Shift</TableHead>
 
-              <TableHead class="text-center">Remarks</TableHead>
+              <TableHead class="text-center min-w-[150px]">Remarks</TableHead>
             </TableRow>
           </TableHeader>
 
@@ -684,7 +684,7 @@ const handleSave = async () => {
 
               <!-- Plans -->
               <!-- Plans -->
-              <TableCell class="border-r border-slate-100 p-0 w-44 bg-blue-50/20">
+              <TableCell class="border-r border-slate-100 p-0 w-32 bg-blue-50/20">
                 <Popover>
                   <PopoverTrigger as-child>
                     <Button
@@ -755,7 +755,7 @@ const handleSave = async () => {
                   </PopoverContent>
                 </Popover>
               </TableCell>
-              <TableCell class="border-r border-slate-100 p-0 w-24 bg-blue-50/20">
+              <TableCell class="border-r border-slate-100 p-0 w-20 bg-blue-50/20">
                 <NumberField v-model="row.plan1Scoops" :min="0" class="w-full">
                   <NumberFieldContent>
                     <NumberFieldDecrement
@@ -772,7 +772,7 @@ const handleSave = async () => {
               </TableCell>
 
               <!-- Plan 2 -->
-              <TableCell class="border-r border-slate-100 p-0 w-44 bg-blue-50/20">
+              <TableCell class="border-r border-slate-100 p-0 w-32 bg-blue-50/20">
                 <Popover>
                   <PopoverTrigger as-child>
                     <Button
@@ -843,7 +843,7 @@ const handleSave = async () => {
                   </PopoverContent>
                 </Popover>
               </TableCell>
-              <TableCell class="border-r border-slate-100 p-0 w-24 bg-blue-50/20">
+              <TableCell class="border-r border-slate-100 p-0 w-20 bg-blue-50/20">
                 <NumberField v-model="row.plan2Scoops" :min="0" class="w-full">
                   <NumberFieldContent>
                     <NumberFieldDecrement
@@ -860,7 +860,7 @@ const handleSave = async () => {
               </TableCell>
 
               <!-- Plan 3 -->
-              <TableCell class="border-r border-slate-100 p-0 w-44 bg-blue-50/20">
+              <TableCell class="border-r border-slate-100 p-0 w-32 bg-blue-50/20">
                 <Popover>
                   <PopoverTrigger as-child>
                     <Button
@@ -931,7 +931,7 @@ const handleSave = async () => {
                   </PopoverContent>
                 </Popover>
               </TableCell>
-              <TableCell class="border-r border-slate-100 p-0 w-24 bg-blue-50/20">
+              <TableCell class="border-r border-slate-100 p-0 w-20 bg-blue-50/20">
                 <NumberField v-model="row.plan3Scoops" :min="0" class="w-full">
                   <NumberFieldContent>
                     <NumberFieldDecrement
@@ -969,211 +969,247 @@ const handleSave = async () => {
         </Table>
       </div>
 
-      <!-- Pooling Detail Table (Segment 2) -->
-      <div class="mt-8 space-y-4">
-        <div class="flex items-center gap-2">
-          <div class="w-1 h-5 bg-blue-500 rounded-full"></div>
-          <h4 class="text-xs font-black uppercase tracking-widest text-slate-700">
-            {{ t('qa.sections.poolPropertiesValidation') }}
-          </h4>
-        </div>
-
-        <div class="overflow-hidden border border-slate-200 rounded-lg shadow-sm max-w-4xl">
-          <Table class="text-[10px]">
-            <TableHeader class="bg-slate-50">
-              <TableRow>
-                <TableHead class="w-16 border-r border-slate-200 font-black text-center">{{
-                  t('qa.columns.poolNo')
-                }}</TableHead>
-                <TableHead class="w-20 border-r border-slate-200 font-black text-center">{{
-                  t('qa.columns.grossTon')
-                }}</TableHead>
-                <TableHead class="w-20 border-r border-slate-200 font-black text-center">{{
-                  t('qa.columns.netTon')
-                }}</TableHead>
-                <TableHead class="w-16 border-r border-slate-200 font-black text-center">{{
-                  t('qa.columns.drc')
-                }}</TableHead>
-                <TableHead class="w-16 border-r border-slate-200 font-black text-center">{{
-                  t('qa.columns.moist')
-                }}</TableHead>
-                <TableHead class="w-16 border-r border-slate-200 font-black text-center">{{
-                  t('qa.columns.po')
-                }}</TableHead>
-                <TableHead class="w-16 border-r border-slate-200 font-black text-center">{{
-                  t('qa.columns.pri')
-                }}</TableHead>
-                <TableHead class="w-24 border-r border-slate-200 font-black text-center">{{
-                  t('qa.columns.date')
-                }}</TableHead>
-                <TableHead class="w-16 font-black text-center">{{
-                  t('qa.columns.grade')
-                }}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow
-                v-for="(p, idx) in plan.poolDetails"
-                :key="idx"
-                class="h-8 group hover:bg-blue-50/30"
-              >
-                <TableCell class="border-r border-slate-100 p-0"
-                  ><Input
-                    v-model="p.poolNo"
-                    class="h-7 text-[10px] border-none shadow-none text-center font-black text-blue-600 focus-visible:ring-0 focus-visible:ring-offset-0"
-                /></TableCell>
-                <TableCell class="border-r border-slate-100 p-0"
-                  ><Input
-                    v-model="p.grossWeight"
-                    class="h-7 text-[10px] border-none shadow-none text-center focus-visible:ring-0 focus-visible:ring-offset-0"
-                /></TableCell>
-                <TableCell class="border-r border-slate-100 p-0"
-                  ><Input
-                    v-model="p.netWeight"
-                    class="h-7 text-[10px] border-none shadow-none text-center font-bold text-slate-700 focus-visible:ring-0 focus-visible:ring-offset-0"
-                /></TableCell>
-                <TableCell class="border-r border-slate-100 p-0"
-                  ><Input
-                    v-model="p.drc"
-                    class="h-7 text-[10px] border-none shadow-none text-center focus-visible:ring-0 focus-visible:ring-offset-0"
-                /></TableCell>
-                <TableCell class="border-r border-slate-100 p-0"
-                  ><Input
-                    v-model="p.moisture"
-                    class="h-7 text-[10px] border-none shadow-none text-center focus-visible:ring-0 focus-visible:ring-offset-0"
-                /></TableCell>
-                <TableCell class="border-r border-slate-100 p-0"
-                  ><Input
-                    v-model="p.p0"
-                    class="h-7 text-[10px] border-none shadow-none text-center focus-visible:ring-0 focus-visible:ring-offset-0"
-                /></TableCell>
-                <TableCell class="border-r border-slate-100 p-0"
-                  ><Input
-                    v-model="p.pri"
-                    class="h-7 text-[10px] border-none shadow-none text-center focus-visible:ring-0 focus-visible:ring-offset-0"
-                /></TableCell>
-                <TableCell class="border-r border-slate-100 p-0 text-center">
-                  <Popover>
-                    <PopoverTrigger as-child>
-                      <Button
-                        variant="ghost"
-                        class="h-7 w-full text-[10px] border-none shadow-none font-normal justify-center px-1"
-                        :class="!p.clearDate && 'text-muted-foreground'"
-                      >
-                        {{ p.clearDate || 'Select' }}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent class="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        @update:model-value="(val: any) => (p.clearDate = formatDate(val))"
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </TableCell>
-                <TableCell class="p-0 px-1">
-                  <Popover>
-                    <PopoverTrigger as-child>
-                      <Button
-                        variant="ghost"
-                        class="h-7 w-full text-[10px] border-none shadow-none font-bold justify-center px-1"
-                        :class="!p.grade?.length && 'text-slate-400'"
-                      >
-                        {{ p.grade?.length ? p.grade.join(' + ') : 'Select Grade' }}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent class="w-32 p-1" align="end">
-                      <div class="space-y-0.5">
-                        <div
-                          v-for="g in validPoolGrades"
-                          :key="g"
-                          class="flex items-center gap-2 px-2 py-1.5 hover:bg-slate-100 rounded cursor-pointer transition-colors"
-                          @click.stop="togglePoolGrade(p, g)"
-                        >
-                          <Checkbox
-                            :checked="p.grade.includes(g)"
-                            @update:checked="() => {}"
-                            class="h-4 w-4 rounded-full data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
-                          />
-                          <span
-                            class="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                            :class="
-                              p.grade.includes(g) ? 'font-bold text-blue-600' : 'text-slate-600'
-                            "
-                          >
-                            {{ g }}
-                          </span>
-                        </div>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </div>
-      </div>
-
-      <!-- Actions Footer -->
-      <div class="flex items-center justify-between pt-6 border-t border-slate-100">
-        <div class="flex items-center gap-6">
-          <div class="flex items-center gap-2 border-r border-slate-200 pr-6">
-            <label class="text-[10px] font-black text-slate-400 uppercase">{{
-              t('qa.footer.issueBy')
-            }}</label>
-            <Input
-              class="h-8 w-40 text-xs font-bold bg-slate-50 border-none"
-              :model-value="authStore.user?.displayName || authStore.user?.username || '-'"
-              readonly
-            />
-          </div>
+      <!-- Pooling and Actions Segment -->
+      <div class="mt-8 flex flex-col lg:flex-row gap-8 items-start">
+        <!-- Pooling Detail Table (Segment 2) -->
+        <div class="space-y-4 flex-1">
           <div class="flex items-center gap-2">
-            <label class="text-[10px] font-black text-slate-400 uppercase">{{
-              t('qa.footer.verifiedBy')
-            }}</label>
-            <Input
-              class="h-8 w-40 text-xs font-bold bg-slate-50 border-none"
-              model-value="รอการอนุมัติ"
-              readonly
-            />
+            <div class="w-1 h-5 bg-blue-500 rounded-full"></div>
+            <h4 class="text-xs font-black uppercase tracking-widest text-slate-700">
+              {{ t('qa.sections.poolPropertiesValidation') }}
+            </h4>
+          </div>
+
+          <div
+            class="overflow-x-auto overflow-y-visible border border-slate-200 rounded-lg shadow-sm"
+          >
+            <Table class="text-[10px]">
+              <TableHeader class="bg-slate-50">
+                <TableRow>
+                  <TableHead class="w-16 border-r border-slate-200 font-black text-center">{{
+                    t('qa.columns.poolNo')
+                  }}</TableHead>
+                  <TableHead class="w-20 border-r border-slate-200 font-black text-center">{{
+                    t('qa.columns.grossTon')
+                  }}</TableHead>
+                  <TableHead class="w-20 border-r border-slate-200 font-black text-center">{{
+                    t('qa.columns.netTon')
+                  }}</TableHead>
+                  <TableHead class="w-16 border-r border-slate-200 font-black text-center">{{
+                    t('qa.columns.drc')
+                  }}</TableHead>
+                  <TableHead class="w-16 border-r border-slate-200 font-black text-center">{{
+                    t('qa.columns.moist')
+                  }}</TableHead>
+                  <TableHead class="w-16 border-r border-slate-200 font-black text-center">{{
+                    t('qa.columns.po')
+                  }}</TableHead>
+                  <TableHead class="w-16 border-r border-slate-200 font-black text-center">{{
+                    t('qa.columns.pri')
+                  }}</TableHead>
+                  <TableHead class="w-24 border-r border-slate-200 font-black text-center">{{
+                    t('qa.columns.date')
+                  }}</TableHead>
+                  <TableHead class="w-16 font-black text-center">{{
+                    t('qa.columns.grade')
+                  }}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow
+                  v-for="(p, idx) in plan.poolDetails"
+                  :key="idx"
+                  class="h-8 group hover:bg-blue-50/30"
+                >
+                  <TableCell class="border-r border-slate-100 p-0"
+                    ><Input
+                      v-model="p.poolNo"
+                      class="h-7 text-[10px] border-none shadow-none text-center font-black text-blue-600 focus-visible:ring-0 focus-visible:ring-offset-0"
+                  /></TableCell>
+                  <TableCell class="border-r border-slate-100 p-0"
+                    ><Input
+                      v-model="p.grossWeight"
+                      class="h-7 text-[10px] border-none shadow-none text-center focus-visible:ring-0 focus-visible:ring-offset-0"
+                  /></TableCell>
+                  <TableCell class="border-r border-slate-100 p-0"
+                    ><Input
+                      v-model="p.netWeight"
+                      class="h-7 text-[10px] border-none shadow-none text-center font-bold text-slate-700 focus-visible:ring-0 focus-visible:ring-offset-0"
+                  /></TableCell>
+                  <TableCell class="border-r border-slate-100 p-0"
+                    ><Input
+                      v-model="p.drc"
+                      class="h-7 text-[10px] border-none shadow-none text-center focus-visible:ring-0 focus-visible:ring-offset-0"
+                  /></TableCell>
+                  <TableCell class="border-r border-slate-100 p-0"
+                    ><Input
+                      v-model="p.moisture"
+                      class="h-7 text-[10px] border-none shadow-none text-center focus-visible:ring-0 focus-visible:ring-offset-0"
+                  /></TableCell>
+                  <TableCell class="border-r border-slate-100 p-0"
+                    ><Input
+                      v-model="p.p0"
+                      class="h-7 text-[10px] border-none shadow-none text-center focus-visible:ring-0 focus-visible:ring-offset-0"
+                  /></TableCell>
+                  <TableCell class="border-r border-slate-100 p-0"
+                    ><Input
+                      v-model="p.pri"
+                      class="h-7 text-[10px] border-none shadow-none text-center focus-visible:ring-0 focus-visible:ring-offset-0"
+                  /></TableCell>
+                  <TableCell class="border-r border-slate-100 p-0 text-center">
+                    <Popover>
+                      <PopoverTrigger as-child>
+                        <Button
+                          variant="ghost"
+                          class="h-7 w-full text-[10px] border-none shadow-none font-normal justify-center px-1"
+                          :class="!p.clearDate && 'text-muted-foreground'"
+                        >
+                          {{ p.clearDate || 'Select' }}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent class="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          @update:model-value="(val: any) => (p.clearDate = formatDate(val))"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </TableCell>
+                  <TableCell class="p-0 px-1">
+                    <Popover>
+                      <PopoverTrigger as-child>
+                        <Button
+                          variant="ghost"
+                          class="h-7 w-full text-[10px] border-none shadow-none font-bold justify-center px-1"
+                          :class="!p.grade?.length && 'text-slate-400'"
+                        >
+                          {{ p.grade?.length ? p.grade.join(' + ') : 'Select Grade' }}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent class="w-32 p-1" align="end">
+                        <div class="space-y-0.5">
+                          <div
+                            v-for="g in validPoolGrades"
+                            :key="g"
+                            class="flex items-center gap-2 px-2 py-1.5 hover:bg-slate-100 rounded cursor-pointer transition-colors"
+                            @click.stop="togglePoolGrade(p, g)"
+                          >
+                            <Checkbox
+                              :checked="p.grade.includes(g)"
+                              @update:checked="() => {}"
+                              class="h-4 w-4 rounded-full data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                            />
+                            <span
+                              class="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                              :class="
+                                p.grade.includes(g) ? 'font-bold text-blue-600' : 'text-slate-600'
+                              "
+                            >
+                              {{ g }}
+                            </span>
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
           </div>
         </div>
 
-        <div class="flex items-center gap-3 no-print">
-          <Button variant="ghost" class="h-10 gap-2 text-slate-500" @click="handleCancel">
-            <X class="w-4 h-4" />
-            Cancel
-          </Button>
+        <!-- Actions and Signatures Sidebar -->
+        <div class="w-full lg:w-72 space-y-4 pt-8">
+          <!-- Signatures Panel -->
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-100 space-y-3 shadow-sm">
+            <div class="space-y-1.5">
+              <label class="text-[9px] font-black text-slate-400 uppercase tracking-wider">{{
+                t('qa.footer.issueBy')
+              }}</label>
+              <div
+                class="flex items-center gap-2 bg-white p-1.5 rounded-lg border border-slate-200"
+              >
+                <div
+                  class="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0"
+                >
+                  <span class="text-blue-600 font-bold text-[10px] uppercase">{{
+                    (authStore.user?.displayName || authStore.user?.username || 'S')[0]
+                  }}</span>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-[11px] font-bold text-slate-700 truncate">
+                    {{ authStore.user?.displayName || authStore.user?.username || '-' }}
+                  </p>
+                  <p class="text-[9px] text-slate-400 font-medium leading-none">Recorder</p>
+                </div>
+              </div>
+            </div>
 
-          <Button
-            variant="outline"
-            class="h-10 gap-2 text-slate-600 border-dashed"
-            @click="isResetAlertOpen = true"
-          >
-            <RotateCcw class="w-4 h-4" />
-            Reset
-          </Button>
+            <div class="space-y-1.5">
+              <label class="text-[9px] font-black text-slate-400 uppercase tracking-wider">{{
+                t('qa.footer.verifiedBy')
+              }}</label>
+              <div
+                class="flex items-center gap-2 bg-white/50 p-1.5 rounded-lg border border-dashed border-slate-300"
+              >
+                <div
+                  class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center flex-shrink-0"
+                >
+                  <RotateCcw class="w-3 h-3 text-slate-400 animate-spin-slow" />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-[11px] font-bold text-slate-400 italic">รอการอนุมัติ</p>
+                  <p class="text-[9px] text-slate-300 font-medium italic leading-none">
+                    Pending Approval
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
 
-          <div class="flex-1"></div>
+          <!-- Action Buttons Stack -->
+          <div class="flex flex-col gap-2 no-print">
+            <Button
+              @click="handleSave"
+              :disabled="isSubmitting"
+              class="h-10 w-full gap-2 font-black px-8 bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-100 rounded-lg text-xs transition-all active:scale-95"
+            >
+              <Save class="w-4 h-4" />
+              {{
+                isSubmitting ? t('common.loading') : isEditMode ? 'Update Changes' : 'Create Plan'
+              }}
+            </Button>
 
-          <Button
-            v-if="isEditMode"
-            variant="destructive"
-            class="h-10 gap-2 mr-2"
-            @click="isDeleteAlertOpen = true"
-            :disabled="isSubmitting"
-          >
-            <Trash2 class="w-4 h-4" />
-            Delete
-          </Button>
-          <Button
-            @click="handleSave"
-            :disabled="isSubmitting"
-            class="h-10 gap-2 font-bold px-8 bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200"
-          >
-            <Save class="w-4 h-4" />
-            {{ isSubmitting ? t('common.loading') : isEditMode ? 'Update Changes' : 'Create Plan' }}
-          </Button>
+            <div class="grid grid-cols-2 gap-2">
+              <Button
+                variant="outline"
+                class="h-9 gap-2 text-slate-600 border-slate-200 hover:bg-slate-50 font-bold rounded-lg active:scale-95 transition-all text-[11px]"
+                @click="isResetAlertOpen = true"
+              >
+                <RotateCcw class="w-3.5 h-3.5" />
+                Reset
+              </Button>
+              <Button
+                variant="ghost"
+                class="h-9 gap-2 text-slate-500 font-bold rounded-lg active:scale-95 transition-all text-[11px]"
+                @click="handleCancel"
+              >
+                <X class="w-3.5 h-3.5" />
+                Cancel
+              </Button>
+            </div>
+
+            <Button
+              v-if="isEditMode"
+              variant="destructive"
+              class="h-9 gap-2 font-bold rounded-lg active:scale-95 transition-all text-[11px]"
+              @click="isDeleteAlertOpen = true"
+              :disabled="isSubmitting"
+            >
+              <Trash2 class="w-3.5 h-3.5" />
+              Delete
+            </Button>
+          </div>
         </div>
       </div>
     </div>
@@ -1247,6 +1283,17 @@ const handleSave = async () => {
 }
 ::-webkit-scrollbar-track {
   background: transparent;
+}
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.animate-spin-slow {
+  animation: spin-slow 3s linear infinite;
 }
 </style>
 
@@ -1359,7 +1406,7 @@ const handleSave = async () => {
   .raw-material-plan-print-container table td:nth-child(13),
   .raw-material-plan-print-container table th:nth-child(15),
   .raw-material-plan-print-container table td:nth-child(15) {
-    width: 37mm !important;
+    width: 30mm !important;
   } /* Pool Label */
 
   .raw-material-plan-print-container table th:nth-child(12),

@@ -27,11 +27,21 @@ const route = useRoute();
 
 // Context: 'production' | 'job-order'
 const activeContext = computed(() => {
-  if (route.name === 'JobOrders' || route.path.includes('job-orders')) {
+  if (route.name === 'JobOrders' || route.path.includes('production/job-orders')) {
+    return 'job-order';
+  }
+  if (route.name === 'QaJobOrders' || route.path.includes('qa/job-orders')) {
     return 'job-order';
   }
   return 'production';
 });
+
+const isQaContext = computed(
+  () => route.name === 'QaJobOrders' || route.path.includes('qa/job-orders')
+);
+const isReadonly = computed(
+  () => activeContext.value === 'job-order' && !isQaContext.value && !isAdmin.value
+);
 // View: 'list' | 'create' | 'details'
 const activeTab = ref('list');
 
@@ -225,6 +235,7 @@ import { onUnmounted } from 'vue';
   <div v-if="canRead" class="flex flex-col space-y-4 p-2 w-full">
     <!-- Premium Header -->
     <div
+      v-if="activeTab === 'list'"
       class="rounded-xl border bg-white shadow-sm p-4 px-6 relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-6"
     >
       <!-- Decorative Background Icon -->
@@ -233,7 +244,7 @@ import { onUnmounted } from 'vue';
       </div>
 
       <!-- Stats Section -->
-      <div class="flex items-center gap-8 relative z-10">
+      <div class="flex items-center justify-center gap-8 relative z-10 flex-1">
         <template v-if="activeContext === 'production'">
           <div class="text-center group/stat">
             <span
@@ -297,7 +308,7 @@ import { onUnmounted } from 'vue';
       <!-- Create Button (Right Side) -->
       <div class="flex items-center gap-3 relative z-10 ml-auto">
         <Button
-          v-if="canCreate"
+          v-if="canCreate && (activeContext === 'production' || isQaContext)"
           @click="handleCreateClick"
           class="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 shadow-primary/20 shadow-lg px-6 h-10 rounded-xl font-bold transition-all hover:scale-105 active:scale-95"
         >
@@ -325,6 +336,7 @@ import { onUnmounted } from 'vue';
               :key="jobOrderListKey"
               :search-query="searchQuery"
               :date="selectedDate || ''"
+              :readonly="isReadonly"
               @view="handleViewJobOrder"
               @edit="handleEditJobOrder"
             />

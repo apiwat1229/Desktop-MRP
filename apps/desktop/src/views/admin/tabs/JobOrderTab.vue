@@ -23,6 +23,7 @@ const { t } = useI18n();
 const props = defineProps<{
   searchQuery: string;
   date: string;
+  readonly?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -170,14 +171,17 @@ onMounted(() => {
               </TableCell>
             </TableRow>
 
-            <TableRow v-else-if="jobOrders.length === 0">
-              <TableCell colspan="7" class="h-64 text-center">
-                <div class="flex flex-col items-center justify-center text-muted-foreground">
-                  <div class="bg-slate-100 p-6 rounded-full mb-4">
-                    <FileText class="w-12 h-12 text-slate-300" />
+            <TableRow v-else-if="filteredJobOrders.length === 0">
+              <TableCell colspan="7" class="py-20 text-center">
+                <div class="flex flex-col items-center justify-center">
+                  <div class="bg-slate-50 p-6 rounded-full mb-4 border border-slate-100/50">
+                    <FileText class="h-10 w-10 text-slate-200" />
                   </div>
-                  <p class="font-bold text-slate-400 text-lg mb-2">
+                  <h3 class="text-lg font-bold text-slate-700 tracking-tight">
                     {{ t('qa.jobOrderMgmt.noOrders') }}
+                  </h3>
+                  <p class="text-slate-400 text-sm font-medium mt-1">
+                    Try changing the date or search query.
                   </p>
                 </div>
               </TableCell>
@@ -236,6 +240,7 @@ onMounted(() => {
               <TableCell class="text-center">
                 <div class="flex items-center justify-center gap-1">
                   <Button
+                    v-if="!props.readonly"
                     variant="ghost"
                     size="icon"
                     class="h-9 w-9 text-slate-500 hover:text-primary hover:bg-primary/10 transition-colors"

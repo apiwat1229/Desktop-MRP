@@ -26,7 +26,7 @@ import {
   getSortedRowModel,
   useVueTable,
 } from '@tanstack/vue-table';
-import { Trash2 } from 'lucide-vue-next';
+import { Search, Trash2 } from 'lucide-vue-next';
 import { h, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 
@@ -150,9 +150,19 @@ const { t } = useI18n();
             </TableRow>
           </template>
           <template v-else>
-            <TableRow>
-              <TableCell :colspan="columnsWithSelection.length" class="h-24 text-center">
-                {{ t('common.table.noResults') }}
+            <TableRow class="hover:bg-transparent">
+              <TableCell :colspan="columnsWithSelection.length" class="h-[300px] text-center">
+                <div class="flex flex-col items-center justify-center py-12">
+                  <div class="bg-slate-50 p-6 rounded-full mb-4 border border-slate-100/50">
+                    <Search class="h-10 w-10 text-slate-200" />
+                  </div>
+                  <h3 class="text-lg font-bold text-slate-700 tracking-tight">
+                    {{ t('common.table.noResults') }}
+                  </h3>
+                  <p class="text-slate-400 text-sm font-medium mt-1">
+                    We couldn't find any results for the current filters.
+                  </p>
+                </div>
               </TableCell>
             </TableRow>
           </template>

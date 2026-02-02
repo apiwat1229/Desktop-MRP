@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/table';
 import api from '@/services/api';
 import { format } from 'date-fns';
-import { FileText, Loader2, Printer, RefreshCw } from 'lucide-vue-next';
+import { FileText, Loader2, Plus, Printer, RefreshCw } from 'lucide-vue-next';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import RawMaterialPlanViewModal from './RawMaterialPlanViewModal.vue';
@@ -24,6 +24,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'edit', plan: any): void;
+  (e: 'create'): void;
 }>();
 
 // Data states
@@ -130,16 +131,28 @@ const getStatusVariant = (status: string) => {
           {{ filteredPlans.length }} plans
         </Badge>
       </div>
-      <Button
-        variant="ghost"
-        size="sm"
-        @click="fetchPlans"
-        :disabled="isLoading"
-        class="h-8 gap-2 text-xs font-bold text-slate-500 hover:text-primary transition-all rounded-md"
-      >
-        <RefreshCw :class="{ 'animate-spin': isLoading }" class="w-3.5 h-3.5" />
-        {{ t('common.refresh') || 'Refresh' }}
-      </Button>
+      <div class="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          @click="fetchPlans"
+          :disabled="isLoading"
+          class="h-8 gap-2 text-xs font-bold text-slate-500 hover:text-primary transition-all rounded-md"
+        >
+          <RefreshCw :class="{ 'animate-spin': isLoading }" class="w-3.5 h-3.5" />
+          {{ t('common.refresh') || 'Refresh' }}
+        </Button>
+
+        <Button
+          variant="default"
+          size="sm"
+          @click="emit('create')"
+          class="h-8 gap-2 text-xs font-bold transition-all rounded-md shadow-sm"
+        >
+          <Plus class="w-3.5 h-3.5" />
+          {{ t('qa.tabs.rawMaterialPlanCreate') }}
+        </Button>
+      </div>
     </div>
 
     <!-- Table Container -->
@@ -147,10 +160,10 @@ const getStatusVariant = (status: string) => {
       <Table>
         <TableHeader class="bg-slate-50">
           <TableRow>
-            <TableHead class="w-32 font-black text-slate-700 uppercase tracking-tighter text-[10px]"
+            <TableHead class="w-28 font-black text-slate-700 uppercase tracking-tighter text-[10px]"
               >Date</TableHead
             >
-            <TableHead class="w-24 font-black text-slate-700 uppercase tracking-tighter text-[10px]"
+            <TableHead class="w-72 font-black text-slate-700 uppercase tracking-tighter text-[10px]"
               >Plan No.</TableHead
             >
             <TableHead class="w-16 font-black text-slate-700 uppercase tracking-tighter text-[10px]"
@@ -226,10 +239,19 @@ const getStatusVariant = (status: string) => {
               </div>
             </TableCell>
           </TableRow>
-          <TableRow v-if="plans.length === 0 && !isLoading">
-            <TableCell colspan="7" class="h-32 text-center text-slate-400 italic">
-              {{ error || 'No plans found.' }}
-              <Button v-if="error" variant="link" @click="fetchPlans" class="ml-2"> Retry </Button>
+          <TableRow v-if="filteredPlans.length === 0 && !isLoading">
+            <TableCell colspan="7" class="py-20 text-center">
+              <div class="flex flex-col items-center justify-center">
+                <div class="bg-slate-50 p-6 rounded-full mb-4 border border-slate-100/50">
+                  <FileText class="h-10 w-10 text-slate-200" />
+                </div>
+                <h3 class="text-lg font-bold text-slate-700 tracking-tight">
+                  {{ t('qa.tabs.planList') }}
+                </h3>
+                <p class="text-slate-400 text-sm font-medium mt-1">
+                  {{ error || 'No plans found.' }}
+                </p>
+              </div>
             </TableCell>
           </TableRow>
           <TableRow v-if="isLoading">

@@ -8,6 +8,7 @@ import { toast } from 'vue-sonner';
 import PoolCard from './components/PoolCard.vue';
 import PoolDistributionCharts from './components/PoolDistributionCharts.vue';
 import PoolManagementDialog from './components/PoolManagementDialog.vue';
+import QaEmptyState from './components/QaEmptyState.vue';
 
 const pools = ref<Pool[]>([]);
 const isLoading = ref(false);
@@ -273,16 +274,20 @@ const getGradeColor = (grade: string) => {
         </div>
       </div>
 
-      <div
-        class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 pb-8"
-      >
-        <PoolCard
-          v-for="pool in pools"
-          :key="pool.id"
-          :pool="pool"
-          @refresh="fetchData"
-          @click="handlePoolClick"
-        />
+      <div class="space-y-4">
+        <QaEmptyState v-if="pools.length === 0 && !isLoading" title="No Pool Data Available" />
+        <div
+          v-else
+          class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 pb-8"
+        >
+          <PoolCard
+            v-for="pool in pools"
+            :key="pool.id"
+            :pool="pool"
+            @refresh="fetchData"
+            @click="handlePoolClick"
+          />
+        </div>
       </div>
     </div>
 

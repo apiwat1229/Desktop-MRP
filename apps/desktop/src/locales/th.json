@@ -120,6 +120,8 @@
       "labOrders": "ใบงานสั่งผลิต",
       "jobOrderList": "รายการใบสั่งผลิต",
       "jobOrderCreate": "สร้างใบสั่งผลิต",
+      "rawMaterialPlanList": "รายการแผนรับวัตถุดิบ",
+      "rawMaterialPlanCreate": "สร้างแผนรับวัตถุดิบ",
       "editPlan": "แก้ไขแผน",
       "editJobOrder": "แก้ไขใบสั่งผลิต"
     },
@@ -143,6 +145,7 @@
       "avgPri": "เฉลี่ย PRI",
       "grade": "เกรด",
       "netWeight": "น้ำหนักเนื้อยางแห้ง",
+      "weight": "น้ำหนัก",
       "date": "วันที่",
       "switchToNormal": "เปลี่ยนกลับเป็นโหมดการผลิตแบบปกติหรือไม่?",
       "switchTo24Hr": "เปิดใช้งานโหมดการผลิต 24 ชั่วโมงหรือไม่?",
@@ -258,6 +261,14 @@
         "selectPallet": "เลือกพาเลท",
         "selectDate": "เลือกวันที่"
       }
+    },
+    "jobOrderDetails": {
+      "productionAllocation": "การจัดสรรชุดการผลิต",
+      "mapBatch": "ข้อมูลชุดการผลิตที่จัดสรร",
+      "selectBatch": "เลือกชุดการผลิต",
+      "noAllocation": "ยังไม่มีการจัดสรรชุดการผลิตสำหรับงานนี้",
+      "mappedDate": "วันที่จัดสรร",
+      "map": "จัดสรร"
     }
   },
   "production": {
@@ -308,6 +319,15 @@
       "totalOrders": "ใบสั่งผลิตทั้งหมด",
       "activeJobs": "ใบงานที่กำลังทำ",
       "completed": "เสร็จสมบูรณ์"
+    },
+    "ratio": "อัตราส่วน",
+    "accumulatedSamples": "จำนวนตัวอย่างสะสม",
+    "totalSamples": "จำนวนตัวอย่างรวม",
+    "saveDraft": "บันทึกฉบับร่าง",
+    "submitReport": "ส่งรายงาน",
+    "shifts": {
+      "first": "กะที่ 1",
+      "second": "กะที่ 2"
     }
   },
   "services": {

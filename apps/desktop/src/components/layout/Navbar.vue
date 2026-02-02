@@ -47,7 +47,6 @@ import {
   Bell,
   BellOff,
   Calendar as CalendarIcon,
-  LayoutDashboard,
   LogOut,
   Menu,
   RotateCw,
@@ -675,23 +674,7 @@ onUnmounted(() => {
               </div>
             </div>
 
-            <!-- Contextual Menu -->
             <div class="mt-2 space-y-0.5 p-1">
-              <DropdownMenuItem
-                v-if="isAdmin"
-                @click="router.push({ name: 'AdminDashboard' })"
-                class="flex items-center h-10 px-3 rounded-lg focus:bg-primary/10 group cursor-pointer"
-              >
-                <div
-                  class="h-7 w-7 rounded-md bg-blue-500/10 flex items-center justify-center transition-colors group-focus:bg-blue-500/20"
-                >
-                  <LayoutDashboard class="h-4 w-4 text-blue-600" />
-                </div>
-                <span class="text-sm font-medium ml-3">Admin Control Panel</span>
-              </DropdownMenuItem>
-
-              <div class="h-px bg-border/40 my-1 mx-2"></div>
-
               <DropdownMenuItem
                 @click="handleLogout"
                 class="flex items-center h-10 px-3 rounded-lg text-destructive focus:bg-destructive/10 cursor-pointer transition-colors group"

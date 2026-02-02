@@ -467,18 +467,7 @@ watch(selectedSlot, (newSlot) => {
 </script>
 
 <template>
-  <div class="h-full flex-1 flex-col space-y-4 p-4 md:flex">
-    <!-- Header -->
-    <div class="flex items-center justify-between space-y-2">
-      <div class="flex items-center gap-3">
-        <!-- Controls moved to Navbar -->
-      </div>
-
-      <div class="flex items-center space-x-2">
-        <!-- Add Booking button moved to list -->
-      </div>
-    </div>
-
+  <div class="h-full flex-1 flex-col space-y-4 pt-1 pb-4 px-4 md:flex">
     <!-- Filters/Selection -->
     <Card class="p-3">
       <div class="flex flex-col lg:flex-row gap-6 items-center justify-between">

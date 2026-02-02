@@ -117,7 +117,9 @@
       "cuplumpPool": "Cuplump Pool",
       "jobOrderList": "Job Orders",
       "jobOrderCreate": "Create Job Order",
-      "rawMaterialPlanList": "Raw Material Plan"
+      "planList": "Raw Material Plan List",
+      "rawMaterialPlanList": "Raw Material Plan",
+      "rawMaterialPlanCreate": "Create Raw Material Plan"
     },
     "searchPlaceholder": "Search items...",
     "pickDate": "Pick a date",
@@ -139,6 +141,7 @@
       "avgPri": "Avg PRI",
       "grade": "Grade",
       "netWeight": "Net Weight",
+      "weight": "Weight",
       "date": "Date",
       "switchToNormal": "Switch back to Normal production mode?",
       "switchTo24Hr": "Switch to 24 HR Production Mode?",
@@ -254,6 +257,14 @@
         "selectPallet": "Select Pallet",
         "selectDate": "Select date"
       }
+    },
+    "jobOrderDetails": {
+      "productionAllocation": "PRODUCTION BATCH ALLOCATION",
+      "mapBatch": "ALLOCATED BATCH DATA",
+      "selectBatch": "Select Production Batch",
+      "noAllocation": "No production batches allocated to this job.",
+      "mappedDate": "Allocation Date",
+      "map": "Map Batch"
     }
   },
   "production": {
@@ -306,6 +317,12 @@
       "totalOrders": "Total Orders",
       "activeJobs": "Active Jobs",
       "completed": "Completed"
+    },
+    "totalSamples": "Total Samples",
+    "accumulatedSamples": "Accumulated Samples",
+    "shifts": {
+      "first": "First Shift",
+      "second": "Second Shift"
     }
   },
   "services": {
