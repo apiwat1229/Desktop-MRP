@@ -370,6 +370,7 @@ import { onUnmounted } from 'vue';
             <JobOrderDetails
               v-if="selectedJobOrder"
               :job-order="selectedJobOrder"
+              :readonly="isReadonly"
               @back="activeTab = 'list'"
               @updated="selectedJobOrder = $event"
             />

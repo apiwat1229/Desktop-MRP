@@ -1,6 +1,7 @@
 {
   "common": {
     "save": "Save",
+    "back": "Back",
     "cancel": "Cancel",
     "delete": "Delete",
     "view": "View",
@@ -78,7 +79,6 @@
     "slot": "Slot",
     "supplier": "Supplier",
     "decimalLimit": "Maximum {n} decimal places",
-    "back": "Back",
     "all": "All",
     "complete": "Complete",
     "incomplete": "Incomplete"
@@ -292,11 +292,14 @@
     "ratioCutting": "Cutting",
     "weightPalletRemained": "Weight Pallet Remained (kg)",
     "sampleAccum": "Accumulated Samples (Lot)",
+    "ratio": "Ratio",
+    "accumulatedSamples": "Accumulated Samples",
+    "totalSamples": "Total Samples",
     "pallet": "Pallet {n}",
     "table": {
       "startTime": "Time",
       "palletType": "Pallet Type",
-      "lotNo": "Lot No",
+      "lotNo": "Lot Number",
       "weight": "Weight Pallet {n}",
       "sampleCount": "Sample Count",
       "totalSample": "Total Sample"
@@ -318,11 +321,9 @@
       "activeJobs": "Active Jobs",
       "completed": "Completed"
     },
-    "totalSamples": "Total Samples",
-    "accumulatedSamples": "Accumulated Samples",
     "shifts": {
-      "first": "First Shift",
-      "second": "Second Shift"
+      "first": "1st",
+      "second": "2nd"
     }
   },
   "services": {

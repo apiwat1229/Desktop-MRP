@@ -43,6 +43,7 @@ const { t } = useI18n();
 
 const props = defineProps<{
   jobOrder: JobOrder;
+  readonly?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -349,7 +350,7 @@ onMounted(() => {
                 {{ t('qa.jobOrderDetails.productionAllocation') }}
               </h3>
 
-              <Dialog v-model:open="isAddDialogOpen">
+              <Dialog v-model:open="isAddDialogOpen" v-if="!readonly">
                 <DialogTrigger as-child>
                   <Button size="sm" class="font-black gap-2 shadow-lg h-9 px-4">
                     <Plus class="w-4 h-4" />
@@ -469,7 +470,7 @@ onMounted(() => {
                     <TableHead class="font-black text-[10px] uppercase text-center">{{
                       t('production.stats.totalPallets')
                     }}</TableHead>
-                    <TableHead class="w-[60px]"></TableHead>
+                    <TableHead class="w-[60px]" v-if="!readonly"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -502,7 +503,7 @@ onMounted(() => {
                     <TableCell class="text-center font-black text-slate-900">{{
                       log.quantity
                     }}</TableCell>
-                    <TableCell>
+                    <TableCell v-if="!readonly">
                       <Button
                         variant="ghost"
                         size="icon"

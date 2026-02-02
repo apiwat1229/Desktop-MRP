@@ -13,6 +13,8 @@ const props = defineProps<{
   class?: string;
   buttonClass?: string;
   mode?: 'decimal' | 'lot-number';
+  maxLength?: number;
+  prefix?: string;
 }>();
 
 const emit = defineEmits(['update:modelValue']);
@@ -28,7 +30,7 @@ const isOpen = ref(false);
           variant="outline"
           :disabled="props.disabled"
           :class="[
-            'w-full justify-between h-10 border-input font-bold text-slate-700 bg-white hover:bg-slate-50/50',
+            'w-full justify-center h-10 border-input font-bold text-slate-700 bg-white hover:bg-slate-50/50',
             props.buttonClass,
           ]"
         >
@@ -46,6 +48,8 @@ const isOpen = ref(false);
           @update:model-value="emit('update:modelValue', $event)"
           :title="props.title"
           :mode="props.mode"
+          :max-length="props.maxLength"
+          :prefix="props.prefix"
           @close="isOpen = false"
         />
       </PopoverContent>

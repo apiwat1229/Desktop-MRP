@@ -1,6 +1,7 @@
 {
   "common": {
     "save": "บันทึก",
+    "back": "ย้อนกลับ",
     "cancel": "ยกเลิก",
     "delete": "ลบ",
     "view": "ดู",
@@ -79,7 +80,6 @@
     "slot": "ช่วงเวลา",
     "supplier": "ผู้ส่ง/ร้านค้า",
     "decimalLimit": "กรอกทศนิยมได้ไม่เกิน {n} ตำแหน่ง",
-    "back": "ย้อนกลับ",
     "all": "ทั้งหมด",
     "complete": "เสร็จสิ้น",
     "incomplete": "ยังไม่เสร็จ"
@@ -298,7 +298,7 @@
     "table": {
       "startTime": "เวลา",
       "palletType": "ประเภทพาเลท",
-      "lotNo": "ล็อตที่",
+      "lotNo": "Lot Number",
       "weight": "น้ำหนักพาเลท {n}",
       "sampleCount": "จำนวนตัวอย่าง",
       "totalSample": "รวมตัวอย่าง"
@@ -326,8 +326,8 @@
     "saveDraft": "บันทึกฉบับร่าง",
     "submitReport": "ส่งรายงาน",
     "shifts": {
-      "first": "กะที่ 1",
-      "second": "กะที่ 2"
+      "first": "1st",
+      "second": "2nd"
     }
   },
   "services": {

@@ -8,26 +8,39 @@ const props = withDefaults(
     modelValue: number | string;
     title?: string;
     mode?: 'decimal' | 'lot-number';
+    maxLength?: number;
+    prefix?: string;
   }>(),
   {
     mode: 'decimal',
+    prefix: '',
   }
 );
 
 const emit = defineEmits(['update:modelValue', 'close']);
 
-const displayValue = ref(props.modelValue?.toString() || '0');
+const displayValue = ref(props.modelValue?.toString() || props.prefix || '0');
 
 watch(
   () => props.modelValue,
   (newVal) => {
-    displayValue.value = newVal?.toString() || '0';
+    displayValue.value = newVal?.toString() || props.prefix || '0';
   }
 );
 
 const handleNumber = (num: string) => {
+  if (
+    props.maxLength &&
+    displayValue.value.length >= props.maxLength &&
+    displayValue.value !== '0'
+  ) {
+    return;
+  }
+
   if (displayValue.value === '0' && num !== '.') {
     displayValue.value = num;
+  } else if (props.prefix && displayValue.value === props.prefix && num !== '.') {
+    displayValue.value += num;
   } else {
     // Prevent multiple decimals
     if (num === '.' && displayValue.value.includes('.')) return;
@@ -37,16 +50,20 @@ const handleNumber = (num: string) => {
 };
 
 const handleBackspace = () => {
+  if (props.prefix && displayValue.value.length <= props.prefix.length) {
+    return;
+  }
+
   if (displayValue.value.length > 1) {
     displayValue.value = displayValue.value.slice(0, -1);
   } else {
-    displayValue.value = '0';
+    displayValue.value = props.prefix || '0';
   }
   updateModel();
 };
 
 const handleClear = () => {
-  displayValue.value = '0';
+  displayValue.value = props.prefix || '0';
   updateModel();
 };
 

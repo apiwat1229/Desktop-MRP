@@ -34,18 +34,19 @@ import {
 import Time24hPicker from '@/components/ui/time-picker/Time24hPicker.vue';
 import { usePermissions } from '@/composables/usePermissions';
 import { productionReportsApi, type ProductionReport } from '@/services/productionReports';
+import { useAuthStore } from '@/stores/auth';
 import { CalendarDate, DateFormatter, getLocalTimeZone, parseDate } from '@internationalized/date';
 import { CalendarIcon, Check, Plus, Trash2 } from 'lucide-vue-next';
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { toast } from 'vue-sonner';
-
+const t = useI18n().t;
+const authStore = useAuthStore();
 const props = defineProps<{
   initialData?: ProductionReport;
 }>();
 
 const emit = defineEmits(['saved', 'cancel']);
-const { t } = useI18n();
 const { hasPermission, isAdmin } = usePermissions();
 
 const canUpdate = computed(() => isAdmin.value || hasPermission('production:update'));
@@ -60,6 +61,7 @@ const isReadOnly = computed(() => {
 const canRevert = computed(() => isReadOnly.value && canApprove.value);
 
 const form = reactive<ProductionReport>({
+  id: undefined,
   dryerName: 'Dryer C',
   bookNo: '',
   pageNo: '',
@@ -70,11 +72,6 @@ const form = reactive<ProductionReport>({
   ratioUSS: 0,
   ratioCutting: 0,
   weightPalletRemained: 0,
-  sampleAccum1: 4,
-  sampleAccum2: 7,
-  sampleAccum3: 11,
-  sampleAccum4: 14,
-  sampleAccum5: 18,
   rows: [],
   baleBagLotNo: '',
   status: 'DRAFT',
@@ -116,11 +113,30 @@ watch(productionDateObject, (newVal) => {
   }
 });
 
+const lotNoPrefix = computed(() => {
+  if (!form.grade || !form.productionDate) return '';
+
+  // Grade: last 2 characters (e.g., STR20 -> 20)
+  const gradeSuffix = form.grade.slice(-2);
+
+  // Date parsing
+  const date = new Date(form.productionDate);
+  if (isNaN(date.getTime())) return '';
+
+  // Year: last 2 digits (e.g., 2026 -> 26)
+  const yearSuffix = date.getFullYear().toString().slice(-2);
+
+  // Day: 2 digits with leading zero (e.g., 2 -> 02)
+  const daySuffix = date.getDate().toString().padStart(2, '0');
+
+  return `${gradeSuffix}${yearSuffix}${daySuffix}`;
+});
+
 const addRow = () => {
   form.rows.push({
     startTime: '',
     palletType: 'Blue',
-    lotNo: '',
+    lotNo: lotNoPrefix.value,
     weight1: 35,
     weight2: 35,
     weight3: 35,
@@ -170,14 +186,23 @@ const totalBales = computed(() => {
 const handleSave = async (status: 'DRAFT' | 'SUBMITTED') => {
   try {
     form.status = status;
-    if (props.initialData?.id) {
-      await productionReportsApi.update(props.initialData.id, form);
+    if (props.initialData?.id || form.id) {
+      const data = await productionReportsApi.update(
+        props.initialData?.id || (form.id as string),
+        form
+      );
+      Object.assign(form, data);
       toast.success(t('common.updateSuccess'));
     } else {
-      await productionReportsApi.create(form);
+      const data = await productionReportsApi.create(form);
+      Object.assign(form, data);
+      form.id = data.id;
       toast.success(t('common.saveSuccess'));
     }
-    emit('saved');
+
+    if (status === 'SUBMITTED') {
+      emit('saved');
+    }
   } catch (error: any) {
     console.error('Failed to save report:', error);
     toast.error(error.response?.data?.message || t('common.errorSave'));
@@ -220,7 +245,48 @@ onMounted(() => {
   } else {
     // Add 1 empty row by default
     for (let i = 0; i < 1; i++) addRow();
+
+    // Auto-fill Issued By with current user name
+    if (authStore.user) {
+      form.issuedBy = `${authStore.user.firstName} ${authStore.user.lastName || ''}`.trim();
+    }
   }
+});
+
+// Auto-calculate Sample Count based on last filled pallet weight
+// Hardcoded sample values: [4, 7, 11, 14, 18]
+const SAMPLE_ACCUM_VALUES = [4, 7, 11, 14, 18];
+
+watch(
+  [() => form.rows],
+  () => {
+    form.rows.forEach((row) => {
+      let lastPalletIndex = 0;
+      if (parseFloat(row.weight5?.toString() || '0') > 0) lastPalletIndex = 5;
+      else if (parseFloat(row.weight4?.toString() || '0') > 0) lastPalletIndex = 4;
+      else if (parseFloat(row.weight3?.toString() || '0') > 0) lastPalletIndex = 3;
+      else if (parseFloat(row.weight2?.toString() || '0') > 0) lastPalletIndex = 2;
+      else if (parseFloat(row.weight1?.toString() || '0') > 0) lastPalletIndex = 1;
+
+      if (lastPalletIndex > 0) {
+        row.sampleCount = SAMPLE_ACCUM_VALUES[lastPalletIndex - 1];
+      }
+    });
+  },
+  { deep: true }
+);
+
+// Watch for Grade or Date changes to update existing row lot prefixes
+watch(lotNoPrefix, (newPrefix, oldPrefix) => {
+  if (!newPrefix) return;
+
+  form.rows.forEach((row) => {
+    // Only update if it was empty OR matched the previous prefix exactly
+    // (Prevents overwriting manual entries like "202602/1")
+    if (!row.lotNo || (oldPrefix && row.lotNo === oldPrefix)) {
+      row.lotNo = newPrefix;
+    }
+  });
 });
 </script>
 
@@ -282,128 +348,54 @@ onMounted(() => {
                 </SelectContent>
               </Select>
             </div>
-            <div class="space-y-2">
-              <Label>{{ t('production.weightPalletRemained') }}</Label>
-              <KeypadInput
-                v-model="form.weightPalletRemained"
-                :title="t('production.weightPalletRemained')"
-                unit="kg"
-                :disabled="isReadOnly"
-              />
-            </div>
-          </div>
-
-          <!-- Ratios and Samples -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="space-y-4 bg-white p-6 rounded-xl border shadow-sm">
-              <h3 class="font-medium flex items-center gap-2 text-primary">
-                <div class="w-1 h-5 bg-primary rounded-full" />
-                {{ t('production.ratio') }}
-              </h3>
-              <div class="grid grid-cols-3 gap-4">
-                <div class="space-y-1">
-                  <Label class="text-xs text-muted-foreground">{{ t('production.ratioCL') }}</Label>
+            <div class="space-y-2 col-span-1">
+              <Label class="text-xs">{{ t('production.ratio') }} (CL / USS / Cut)</Label>
+              <div class="flex items-center gap-2 h-10">
+                <div class="flex-1 relative">
                   <KeypadInput
                     v-model="form.ratioCL"
                     :title="t('production.ratioCL')"
                     :disabled="isReadOnly"
+                    button-class="h-9 px-2 text-xs text-center"
+                    :max-length="2"
                   />
                 </div>
-                <div class="space-y-1">
-                  <Label class="text-xs text-muted-foreground">{{
-                    t('production.ratioUSS')
-                  }}</Label>
+                <div class="flex-1 relative">
                   <KeypadInput
                     v-model="form.ratioUSS"
                     :title="t('production.ratioUSS')"
                     :disabled="isReadOnly"
+                    button-class="h-9 px-2 text-xs text-center"
+                    :max-length="2"
                   />
                 </div>
-                <div class="space-y-1">
-                  <Label class="text-xs text-muted-foreground">{{
-                    t('production.ratioCutting')
-                  }}</Label>
+                <div class="flex-1 relative">
                   <KeypadInput
                     v-model="form.ratioCutting"
                     :title="t('production.ratioCutting')"
                     :disabled="isReadOnly"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div class="space-y-4 bg-white p-6 rounded-xl border shadow-sm">
-              <h3 class="font-medium flex items-center gap-2 text-primary">
-                <div class="w-1 h-5 bg-primary rounded-full" />
-                {{ t('production.accumulatedSamples') }}
-              </h3>
-              <div class="grid grid-cols-5 gap-2">
-                <div class="space-y-1">
-                  <Label class="text-[10px] text-muted-foreground uppercase">{{
-                    t('production.pallet', { n: 1 })
-                  }}</Label>
-                  <KeypadInput
-                    v-model="form.sampleAccum1"
-                    :title="t('production.pallet', { n: 1 })"
-                    :disabled="isReadOnly"
-                  />
-                </div>
-                <div class="space-y-1">
-                  <Label class="text-[10px] text-muted-foreground uppercase">{{
-                    t('production.pallet', { n: 2 })
-                  }}</Label>
-                  <KeypadInput
-                    v-model="form.sampleAccum2"
-                    :title="t('production.pallet', { n: 2 })"
-                    :disabled="isReadOnly"
-                  />
-                </div>
-                <div class="space-y-1">
-                  <Label class="text-[10px] text-muted-foreground uppercase">{{
-                    t('production.pallet', { n: 3 })
-                  }}</Label>
-                  <KeypadInput
-                    v-model="form.sampleAccum3"
-                    :title="t('production.pallet', { n: 3 })"
-                    :disabled="isReadOnly"
-                  />
-                </div>
-                <div class="space-y-1">
-                  <Label class="text-[10px] text-muted-foreground uppercase">{{
-                    t('production.pallet', { n: 4 })
-                  }}</Label>
-                  <KeypadInput
-                    v-model="form.sampleAccum4"
-                    :title="t('production.pallet', { n: 4 })"
-                    :disabled="isReadOnly"
-                  />
-                </div>
-                <div class="space-y-1">
-                  <Label class="text-[10px] text-muted-foreground uppercase">{{
-                    t('production.pallet', { n: 5 })
-                  }}</Label>
-                  <KeypadInput
-                    v-model="form.sampleAccum5"
-                    :title="t('production.pallet', { n: 5 })"
-                    :disabled="isReadOnly"
+                    button-class="h-9 px-2 text-xs text-center"
+                    :max-length="2"
                   />
                 </div>
               </div>
             </div>
           </div>
+
+          <!-- Accumulated Samples section removed as per instruction -->
 
           <!-- Table -->
           <div class="rounded-xl border shadow-sm bg-white overflow-hidden">
             <Table>
               <TableHeader class="bg-muted/30">
                 <TableRow>
-                  <TableHead class="w-24 whitespace-nowrap">{{
+                  <TableHead class="w-24 whitespace-nowrap text-center">{{
                     t('production.table.startTime')
                   }}</TableHead>
-                  <TableHead class="w-32 whitespace-nowrap">{{
+                  <TableHead class="w-32 whitespace-nowrap text-center">{{
                     t('production.table.palletType')
                   }}</TableHead>
-                  <TableHead class="w-40 whitespace-nowrap">{{
+                  <TableHead class="w-40 whitespace-nowrap text-center">{{
                     t('production.table.lotNo')
                   }}</TableHead>
                   <TableHead v-for="i in 5" :key="i" class="text-center w-24 whitespace-nowrap">{{
@@ -412,91 +404,100 @@ onMounted(() => {
                   <TableHead class="w-24 text-center whitespace-nowrap">{{
                     t('production.table.sampleCount')
                   }}</TableHead>
-                  <TableHead class="w-12"></TableHead>
+                  <TableHead class="w-12 text-center"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 <TableRow v-for="(row, index) in form.rows" :key="index">
-                  <TableCell>
-                    <Time24hPicker v-model="row.startTime" class="w-24" :disabled="isReadOnly" />
+                  <TableCell class="text-center">
+                    <div class="flex justify-center">
+                      <Time24hPicker v-model="row.startTime" class="w-24" :disabled="isReadOnly" />
+                    </div>
                   </TableCell>
-                  <TableCell>
-                    <Select v-model="row.palletType" :disabled="isReadOnly">
-                      <SelectTrigger class="h-8 w-28">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="MB5">MB5</SelectItem>
-                        <SelectItem value="MB4">MB4</SelectItem>
-                        <SelectItem value="GPS">GPS</SelectItem>
-                        <SelectItem value="Blue">Blue</SelectItem>
-                      </SelectContent>
-                    </Select>
+                  <TableCell class="text-center">
+                    <div class="flex justify-center">
+                      <Select v-model="row.palletType" :disabled="isReadOnly">
+                        <SelectTrigger class="h-8 w-28 text-center">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="MB5">MB5</SelectItem>
+                          <SelectItem value="MB4">MB4</SelectItem>
+                          <SelectItem value="GPS">GPS</SelectItem>
+                          <SelectItem value="Blue">Blue</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell class="text-center">
                     <KeypadInput
                       v-model="row.lotNo"
                       :title="t('production.table.lotNo')"
-                      button-class="h-8"
+                      button-class="h-8 text-center"
                       mode="lot-number"
                       :disabled="isReadOnly"
+                      :prefix="lotNoPrefix"
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell class="text-center">
                     <KeypadInput
                       v-model="row.weight1"
                       :title="t('production.pallet', { n: 1 })"
                       button-class="h-8 text-center"
                       :disabled="isReadOnly"
+                      :max-length="2"
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell class="text-center">
                     <KeypadInput
                       v-model="row.weight2"
                       :title="t('production.pallet', { n: 2 })"
                       button-class="h-8 text-center"
                       :disabled="isReadOnly"
+                      :max-length="2"
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell class="text-center">
                     <KeypadInput
                       v-model="row.weight3"
                       :title="t('production.pallet', { n: 3 })"
                       button-class="h-8 text-center"
                       :disabled="isReadOnly"
+                      :max-length="2"
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell class="text-center">
                     <KeypadInput
                       v-model="row.weight4"
                       :title="t('production.pallet', { n: 4 })"
                       button-class="h-8 text-center"
                       :disabled="isReadOnly"
+                      :max-length="2"
                     />
                   </TableCell>
-                  <TableCell>
+                  <TableCell class="text-center">
                     <KeypadInput
                       v-model="row.weight5"
                       :title="t('production.pallet', { n: 5 })"
                       button-class="h-8 text-center"
                       :disabled="isReadOnly"
+                      :max-length="2"
                     />
                   </TableCell>
-                  <TableCell>
-                    <KeypadInput
-                      v-model="row.sampleCount"
-                      :title="t('production.table.sampleCount')"
-                      button-class="h-8 text-center"
-                      :disabled="isReadOnly"
-                    />
+                  <TableCell class="text-center">
+                    <div
+                      class="h-8 w-full flex items-center justify-center font-bold text-slate-700 bg-slate-50/50 border rounded-md"
+                    >
+                      {{ row.sampleCount }}
+                    </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell class="text-center">
                     <AlertDialog v-if="!isReadOnly">
                       <AlertDialogTrigger as-child>
                         <Button
                           variant="ghost"
                           size="icon"
-                          class="h-8 w-8 text-destructive hover:bg-destructive/10"
+                          class="h-8 w-8 text-destructive hover:bg-destructive/10 mx-auto flex"
                         >
                           <Trash2 class="h-4 w-4" />
                         </Button>
@@ -618,103 +619,75 @@ onMounted(() => {
 
         <!-- Actions -->
         <div class="flex items-center justify-between pt-4 border-t">
-          <!-- Left: Delete & Revert -->
+          <!-- Left: Delete & Submit (Move Submit to Left) -->
           <div class="flex items-center gap-3">
-            <AlertDialog v-if="props.initialData?.id && !isReadOnly && canDelete">
-              <AlertDialogTrigger as-child>
-                <Button variant="ghost" class="text-destructive hover:bg-destructive/10 gap-2">
-                  <Trash2 class="h-4 w-4" />
-                  {{ t('common.delete') }}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>{{ t('common.deleteConfirm') }}</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {{ t('common.deleteWarning') }}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{{ t('common.cancel') }}</AlertDialogCancel>
-                  <AlertDialogAction
-                    @click="handleDelete"
-                    class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    {{ t('common.delete') }}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-
-            <!-- Revert to Draft (only for Submitted + authorized) -->
-            <AlertDialog v-if="canRevert">
-              <AlertDialogTrigger as-child>
-                <Button
-                  variant="outline"
-                  class="text-orange-600 border-orange-200 hover:bg-orange-50 gap-2"
-                >
-                  <Plus class="h-4 w-4 rotate-45" />
-                  Revert to Draft
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Revert to Draft?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will unlock the report for editing. Are you sure you want to continue?
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{{ t('common.cancel') }}</AlertDialogCancel>
-                  <AlertDialogAction
-                    @click="handleRevertToDraft"
-                    class="bg-orange-600 hover:bg-orange-700"
-                  >
-                    Confirm Revert
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-
-          <!-- Right: Actions -->
-          <div class="flex items-center gap-3">
-            <Button variant="ghost" @click="emit('cancel')">
-              {{ isReadOnly ? t('common.close') : t('common.cancel') }}
-            </Button>
-
-            <template v-if="(!isReadOnly && canUpdate) || (!props.initialData?.id && canCreate)">
-              <Button
-                variant="outline"
-                @click="handleSave('DRAFT')"
-                class="bg-white border-slate-200 shadow-sm"
-              >
-                {{ t('production.saveDraft') }}
-              </Button>
-
-              <AlertDialog>
+            <template v-if="!isReadOnly">
+              <!-- Delete Button -->
+              <AlertDialog v-if="(props.initialData?.id || form.id) && canDelete">
                 <AlertDialogTrigger as-child>
-                  <Button class="gap-2 shadow-sm shadow-primary/20">
-                    <Check class="h-4 w-4" />
-                    {{ t('production.submitReport') }}
+                  <Button variant="ghost" class="text-destructive hover:bg-destructive/10 gap-2">
+                    <Trash2 class="h-4 w-4" />
+                    {{ t('common.delete') }}
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>{{ t('common.confirm') }}</AlertDialogTitle>
+                    <AlertDialogTitle>{{ t('common.deleteConfirm') }}</AlertDialogTitle>
                     <AlertDialogDescription>
-                      {{ t('common.areYouSure') }}
+                      {{ t('common.deleteWarning') }}
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>{{ t('common.cancel') }}</AlertDialogCancel>
-                    <AlertDialogAction @click="handleSave('SUBMITTED')">
-                      {{ t('common.confirm') }}
+                    <AlertDialogAction
+                      @click="handleDelete"
+                      class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      {{ t('common.delete') }}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
+
+              <!-- Submit Button (Enabled only if saved as draft once) -->
+              <Button
+                v-if="props.initialData?.id || form.id"
+                @click="handleSave('SUBMITTED')"
+                class="bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-200 gap-2"
+                :disabled="!canUpdate"
+              >
+                <Check class="h-4 w-4" />
+                {{ t('production.submitReport') }}
+              </Button>
             </template>
+
+            <Button
+              v-if="isReadOnly && canRevert"
+              variant="outline"
+              @click="handleRevertToDraft"
+              class="gap-2"
+            >
+              Revert to Draft
+            </Button>
+          </div>
+
+          <!-- Right: Back & Save Draft -->
+          <div class="flex items-center gap-3">
+            <Button variant="ghost" @click="emit('cancel')">
+              {{ t('common.back') }}
+            </Button>
+
+            <Button
+              v-if="
+                !isReadOnly &&
+                ((props.initialData?.id && canUpdate) || (!props.initialData?.id && canCreate))
+              "
+              variant="outline"
+              @click="handleSave('DRAFT')"
+              class="bg-white border-slate-200 shadow-sm"
+            >
+              {{ t('production.saveDraft') }}
+            </Button>
           </div>
         </div>
 

@@ -1463,7 +1463,7 @@ onMounted(async () => {
                 variant="outline"
                 size="sm"
                 class="h-8 text-xs gap-1.5 px-4"
-                @click="router.back()"
+                @click="router.go(-1)"
               >
                 <ArrowLeft class="w-3.5 h-3.5" />
                 {{ t('common.back') }}
