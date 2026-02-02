@@ -111,7 +111,7 @@
     "tabs": {
       "clPoPri": "Cuplump PO / P30 / PRI",
       "clLab": "Cuplump Lab",
-      "clSummary": "Cuplump Incoming",
+      "clSummary": "สรุปข้อมูล Cuplump",
       "cuplumpPool": "บ่อยางก้อนถ้วย",
       "planList": "รายการแผน",
       "createPlan": "สร้างแผน",
@@ -650,7 +650,7 @@
       "menu": {
         "clPoPri": "Cuplump PO / P30 / PRI",
         "ussPoPri": "USS PO / PRI",
-        "clIncoming": "Cuplump Incoming",
+        "clIncoming": "สรุปข้อมูล Cuplump",
         "ussIncoming": "USS Incoming",
         "clLab": "Cuplump Lab"
       }

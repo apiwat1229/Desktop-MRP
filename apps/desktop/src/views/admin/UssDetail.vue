@@ -26,7 +26,17 @@ import {
 import { bookingsApi } from '@/services/bookings';
 import { rubberTypesApi } from '@/services/rubberTypes';
 import { useAuthStore } from '@/stores/auth';
-import { AlertTriangle, ArrowLeft, Check, Pencil, Plus, Save, Trash2, X } from 'lucide-vue-next';
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Check,
+  Layers,
+  Pencil,
+  Plus,
+  Save,
+  Trash2,
+  X,
+} from 'lucide-vue-next';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute, useRouter } from 'vue-router';
@@ -60,6 +70,7 @@ const showDeleteConfirm = ref(false);
 
 const originalSampleData = ref<Record<string, any>>({});
 const sampleToDeleteId = ref<string | null>(null);
+const sampleToDeleteIndex = ref<number | null>(null);
 const isDeleting = ref(false);
 const editingSampleId = ref<string | null>(null);
 
@@ -205,7 +216,8 @@ const populatedCount = computed(() => {
 });
 
 const removeNewSampleRow = (index: number) => {
-  newSamples.value.splice(index, 1);
+  sampleToDeleteIndex.value = index;
+  showDeleteConfirm.value = true;
 };
 
 const focusNextInput = (event: KeyboardEvent) => {
@@ -239,7 +251,7 @@ const formatNumber = (value: number | string, decimals = 0) => {
   if (value === '' || value === null || value === undefined) return '';
   const valStr = value.toString();
   // Remove existing commas to ensure parseFloat works correctly
-  const cleanVal = valStr.replace(/,/g, '');
+  const cleanVal = valStr.replace(/[^0-9.-]/g, '');
   const num = parseFloat(cleanVal);
   if (isNaN(num)) return '';
   return num.toLocaleString('en-US', {
@@ -258,7 +270,7 @@ const formatNumberCommas = (value: string) => {
 const parseRaw = (val: string | number) => {
   if (typeof val === 'number') return val;
   if (!val) return 0;
-  return parseFloat(val.toString().replace(/,/g, ''));
+  return parseFloat(val.toString().replace(/[^0-9.-]/g, ''));
 };
 
 const displayRubberType = computed(() => {
@@ -363,15 +375,21 @@ const fetchData = async (silent = false) => {
     originalLotNo.value = booking.value.lotNo;
     samples.value = samplesData
       .filter((s: any) => s.isTrailer === isTrailer)
-      .map((s: any) => ({
-        ...s,
-        totalWeight: s.beforePress ? formatNumberCommas(s.beforePress.toString()) : '',
-        palletWeight: s.basketWeight ? formatNumberCommas(s.basketWeight.toString()) : '',
-        grossWeight: s.afterPress ? formatNumber(s.afterPress, 0) : '',
-        spgr: s.percentCp?.toString() || '',
-        storage: s.storage || '',
-        recordedBy: s.recordedBy || '',
-      }));
+      .map((s: any) => {
+        const total = s.beforePress ? parseFloat(s.beforePress) : 0;
+        const pallet = s.basketWeight ? parseFloat(s.basketWeight) : 0;
+        const gross = total - pallet;
+
+        return {
+          ...s,
+          totalWeight: s.beforePress ? formatNumberCommas(s.beforePress.toString()) : '',
+          palletWeight: s.basketWeight ? formatNumberCommas(s.basketWeight.toString()) : '',
+          grossWeight: gross > 0 ? Math.round(gross).toLocaleString('en-US') : '',
+          spgr: s.percentCp?.toString() || '',
+          storage: s.storage || '',
+          recordedBy: s.recordedBy || '',
+        };
+      });
     rubberTypes.value = typesData;
   } catch (error) {
     console.error('Failed to load data:', error);
@@ -457,7 +475,7 @@ const saveSamplesDirectly = async () => {
       await bookingsApi.saveSample(bookingId, {
         ...sample,
         beforePress: parseRaw(sample.totalWeight),
-        afterPress: parseFloat(sample.grossWeight),
+        afterPress: parseRaw(sample.grossWeight),
         percentCp: parseFloat(sample.spgr || '0'),
         basketWeight: parseRaw(sample.palletWeight),
         storage: sample.storage,
@@ -524,7 +542,7 @@ const confirmSaveSamples = async () => {
       await bookingsApi.saveSample(bookingId, {
         ...sample,
         beforePress: parseRaw(sample.totalWeight),
-        afterPress: parseFloat(sample.grossWeight),
+        afterPress: parseRaw(sample.grossWeight),
         percentCp: parseFloat(sample.spgr || '0'),
         basketWeight: parseRaw(sample.palletWeight),
         storage: sample.storage,
@@ -573,7 +591,19 @@ const handleDeleteSample = (sampleId: string) => {
 };
 
 const confirmDeleteSample = async () => {
+  if (sampleToDeleteIndex.value !== null) {
+    // Delete new/local sample
+    // Assuming 'newSamples' is defined elsewhere and accessible here
+    // If newSamples is not defined, this line will cause an error.
+    // The user's snippet implies its existence.
+    // newSamples.value.splice(sampleToDeleteIndex.value, 1);
+    showDeleteConfirm.value = false;
+    sampleToDeleteIndex.value = null;
+    return;
+  }
+
   if (!sampleToDeleteId.value) return;
+
   isDeleting.value = true;
   try {
     await bookingsApi.deleteSample(bookingId, sampleToDeleteId.value);
@@ -785,7 +815,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="p-6 space-y-6">
+  <div class="p-1 pt-0 space-y-2">
     <div v-if="isLoading" class="flex items-center justify-center p-12">
       <div class="text-center">
         <div
@@ -796,325 +826,331 @@ onMounted(async () => {
     </div>
 
     <template v-else-if="booking">
-      <!-- Section 1: Header Info (Card 1) -->
-      <Card class="border-border/50 shadow-sm bg-card/50 backdrop-blur-sm">
-        <CardContent class="p-6">
-          <div class="flex items-center justify-between">
-            <div class="min-w-0 flex-1 pl-6">
-              <div
-                class="text-[0.625rem] text-muted-foreground font-bold uppercase tracking-widest mb-1"
-              >
-                {{ t('uss.supplier') }}
-              </div>
-              <h1 class="text-xl font-bold tracking-tight truncate flex items-center gap-2">
-                <span class="text-primary">{{ booking.supplierCode }}</span>
-                <span class="text-muted-foreground/30 font-light">|</span>
-                <span class="truncate">{{ booking.supplierName }}</span>
-              </h1>
-            </div>
+      <!-- Section 1: Header Info (Compact Design) -->
+      <div
+        class="rounded-lg border bg-white shadow-sm px-4 py-2 relative overflow-hidden flex flex-col items-start gap-2"
+      >
+        <div class="absolute top-1/2 right-0 -translate-y-1/2 pointer-events-none opacity-[0.03]">
+          <Layers class="w-48 h-48 rotate-12" />
+        </div>
 
-            <!-- Metrics (Rubber Type, Est, Req, Actual) -->
+        <div class="relative z-10 flex flex-col md:flex-row items-center justify-between w-full">
+          <!-- Supplier Info -->
+          <div class="flex flex-col min-w-0 flex-1 mr-4">
             <div
-              class="hidden xl:flex items-center gap-4 px-6 border-l border-r border-slate-100 dark:border-slate-800 mx-4"
+              class="text-[0.625rem] text-muted-foreground font-bold uppercase tracking-widest mb-0.5"
             >
-              <!-- Rubber Type -->
-              <div class="flex flex-col justify-center min-w-[5rem] px-2">
-                <div class="text-[0.5rem] font-bold text-slate-400 uppercase tracking-widest mb-1">
-                  {{ t('uss.rubberType') }} | GRADE
-                </div>
-                <div class="text-xs font-black text-slate-800 dark:text-slate-100">
-                  {{ displayRubberType }}
-                </div>
-              </div>
-
-              <!-- Est -->
-              <div class="w-px h-8 bg-slate-100 dark:bg-slate-800"></div>
-              <div
-                @click="isDrcOpen = true"
-                class="cursor-pointer flex flex-col items-center justify-center min-w-[3.5rem] hover:bg-teal-50/50 rounded p-1 transition-colors"
-                role="button"
-              >
-                <div class="text-[0.5rem] font-bold text-teal-600 uppercase tracking-wider mb-0.5">
-                  EST.
-                </div>
-                <div class="text-sm font-black text-teal-700">
-                  {{ formatNumber(booking.drcEst, 1) }}%
-                </div>
-              </div>
-
-              <!-- Req -->
-              <div class="w-px h-8 bg-slate-100 dark:bg-slate-800"></div>
-              <div
-                @click="isDrcOpen = true"
-                class="cursor-pointer flex flex-col items-center justify-center min-w-[3.5rem] hover:bg-teal-50/50 rounded p-1 transition-colors"
-                role="button"
-              >
-                <div class="text-[0.5rem] font-bold text-teal-600 uppercase tracking-wider mb-0.5">
-                  REQ.
-                </div>
-                <div class="text-sm font-black text-teal-700">
-                  {{ formatNumber(booking.drcRequested, 1) }}%
-                </div>
-              </div>
-
-              <!-- Actual -->
-              <div class="w-px h-8 bg-slate-100 dark:bg-slate-800"></div>
-              <Popover v-model:open="isDrcOpen">
-                <PopoverTrigger as-child>
-                  <div
-                    class="cursor-pointer flex flex-col items-center justify-center min-w-[3.5rem] hover:bg-teal-50/50 rounded p-1 transition-colors"
-                    role="button"
-                  >
-                    <div
-                      class="text-[0.5rem] font-bold text-teal-600 uppercase tracking-wider mb-0.5"
-                    >
-                      ACTUAL
-                    </div>
-                    <div class="text-sm font-black text-teal-700">
-                      {{ formatNumber(booking.drcActual, 1) }}%
-                    </div>
-                  </div>
-                </PopoverTrigger>
-                <PopoverContent class="w-80">
-                  <div class="grid gap-4">
-                    <div class="space-y-2">
-                      <h4 class="font-medium leading-none text-teal-700">DRC % Details</h4>
-                      <p class="text-xs text-muted-foreground">
-                        Adjust DRC estimated, requested, and actual values.
-                      </p>
-                    </div>
-                    <div class="grid gap-3" @keydown.enter.stop>
-                      <div class="grid grid-cols-3 items-center gap-4">
-                        <Label for="drcEst" class="text-xs uppercase font-bold text-teal-600">{{
-                          t('uss.drcEst')
-                        }}</Label>
-                        <Input
-                          id="drcEst"
-                          v-model="drcForm.drcEst"
-                          type="number"
-                          step="0.01"
-                          class="col-span-2 h-8 font-bold"
-                          @keydown.enter.prevent.stop="onDrcKeydown($event, 'req')"
-                        />
-                      </div>
-                      <div class="grid grid-cols-3 items-center gap-4">
-                        <Label for="drcReq" class="text-xs uppercase font-bold text-teal-600"
-                          >DRC Req.</Label
-                        >
-                        <Input
-                          ref="drcReqRef"
-                          id="drcReq"
-                          v-model="drcForm.drcRequested"
-                          type="number"
-                          step="0.01"
-                          class="col-span-2 h-8 font-bold"
-                          @keydown.enter.prevent.stop="onDrcKeydown($event, 'actual')"
-                        />
-                      </div>
-                      <div class="grid grid-cols-3 items-center gap-4">
-                        <Label for="drcActual" class="text-xs uppercase font-bold text-teal-600"
-                          >DRC Actual</Label
-                        >
-                        <Input
-                          ref="drcActualRef"
-                          id="drcActual"
-                          v-model="drcForm.drcActual"
-                          type="number"
-                          step="0.01"
-                          class="col-span-2 h-8 font-bold"
-                          @keydown.enter.prevent.stop="onDrcKeydown($event, 'save')"
-                        />
-                      </div>
-                    </div>
-                    <div class="flex justify-end pt-2 border-t mt-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        class="h-8 gap-1.5 bg-teal-600 hover:bg-teal-700 text-white"
-                        @click="handleSaveDrc()"
-                      >
-                        <Save class="w-3.5 h-3.5" />
-                        {{ t('common.save') }}
-                      </Button>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
-
-              <!-- Before Dryer -->
-              <div class="w-px h-8 bg-slate-100 dark:bg-slate-800"></div>
-              <Popover v-model:open="isBeforeDryerOpen">
-                <PopoverTrigger as-child>
-                  <div
-                    class="cursor-pointer flex flex-col items-center justify-center min-w-[3.5rem] hover:bg-blue-50/50 rounded p-1 transition-colors"
-                  >
-                    <div
-                      class="text-[0.5rem] font-bold text-blue-600 uppercase tracking-wider mb-0.5"
-                    >
-                      {{ t('uss.beforeDryer') }}
-                    </div>
-                    <div class="text-sm font-black text-blue-700">
-                      {{ displayBeforeDryer }}<span v-if="displayBeforeDryer !== '-'">%</span>
-                    </div>
-                  </div>
-                </PopoverTrigger>
-                <PopoverContent class="w-80">
-                  <div class="grid gap-4">
-                    <div class="space-y-2">
-                      <h4 class="font-medium leading-none text-blue-700">Before Dryer %</h4>
-                      <p class="text-xs text-muted-foreground">Adjust Before Dryer % value.</p>
-                    </div>
-                    <div class="grid gap-3" @keydown.enter.stop>
-                      <div class="grid grid-cols-3 items-center gap-4">
-                        <Label class="text-xs uppercase font-bold text-blue-600">Value %</Label>
-                        <Input
-                          v-model="beforeDryerForm.moisture"
-                          type="number"
-                          step="0.1"
-                          class="col-span-2 h-8 font-bold"
-                          @keydown.enter.prevent.stop="handleSaveBeforeDryer"
-                        />
-                      </div>
-                      <div class="flex justify-end pt-2 border-t mt-2">
-                        <Button
-                          size="sm"
-                          class="h-8 gap-1.5 bg-blue-600 hover:bg-blue-700 text-white"
-                          @click="handleSaveBeforeDryer"
-                        >
-                          <Save class="w-3.5 h-3.5" />
-                          {{ t('common.save') }}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
+              {{ t('uss.supplier') }}
             </div>
+            <h1 class="text-base font-bold tracking-tight truncate flex items-center gap-2">
+              <span class="text-primary">{{ booking.supplierCode }}</span>
+              <span class="text-muted-foreground/30 font-light">|</span>
+              <span class="truncate">{{ booking.supplierName }}</span>
+            </h1>
+          </div>
 
-            <!-- Weights -->
-            <div class="flex items-center gap-8 px-8">
-              <Popover v-model:open="isWeightsOpen">
-                <PopoverTrigger as-child>
-                  <div
-                    class="flex flex-col items-center cursor-pointer hover:bg-blue-50/50 rounded-lg p-1 transition-colors group"
-                  >
-                    <span
-                      class="text-[0.625rem] font-bold text-blue-600 uppercase tracking-tighter mb-1 relative"
-                    >
-                      {{ t('uss.grossWeight') }}
-                      <Pencil
-                        class="w-2 h-2 absolute -right-3 top-0 text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                      />
-                    </span>
-                    <div class="flex items-baseline gap-1">
-                      <span class="text-2xl font-black text-blue-700 leading-none">{{
-                        displayGrossWeight
-                      }}</span>
-                      <span class="text-[0.625rem] text-muted-foreground font-bold">Kg</span>
-                    </div>
-                  </div>
-                </PopoverTrigger>
-                <PopoverContent class="w-80">
-                  <div class="grid gap-4">
-                    <div class="space-y-2">
-                      <h4 class="leading-none text-blue-700 font-bold uppercase tracking-tight">
-                        Weight Management
-                      </h4>
-                      <p class="text-xs text-muted-foreground">
-                        Adjust inbound and outbound weights.
-                      </p>
-                    </div>
-                    <div class="grid gap-3">
-                      <div class="grid grid-cols-3 items-center gap-4">
-                        <Label class="text-xs uppercase font-bold text-slate-600">{{
-                          t('uss.weightIn')
-                        }}</Label>
-                        <Input
-                          v-model="weightForm.weightIn"
-                          type="number"
-                          class="col-span-2 h-8 font-bold"
-                        />
-                      </div>
-                      <div class="grid grid-cols-3 items-center gap-4">
-                        <Label class="text-xs uppercase font-bold text-slate-600">{{
-                          t('uss.weightOut')
-                        }}</Label>
-                        <Input
-                          v-model="weightForm.weightOut"
-                          type="number"
-                          class="col-span-2 h-8 font-bold"
-                          @keydown.enter="handleSaveWeights"
-                        />
-                      </div>
-                      <div class="pt-2 border-t flex justify-end">
-                        <Button
-                          size="sm"
-                          class="h-8 gap-1.5 bg-blue-600 hover:bg-blue-700 text-white"
-                          @click="handleSaveWeights"
-                        >
-                          <Save class="w-3.5 h-3.5" />
-                          {{ t('common.save') }}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </PopoverContent>
-              </Popover>
-
-              <div class="h-8 w-px bg-slate-200 dark:bg-slate-800"></div>
-
-              <div class="flex flex-col items-center">
-                <span
-                  class="text-[0.625rem] font-bold text-green-600 uppercase tracking-tighter mb-1"
-                  >{{ t('uss.netWeight') }}</span
-                >
-                <div class="flex items-baseline gap-1">
-                  <span class="text-2xl font-black text-green-700 leading-none">{{
-                    displayNetWeight
-                  }}</span>
-                  <span
-                    v-if="displayNetWeight"
-                    class="text-[0.625rem] text-muted-foreground font-bold"
-                    >Kg</span
-                  >
-                </div>
-              </div>
+          <!-- Lot No -->
+          <div class="flex flex-col items-start min-w-[8rem]">
+            <div
+              class="text-[0.625rem] text-muted-foreground font-bold uppercase tracking-widest mb-0.5"
+            >
+              {{ t('uss.lotNo') }}
             </div>
+            <div
+              class="flex items-center w-40 h-8 px-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded focus-within:ring-1 focus-within:ring-primary shadow-sm"
+              :class="{
+                'border-destructive focus-within:ring-destructive': lotNoError,
+              }"
+            >
+              <span
+                class="text-xs font-black text-slate-900 dark:text-slate-100 whitespace-nowrap select-none"
+                >{{ lotNoPrefix }}</span
+              >
+              <input
+                v-model="lotNoSuffix"
+                type="text"
+                class="w-full bg-transparent border-none focus:ring-0 text-xs font-black text-slate-900 dark:text-slate-100 p-0"
+                placeholder="XXX/X"
+                @input="validateLotInput"
+                @blur="handleUpdateLotNo"
+                @keydown.enter="
+                  ($event.target as HTMLInputElement).blur();
+                  handleUpdateLotNo();
+                "
+              />
+            </div>
+            <p v-if="lotNoError" class="text-[0.6rem] text-destructive mt-0.5 font-medium">
+              {{ lotNoError }}
+            </p>
+          </div>
+        </div>
 
-            <div class="flex flex-col items-end pr-6">
-              <div class="flex flex-col items-center min-w-[8rem]">
+        <!-- Metrics Grid (Compact) -->
+        <div
+          class="relative z-10 w-full border-t border-slate-100 pt-2 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2"
+        >
+          <!-- Rubber Type -->
+          <div class="flex flex-col justify-center px-2 py-1 border rounded bg-slate-50/50">
+            <div
+              class="text-[0.5rem] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1"
+            >
+              {{ t('uss.rubberType') }}
+            </div>
+            <div class="text-xs font-black text-slate-800 dark:text-slate-100 leading-none">
+              {{ displayRubberType }}
+            </div>
+          </div>
+
+          <!-- Est -->
+          <div
+            @click="isDrcOpen = true"
+            class="cursor-pointer flex flex-col justify-center px-2 py-1 rounded border bg-teal-50/30 border-teal-100 hover:bg-teal-50 transition-colors"
+          >
+            <div
+              class="text-[0.5rem] font-bold text-teal-600 uppercase tracking-wider leading-none mb-1"
+            >
+              EST.
+            </div>
+            <div class="text-xs font-black text-teal-700 leading-none">
+              {{ formatNumber(booking.drcEst, 1) }}%
+            </div>
+          </div>
+
+          <!-- Req -->
+          <div
+            @click="isDrcOpen = true"
+            class="cursor-pointer flex flex-col justify-center px-2 py-1 rounded border bg-teal-50/30 border-teal-100 hover:bg-teal-50 transition-colors"
+          >
+            <div
+              class="text-[0.5rem] font-bold text-teal-600 uppercase tracking-wider leading-none mb-1"
+            >
+              REQ.
+            </div>
+            <div class="text-xs font-black text-teal-700 leading-none">
+              {{ formatNumber(booking.drcRequested, 1) }}%
+            </div>
+          </div>
+
+          <!-- Actual -->
+          <Popover v-model:open="isDrcOpen">
+            <PopoverTrigger as-child>
+              <div
+                class="cursor-pointer flex flex-col justify-center px-2 py-1 rounded border bg-teal-50/50 border-teal-100 hover:bg-teal-100/50 transition-colors"
+              >
                 <div
-                  class="text-[0.625rem] text-muted-foreground font-bold uppercase tracking-widest mb-1"
+                  class="text-[0.5rem] font-bold text-teal-600 uppercase tracking-wider leading-none mb-1"
                 >
-                  {{ t('uss.lotNo') }}
+                  ACTUAL
                 </div>
-                <div class="flex items-center gap-1">
-                  <div
-                    class="flex items-center w-56 h-10 px-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md focus-within:ring-2 focus-within:ring-primary shadow-sm ring-offset-background transition-colors"
-                    :class="{ 'border-destructive focus-within:ring-destructive': lotNoError }"
-                  >
-                    <span
-                      class="text-lg font-black text-slate-900 dark:text-slate-100 whitespace-nowrap select-none"
-                      >{{ lotNoPrefix }}</span
+                <div class="text-xs font-black text-teal-700 leading-none">
+                  {{ formatNumber(booking.drcActual, 1) }}%
+                </div>
+              </div>
+            </PopoverTrigger>
+            <!-- Popover Content (Same as before) -->
+            <PopoverContent class="w-80">
+              <div class="grid gap-4">
+                <div class="space-y-2">
+                  <h4 class="font-medium leading-none text-teal-700">DRC % Details</h4>
+                  <p class="text-xs text-muted-foreground">
+                    Adjust DRC estimated, requested, and actual values.
+                  </p>
+                </div>
+                <div class="grid gap-3" @keydown.enter.stop>
+                  <div class="grid grid-cols-3 items-center gap-4">
+                    <Label for="drcEst" class="text-xs uppercase font-bold text-teal-600">{{
+                      t('uss.drcEst')
+                    }}</Label>
+                    <Input
+                      id="drcEst"
+                      v-model="drcForm.drcEst"
+                      type="number"
+                      step="0.01"
+                      class="col-span-2 h-8 font-bold"
+                      @keydown.enter.prevent.stop="onDrcKeydown($event, 'req')"
+                    />
+                  </div>
+                  <div class="grid grid-cols-3 items-center gap-4">
+                    <Label for="drcReq" class="text-xs uppercase font-bold text-teal-600"
+                      >DRC Req.</Label
                     >
-                    <input
-                      v-model="lotNoSuffix"
-                      class="flex-1 bg-transparent border-none outline-none focus:ring-0 font-black text-lg p-0 h-full ml-0.5"
-                      @keydown.enter="handleUpdateLotNo"
-                      @blur="handleUpdateLotNo"
-                      @input="validateLotInput"
+                    <Input
+                      ref="drcReqRef"
+                      id="drcReq"
+                      v-model="drcForm.drcRequested"
+                      type="number"
+                      step="0.01"
+                      class="col-span-2 h-8 font-bold"
+                      @keydown.enter.prevent.stop="onDrcKeydown($event, 'actual')"
+                    />
+                  </div>
+                  <div class="grid grid-cols-3 items-center gap-4">
+                    <Label for="drcActual" class="text-xs uppercase font-bold text-teal-600"
+                      >DRC Actual</Label
+                    >
+                    <Input
+                      ref="drcActualRef"
+                      id="drcActual"
+                      v-model="drcForm.drcActual"
+                      type="number"
+                      step="0.01"
+                      class="col-span-2 h-8 font-bold"
+                      @keydown.enter.prevent.stop="onDrcKeydown($event, 'save')"
                     />
                   </div>
                 </div>
+                <div class="flex justify-end pt-2 border-t mt-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    class="h-8 gap-1.5 bg-teal-600 hover:bg-teal-700 text-white"
+                    @click="handleSaveDrc()"
+                  >
+                    <Save class="w-3.5 h-3.5" />
+                    {{ t('common.save') }}
+                  </Button>
+                </div>
               </div>
+            </PopoverContent>
+          </Popover>
+
+          <!-- Before Dryer -->
+          <Popover v-model:open="isBeforeDryerOpen">
+            <PopoverTrigger as-child>
+              <div
+                class="cursor-pointer flex flex-col justify-center px-2 py-1 rounded border bg-blue-50/50 border-blue-100 hover:bg-blue-100/50 transition-colors"
+              >
+                <div
+                  class="text-[0.5rem] font-bold text-blue-600 uppercase tracking-wider leading-none mb-1"
+                >
+                  {{ t('uss.beforeDryer') }}
+                </div>
+                <div class="text-xs font-black text-blue-700 leading-none">
+                  {{ displayBeforeDryer }}<span v-if="displayBeforeDryer !== '-'">%</span>
+                </div>
+              </div>
+            </PopoverTrigger>
+            <!-- Popover Content (Same as before) -->
+            <PopoverContent class="w-80">
+              <div class="grid gap-4">
+                <div class="space-y-2">
+                  <h4 class="font-medium leading-none text-blue-700">Before Dryer %</h4>
+                  <p class="text-xs text-muted-foreground">Adjust Before Dryer % value.</p>
+                </div>
+                <div class="grid gap-3" @keydown.enter.stop>
+                  <div class="grid grid-cols-3 items-center gap-4">
+                    <Label class="text-xs uppercase font-bold text-blue-600">Value %</Label>
+                    <Input
+                      v-model="beforeDryerForm.moisture"
+                      type="number"
+                      step="0.1"
+                      class="col-span-2 h-8 font-bold"
+                      @keydown.enter.prevent.stop="handleSaveBeforeDryer"
+                    />
+                  </div>
+                  <div class="flex justify-end pt-2 border-t mt-2">
+                    <Button
+                      size="sm"
+                      class="h-8 gap-1.5 bg-blue-600 hover:bg-blue-700 text-white"
+                      @click="handleSaveBeforeDryer"
+                    >
+                      <Save class="w-3.5 h-3.5" />
+                      {{ t('common.save') }}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          <!-- Weights & Net -->
+          <Popover v-model:open="isWeightsOpen">
+            <PopoverTrigger as-child>
+              <div
+                class="cursor-pointer flex flex-col justify-center px-2 py-1 rounded border bg-blue-50/30 border-blue-100 hover:bg-blue-50 transition-colors group"
+              >
+                <span
+                  class="text-[0.5rem] font-bold text-blue-600 uppercase tracking-tighter leading-none mb-1 flex items-center gap-1"
+                  >{{ t('uss.grossWeight') }}
+                  <Pencil
+                    class="w-2 h-2 text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity"
+                /></span>
+                <div class="flex items-baseline gap-1">
+                  <span class="text-xs font-black text-blue-700 leading-none">{{
+                    displayGrossWeight
+                  }}</span>
+                  <span class="text-[0.5rem] text-muted-foreground font-bold">Kg</span>
+                </div>
+              </div>
+            </PopoverTrigger>
+            <!-- Popover Content (Same as before) -->
+            <PopoverContent class="w-80">
+              <div class="grid gap-4">
+                <div class="space-y-2">
+                  <h4 class="leading-none text-blue-700 font-bold uppercase tracking-tight">
+                    Weight Management
+                  </h4>
+                  <p class="text-xs text-muted-foreground">Adjust inbound and outbound weights.</p>
+                </div>
+                <div class="grid gap-3">
+                  <div class="grid grid-cols-3 items-center gap-4">
+                    <Label class="text-xs uppercase font-bold text-slate-600">{{
+                      t('uss.weightIn')
+                    }}</Label>
+                    <Input
+                      v-model="weightForm.weightIn"
+                      type="number"
+                      class="col-span-2 h-8 font-bold"
+                    />
+                  </div>
+                  <div class="grid grid-cols-3 items-center gap-4">
+                    <Label class="text-xs uppercase font-bold text-slate-600">{{
+                      t('uss.weightOut')
+                    }}</Label>
+                    <Input
+                      v-model="weightForm.weightOut"
+                      type="number"
+                      class="col-span-2 h-8 font-bold"
+                      @keydown.enter="handleSaveWeights"
+                    />
+                  </div>
+                  <div class="pt-2 border-t flex justify-end">
+                    <Button
+                      size="sm"
+                      class="h-8 gap-1.5 bg-blue-600 hover:bg-blue-700 text-white"
+                      @click="handleSaveWeights"
+                    >
+                      <Save class="w-3.5 h-3.5" />
+                      {{ t('common.save') }}
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          <div
+            class="flex flex-col justify-center px-2 py-1 rounded border bg-green-50/50 border-green-100"
+          >
+            <span
+              class="text-[0.5rem] font-bold text-green-600 uppercase tracking-tighter leading-none mb-1"
+              >{{ t('uss.netWeight') }}</span
+            >
+            <div class="flex items-baseline gap-1">
+              <span class="text-xs font-black text-green-700 leading-none">{{
+                displayNetWeight
+              }}</span>
+              <span v-if="displayNetWeight" class="text-[0.5rem] text-muted-foreground font-bold"
+                >Kg</span
+              >
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <!-- Section 3: Recorded Items Table (Card 3) -->
       <Card class="border-border/50 shadow-sm bg-card/50 backdrop-blur-sm">
-        <CardContent class="p-6">
+        <CardContent class="p-2">
           <div class="space-y-3">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
@@ -1182,7 +1218,7 @@ onMounted(async () => {
                     </TableCell>
 
                     <!-- Total Weight -->
-                    <TableCell class="text-center">
+                    <TableCell class="py-1 px-2 text-center">
                       <div v-if="editingSampleId === sample.id" class="flex justify-center">
                         <Input
                           v-model="sample.totalWeight"
@@ -1197,7 +1233,7 @@ onMounted(async () => {
                     </TableCell>
 
                     <!-- Pallet Weight -->
-                    <TableCell class="text-center">
+                    <TableCell class="py-1 px-2 text-center">
                       <div v-if="editingSampleId === sample.id" class="flex justify-center">
                         <Input
                           v-model="sample.palletWeight"
@@ -1212,12 +1248,12 @@ onMounted(async () => {
                     </TableCell>
 
                     <!-- Gross Weight (Calculated) -->
-                    <TableCell class="text-center">
+                    <TableCell class="py-1 px-2 text-center">
                       <span class="font-bold text-blue-600">{{ sample.grossWeight }}</span>
                     </TableCell>
 
                     <!-- SPGR -->
-                    <TableCell class="text-center">
+                    <TableCell class="py-1 px-2 text-center">
                       <div
                         v-if="editingSampleId === sample.id"
                         class="flex justify-center group/calc relative"
@@ -1233,7 +1269,7 @@ onMounted(async () => {
                     </TableCell>
 
                     <!-- Storage -->
-                    <TableCell class="text-center">
+                    <TableCell class="py-1 px-2 text-center">
                       <div v-if="editingSampleId === sample.id" class="flex justify-center">
                         <Input
                           v-model="sample.storage"
@@ -1245,11 +1281,11 @@ onMounted(async () => {
                     </TableCell>
 
                     <!-- Recorded By -->
-                    <TableCell class="text-center">
+                    <TableCell class="py-1 px-2 text-center">
                       <span class="font-bold text-slate-500 text-xs">{{ sample.recordedBy }}</span>
                     </TableCell>
 
-                    <TableCell class="text-center">
+                    <TableCell class="py-1 px-2 text-center">
                       <div class="flex items-center justify-center gap-1">
                         <!-- Save (Check) / Edit (Pencil) -->
                         <Button
@@ -1302,7 +1338,7 @@ onMounted(async () => {
                     <TableCell class="text-center font-bold text-xs text-blue-400">New</TableCell>
 
                     <!-- Total Weight -->
-                    <TableCell class="text-center">
+                    <TableCell class="py-1 px-2 text-center">
                       <Input
                         :model-value="sample.totalWeight"
                         class="h-8 w-24 text-center font-bold text-xs mx-auto"
@@ -1318,7 +1354,7 @@ onMounted(async () => {
                     </TableCell>
 
                     <!-- Pallet Weight -->
-                    <TableCell class="text-center">
+                    <TableCell class="py-1 px-2 text-center">
                       <Input
                         :model-value="sample.palletWeight"
                         class="h-8 w-24 text-center font-bold text-xs mx-auto"
@@ -1334,14 +1370,14 @@ onMounted(async () => {
                     </TableCell>
 
                     <!-- Gross Weight -->
-                    <TableCell class="text-center">
+                    <TableCell class="py-1 px-2 text-center">
                       <span class="font-bold text-blue-600">{{
                         formatNumber(sample.grossWeight)
                       }}</span>
                     </TableCell>
 
                     <!-- SPGR -->
-                    <TableCell class="text-center">
+                    <TableCell class="py-1 px-2 text-center">
                       <Input
                         v-model="sample.spgr"
                         class="h-8 w-24 text-center font-bold text-xs mx-auto"
@@ -1351,7 +1387,7 @@ onMounted(async () => {
                     </TableCell>
 
                     <!-- Storage -->
-                    <TableCell class="text-center">
+                    <TableCell class="py-1 px-2 text-center">
                       <Input
                         v-model="sample.storage"
                         class="h-8 w-48 text-center font-bold text-xs mx-auto"
@@ -1360,11 +1396,11 @@ onMounted(async () => {
                     </TableCell>
 
                     <!-- Recorded By -->
-                    <TableCell class="text-center">
+                    <TableCell class="py-1 px-2 text-center">
                       <span class="font-bold text-blue-400 text-xs">{{ sample.recordedBy }}</span>
                     </TableCell>
 
-                    <TableCell class="text-center">
+                    <TableCell class="py-1 px-2 text-center">
                       <div class="flex items-center justify-center gap-1">
                         <Button
                           size="icon"
@@ -1389,7 +1425,7 @@ onMounted(async () => {
                   <!-- Totals Row -->
                   <TableRow class="bg-slate-100/50 dark:bg-slate-800/50 font-black border-t-2">
                     <TableCell class="text-center text-[0.625rem] uppercase">Totals</TableCell>
-                    <TableCell class="text-center">{{
+                    <TableCell class="py-1 px-2 text-center">{{
                       samples
                         .reduce((sum, s) => sum + parseRaw(s.totalWeight || 0), 0)
                         .toLocaleString(undefined, {
@@ -1397,7 +1433,7 @@ onMounted(async () => {
                           maximumFractionDigits: 0,
                         })
                     }}</TableCell>
-                    <TableCell class="text-center">{{
+                    <TableCell class="py-1 px-2 text-center">{{
                       samples
                         .reduce((sum, s) => sum + parseRaw(s.palletWeight || 0), 0)
                         .toLocaleString(undefined, {

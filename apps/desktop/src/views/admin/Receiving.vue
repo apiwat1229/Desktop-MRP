@@ -87,7 +87,7 @@ watch(
         <component :is="headerIcon" class="w-64 h-64 rotate-12" />
       </div>
 
-      <div class="flex flex-col xl:flex-row gap-4 items-center justify-start w-full relative z-10">
+      <div class="flex flex-col md:flex-row gap-4 items-center justify-start w-full relative z-10">
         <!-- Status Tabs (Custom buttons consistent with design) -->
         <div class="flex items-center gap-1 bg-gray-100 p-1 rounded-lg shrink-0">
           <button

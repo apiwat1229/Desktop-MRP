@@ -72,7 +72,7 @@ const fetchBookings = async () => {
 // Modal Logic
 const handleRowClick = (row: any) => {
   router.push({
-    name: 'UssDetail',
+    name: 'Uss Detail',
     params: { id: row.originalId },
     query: {
       isTrailer: row.isTrailerPart ? 'true' : 'false',
@@ -141,6 +141,7 @@ const processedBookings = computed(() => {
         drcActual: b.drcActual ? b.drcActual.toFixed(1) : '-',
         cpAvg: avgCp > 0 ? avgCp.toFixed(2) : '-',
         lotNo: b.lotNo || '-',
+        totalPallets: bSamples.length,
         isComplete,
       });
     }
@@ -183,6 +184,7 @@ const processedBookings = computed(() => {
         drcActual: b.trailerDrcActual ? b.trailerDrcActual.toFixed(1) : '-',
         cpAvg: avgCp > 0 ? avgCp.toFixed(2) : '-',
         lotNo: b.trailerLotNo || '2251226-' + b.queueNo + '/2',
+        totalPallets: bSamples.length,
         isComplete,
       });
     }
@@ -265,11 +267,7 @@ const columns: ColumnDef<any>[] = [
     accessorKey: 'totalPallets',
     header: () => h('div', { class: 'text-center' }, t('uss.totalPallets')),
     cell: ({ row }) =>
-      h(
-        'div',
-        { class: 'text-center font-medium' },
-        (row.original.subBookings?.length || 0).toString()
-      ),
+      h('div', { class: 'text-center font-medium' }, (row.original.totalPallets || 0).toString()),
   },
   {
     accessorKey: 'grossPlusPallets',

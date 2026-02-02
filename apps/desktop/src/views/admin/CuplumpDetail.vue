@@ -906,8 +906,8 @@ onMounted(async () => {
                 </div>
               </div>
 
-              <div class="flex flex-col items-end pr-6">
-                <div class="flex flex-col items-center min-w-[8rem]">
+              <div class="flex flex-col items-start pr-6">
+                <div class="flex flex-col items-start min-w-[8rem]">
                   <div
                     class="text-[0.625rem] text-slate-500 font-bold uppercase tracking-widest mb-1"
                   >
@@ -924,7 +924,7 @@ onMounted(async () => {
                       >
                       <input
                         v-model="lotNoSuffix"
-                        class="flex-1 bg-transparent border-none outline-none focus:ring-0 font-black text-lg p-0 h-full ml-0.5"
+                        class="flex-1 bg-transparent border-none outline-none focus:ring-0 font-black text-lg p-0 h-full ml-0.5 text-left"
                         @keydown.enter="handleUpdateLotNo"
                         @blur="handleUpdateLotNo"
                         @input="validateLotInput"

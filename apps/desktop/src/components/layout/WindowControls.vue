@@ -1,4 +1,10 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+
+const isElectron = computed(() => {
+  return typeof window !== 'undefined' && !!(window as any).ipcRenderer;
+});
+
 const handleMinimize = () => {
   (window as any).ipcRenderer?.window?.minimize();
 };
@@ -20,7 +26,7 @@ defineProps<{
 </script>
 
 <template>
-  <div class="flex items-center gap-1">
+  <div v-if="isElectron" class="flex items-center gap-1">
     <button
       @click="handleMinimize"
       class="h-8 w-8 flex items-center justify-center rounded-sm hover:bg-muted transition-colors"

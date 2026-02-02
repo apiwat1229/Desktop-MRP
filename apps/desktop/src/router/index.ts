@@ -192,7 +192,7 @@ const routes = [
             },
             {
                 path: 'uss/:id',
-                name: 'UssDetail',
+                name: 'Uss Detail',
                 component: () => import('../views/admin/UssDetail.vue'),
             },
 

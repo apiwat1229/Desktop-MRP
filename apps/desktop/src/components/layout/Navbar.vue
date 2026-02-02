@@ -89,6 +89,10 @@ const userInitials = () => {
   return `${authStore.user.firstName.charAt(0)}${authStore.user.lastName ? authStore.user.lastName.charAt(0) : ''}`;
 };
 
+const isElectron = computed(() => {
+  return typeof window !== 'undefined' && !!(window as any).ipcRenderer;
+});
+
 const pageTitle = computed(() => {
   if (navigationStore.title) return navigationStore.title;
   const name = route.name?.toString() || '';
@@ -690,69 +694,83 @@ onUnmounted(() => {
           </div>
         </DropdownMenuContent>
       </DropdownMenu>
-      <Button variant="ghost" size="icon" class="h-8 w-8" title="Minimize" @click="handleMinimize">
-        <svg
-          width="15"
-          height="15"
-          viewBox="0 0 15 15"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          class="w-4 h-4"
+      <template v-if="isElectron">
+        <Button
+          variant="ghost"
+          size="icon"
+          class="h-8 w-8"
+          title="Minimize"
+          @click="handleMinimize"
         >
-          <path
-            d="M2.25 7.5H12.75"
-            stroke="currentColor"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </Button>
-      <Button variant="ghost" size="icon" class="h-8 w-8" title="Maximize" @click="handleMaximize">
-        <svg
-          width="15"
-          height="15"
-          viewBox="0 0 15 15"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          class="w-3.5 h-3.5"
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 15 15"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-4 h-4"
+          >
+            <path
+              d="M2.25 7.5H12.75"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          class="h-8 w-8"
+          title="Maximize"
+          @click="handleMaximize"
         >
-          <path
-            d="M2.5 2.5H12.5V12.5H2.5V2.5Z"
-            stroke="currentColor"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        class="h-8 w-8 hover:bg-red-500 hover:text-white"
-        title="Close"
-        @click="handleClose"
-      >
-        <svg
-          width="15"
-          height="15"
-          viewBox="0 0 15 15"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          class="w-4 h-4"
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 15 15"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-3.5 h-3.5"
+          >
+            <path
+              d="M2.5 2.5H12.5V12.5H2.5V2.5Z"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          class="h-8 w-8 hover:bg-red-500 hover:text-white"
+          title="Close"
+          @click="handleClose"
         >
-          <path
-            d="M3.75 3.75L11.25 11.25"
-            stroke="currentColor"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-          <path
-            d="M11.25 3.75L3.75 11.25"
-            stroke="currentColor"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-        </svg>
-      </Button>
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 15 15"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-4 h-4"
+          >
+            <path
+              d="M3.75 3.75L11.25 11.25"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M11.25 3.75L3.75 11.25"
+              stroke="currentColor"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </Button>
+      </template>
     </div>
     <!-- Theme Settings Dialog -->
     <Dialog v-model:open="showThemeSettings">
