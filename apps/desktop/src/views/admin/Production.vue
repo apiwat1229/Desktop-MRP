@@ -6,7 +6,7 @@ import { type JobOrder, jobOrdersApi } from '@/services/jobOrders';
 import { type ProductionReport, productionReportsApi } from '@/services/productionReports';
 import { useNavigationStore } from '@/stores/navigation';
 import { getLocalTimeZone, today } from '@internationalized/date';
-import { Layers, LayoutGrid, Plus, Shield } from 'lucide-vue-next';
+import { ClipboardList, LayoutGrid, Plus, RefreshCw, Shield } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRoute } from 'vue-router';
@@ -151,7 +151,9 @@ const handleCreateClick = () => {
 };
 
 // Header Computed
-const headerIcon = computed(() => (activeContext.value === 'production' ? LayoutGrid : Layers));
+const headerIcon = computed(() =>
+  activeContext.value === 'production' ? LayoutGrid : ClipboardList
+);
 const headerTitle = computed(() =>
   activeContext.value === 'production' ? t('production.title') : t('production.jobOrderList')
 );
@@ -255,12 +257,13 @@ import { onUnmounted } from 'vue';
       class="rounded-xl border bg-white shadow-sm p-4 px-6 relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-6"
     >
       <!-- Decorative Background Icon -->
-      <div class="absolute top-1/2 right-0 -translate-y-1/2 pointer-events-none opacity-[0.03]">
-        <component :is="headerIcon" class="w-64 h-64 rotate-12" />
-      </div>
+      <component
+        :is="headerIcon"
+        class="absolute -right-8 -bottom-8 w-64 h-64 text-slate-100/50 -rotate-12 pointer-events-none"
+      />
 
       <!-- Stats Section -->
-      <div class="flex items-center justify-center lg:justify-start gap-12 relative z-10 flex-1">
+      <div class="flex items-center justify-start gap-12 relative z-10 flex-1">
         <template v-if="activeContext === 'production'">
           <div class="text-center group/stat">
             <span
@@ -321,8 +324,17 @@ import { onUnmounted } from 'vue';
         </template>
       </div>
 
-      <!-- Create Button (Right Side) -->
+      <!-- Action Button (Right Side) -->
       <div class="flex items-center gap-3 relative z-10 ml-auto">
+        <Button
+          variant="ghost"
+          size="sm"
+          @click="fetchStats"
+          class="h-10 gap-2 text-xs font-bold text-slate-500 hover:text-primary transition-all rounded-xl"
+        >
+          <RefreshCw class="w-4 h-4" />
+          Refresh
+        </Button>
         <Button
           v-if="canCreate && (activeContext === 'production' || isQaContext)"
           @click="handleCreateClick"

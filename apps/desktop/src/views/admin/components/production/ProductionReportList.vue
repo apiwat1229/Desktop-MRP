@@ -1,19 +1,13 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import DataTable from '@/components/ui/data-table/DataTable.vue';
 import { usePermissions } from '@/composables/usePermissions';
 import { productionReportsApi, type ProductionReport } from '@/services/productionReports';
 import { CalendarDate } from '@internationalized/date';
+import type { ColumnDef } from '@tanstack/vue-table';
 import { format } from 'date-fns';
-import { Edit2, FileText, Loader2 } from 'lucide-vue-next';
-import { computed, onMounted, ref } from 'vue';
+import { Edit2, FileText, Search } from 'lucide-vue-next';
+import { computed, h, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { toast } from 'vue-sonner';
 
@@ -131,73 +125,125 @@ const fetchReports = async () => {
   }
 };
 
+const columns: ColumnDef<ProductionReport>[] = [
+  {
+    accessorKey: 'productionDate',
+    header: () => h('div', { class: 'text-center' }, t('production.productionDate')),
+    cell: ({ row }) => {
+      const date = row.original.productionDate;
+      return h(
+        'div',
+        {
+          class: 'text-center font-medium cursor-pointer hover:text-blue-600 hover:underline',
+          onClick: () => emit('edit', row.original),
+        },
+        format(new Date(date), 'dd-MMM-yyyy')
+      );
+    },
+  },
+  {
+    accessorKey: 'shift',
+    header: () => h('div', { class: 'text-center' }, t('production.shift')),
+    cell: ({ row }) => h('div', { class: 'text-center' }, row.original.shift),
+  },
+  {
+    accessorKey: 'grade',
+    header: () => h('div', { class: 'text-center' }, t('production.grade')),
+    cell: ({ row }) => h('div', { class: 'text-center' }, row.original.grade),
+  },
+  {
+    accessorKey: 'baleBagLotNo',
+    header: () => h('div', { class: 'text-center' }, t('production.footer.baleBagLotNo')),
+    cell: ({ row }) => h('div', { class: 'text-center' }, row.original.baleBagLotNo || '-'),
+  },
+  {
+    id: 'pallets',
+    header: () => h('div', { class: 'text-center' }, 'Pallets'),
+    cell: ({ row }) =>
+      h(
+        'div',
+        { class: 'text-center font-bold text-green-600' },
+        getPalletCount(row.original).toLocaleString()
+      ),
+  },
+  {
+    id: 'bales',
+    header: () => h('div', { class: 'text-center' }, 'Bales'),
+    cell: ({ row }) =>
+      h(
+        'div',
+        { class: 'text-center font-bold text-orange-600' },
+        getBaleCount(row.original).toLocaleString()
+      ),
+  },
+  {
+    accessorKey: 'status',
+    header: () => h('div', { class: 'text-center' }, t('common.status')),
+    cell: ({ row }) => {
+      const status = row.original.status;
+      return h('div', { class: 'text-center' }, [
+        h(
+          'span',
+          {
+            class: [
+              'px-2 py-1 rounded-full text-xs font-medium',
+              status === 'SUBMITTED'
+                ? 'bg-green-100 text-green-700'
+                : 'bg-yellow-100 text-yellow-700',
+            ],
+          },
+          status
+        ),
+      ]);
+    },
+  },
+  {
+    id: 'actions',
+    header: () => h('div', { class: 'text-right' }, t('common.actions')),
+    cell: ({ row }) => {
+      const report = row.original;
+      const isReadonly = report.status === 'SUBMITTED' || !canUpdate.value;
+      return h(
+        'div',
+        { class: 'flex justify-end gap-2' },
+        h(
+          Button,
+          {
+            variant: 'ghost',
+            size: 'icon',
+            onClick: () => emit('edit', report),
+          },
+          () => (isReadonly ? h(FileText, { class: 'h-4 w-4' }) : h(Edit2, { class: 'h-4 w-4' }))
+        )
+      );
+    },
+  },
+];
+
 onMounted(fetchReports);
 </script>
 
 <template>
-  <div class="rounded-xl border bg-card">
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead class="text-center">{{ t('production.productionDate') }}</TableHead>
-          <TableHead class="text-center">{{ t('production.shift') }}</TableHead>
-          <TableHead class="text-center">{{ t('production.grade') }}</TableHead>
-          <TableHead class="text-center">{{ t('production.footer.baleBagLotNo') }}</TableHead>
-          <TableHead class="text-center">Pallets</TableHead>
-          <TableHead class="text-center">Bales</TableHead>
-          <TableHead class="text-center">{{ t('common.status') }}</TableHead>
-          <TableHead class="text-right">{{ t('common.actions') }}</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        <TableRow v-if="isLoading">
-          <TableCell colspan="6" class="h-24 text-center">
-            <Loader2 class="h-6 w-6 animate-spin mx-auto text-muted-foreground" />
-          </TableCell>
-        </TableRow>
-        <TableRow v-else v-for="report in filteredReports" :key="report.id">
-          <TableCell
-            class="text-center cursor-pointer hover:text-blue-600 hover:underline"
-            @click="emit('edit', report)"
-          >
-            {{ format(new Date(report.productionDate), 'dd-MMM-yyyy') }}
-          </TableCell>
-          <TableCell class="text-center">{{ report.shift }}</TableCell>
-          <TableCell class="text-center">{{ report.grade }}</TableCell>
-          <TableCell class="text-center">{{ report.baleBagLotNo || '-' }}</TableCell>
-          <TableCell class="text-center font-bold text-green-600">{{
-            getPalletCount(report)
-          }}</TableCell>
-          <TableCell class="text-center font-bold text-orange-600">{{
-            getBaleCount(report)
-          }}</TableCell>
-          <TableCell class="text-center">
-            <span
-              :class="[
-                'px-2 py-1 rounded-full text-xs font-medium',
-                report.status === 'SUBMITTED'
-                  ? 'bg-green-100 text-green-700'
-                  : 'bg-yellow-100 text-yellow-700',
-              ]"
-            >
-              {{ report.status }}
-            </span>
-          </TableCell>
-          <TableCell class="text-right">
-            <div class="flex justify-end gap-2">
-              <Button variant="ghost" size="icon" @click="emit('edit', report)">
-                <FileText v-if="report.status === 'SUBMITTED' || !canUpdate" class="h-4 w-4" />
-                <Edit2 v-else class="h-4 w-4" />
-              </Button>
-            </div>
-          </TableCell>
-        </TableRow>
-        <TableRow v-if="!isLoading && filteredReports.length === 0">
-          <TableCell colspan="8" class="h-24 text-center text-muted-foreground">
+  <div>
+    <DataTable
+      :columns="columns"
+      :data="filteredReports"
+      :loading="isLoading"
+      @row-click="(report) => emit('edit', report)"
+    >
+      <template #empty>
+        <div class="flex flex-col items-center justify-center py-12">
+          <div class="bg-slate-50 p-6 rounded-full mb-4 border border-slate-100/50">
+            <Search class="h-10 w-10 text-slate-200" />
+          </div>
+          <h3 class="text-lg font-bold text-slate-700 tracking-tight">
             {{ t('production.history.empty') }}
-          </TableCell>
-        </TableRow>
-      </TableBody>
-    </Table>
+          </h3>
+          <p class="text-slate-400 text-sm font-medium mt-1">
+            No reports found for the selected date range.
+          </p>
+        </div>
+      </template>
+    </DataTable>
   </div>
 </template>

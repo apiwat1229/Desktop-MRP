@@ -1,20 +1,22 @@
 <script setup lang="ts">
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import DataTable from '@/components/ui/data-table/DataTable.vue';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { jobOrdersApi, type JobOrder } from '@/services/jobOrders';
 import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date';
+import type { ColumnDef } from '@tanstack/vue-table';
 import { format } from 'date-fns';
-import { CheckCircle2, Clock, Edit, FileText, Plus } from 'lucide-vue-next';
-import { computed, onMounted, ref, watch } from 'vue';
+import {
+  CheckCircle2,
+  ClipboardList,
+  Clock,
+  Edit,
+  FileText,
+  Plus,
+  RefreshCw,
+} from 'lucide-vue-next';
+import { computed, h, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { toast } from 'vue-sonner';
 import JobOrderPrint from '../components/JobOrderPrint.vue';
@@ -175,10 +177,165 @@ const handleEdit = (jobOrder: JobOrder) => {
   emit('edit', jobOrder);
 };
 
-const handlePrint = (jobOrder: JobOrder) => {
-  selectedJobOrder.value = jobOrder;
+const handlePrint = (order: JobOrder) => {
+  selectedJobOrder.value = order;
   isPrintDialogOpen.value = true;
 };
+
+// DataTable Columns
+const columns: ColumnDef<JobOrder>[] = [
+  {
+    accessorKey: 'qaDate',
+    header: () => h('div', { class: 'font-black text-slate-700' }, 'Date'),
+    cell: ({ row }) => {
+      const date = row.original.qaDate;
+      return h('div', { class: 'font-bold text-slate-700' }, format(new Date(date), 'dd-MMM-yyyy'));
+    },
+  },
+  {
+    accessorKey: 'jobOrderNo',
+    header: () => h('div', { class: 'font-black text-slate-700' }, t('qa.jobOrderMgmt.cols.no')),
+    cell: ({ row }) => {
+      const order = row.original;
+      return h('div', { class: 'font-black text-slate-900 flex items-center gap-2' }, [
+        h('div', {
+          class: [
+            'w-2 h-2 rounded-full',
+            order.isClosed
+              ? 'bg-emerald-500 shadow-emerald-200 shadow-lg'
+              : 'bg-amber-500 shadow-amber-200 shadow-lg',
+          ],
+        }),
+        order.jobOrderNo,
+      ]);
+    },
+  },
+  {
+    accessorKey: 'contractNo',
+    header: () =>
+      h('div', { class: 'font-black text-slate-700' }, t('qa.jobOrderMgmt.cols.contract')),
+    cell: ({ row }) => h('div', { class: 'font-bold text-slate-700' }, row.original.contractNo),
+  },
+  {
+    accessorKey: 'grade',
+    header: () => h('div', { class: 'font-black text-slate-700' }, t('qa.jobOrderMgmt.cols.grade')),
+    cell: ({ row }) => {
+      const order = row.original;
+      return h(
+        Badge,
+        {
+          variant: 'secondary',
+          class: 'font-bold bg-blue-100 text-blue-700 border-blue-200',
+        },
+        () => (order.grade === 'Other' ? order.otherGrade : order.grade)
+      );
+    },
+  },
+  {
+    accessorKey: 'palletSpecs',
+    header: () =>
+      h('div', { class: 'font-black text-slate-700' }, t('qa.jobOrderMgmt.cols.palletSpecs')),
+    cell: ({ row }) => {
+      const order = row.original;
+      return h('div', { class: 'text-xs flex flex-col gap-0.5' }, [
+        h('span', { class: 'font-bold text-slate-700' }, order.palletType),
+        h(
+          'span',
+          { class: 'text-slate-600' },
+          `${order.orderQuantity} ${t('qa.jobOrderMgmt.palletsCount')} • ${order.quantityBale} ${t('qa.jobOrderMgmt.balesCount')}`
+        ),
+      ]);
+    },
+  },
+  {
+    accessorKey: 'palletMarking',
+    header: () =>
+      h(
+        'div',
+        { class: 'font-black text-slate-700 text-center' },
+        t('qa.jobOrderForm.palletMarking')
+      ),
+    cell: ({ row }) => {
+      const order = row.original;
+      return h('div', { class: 'text-center' }, [
+        h(
+          Badge,
+          {
+            variant: 'outline',
+            class: [
+              'font-bold',
+              order.palletMarking
+                ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                : 'bg-slate-100 text-slate-600 border-slate-200',
+            ],
+          },
+          () => (order.palletMarking ? t('common.yes') : t('common.no'))
+        ),
+      ]);
+    },
+  },
+  {
+    accessorKey: 'status',
+    header: () =>
+      h('div', { class: 'font-black text-slate-700' }, t('qa.jobOrderMgmt.cols.status')),
+    cell: ({ row }) => {
+      const order = row.original;
+      if (order.isClosed) {
+        return h(Badge, { class: 'bg-emerald-500 text-white border-0 shadow-sm font-bold' }, () => [
+          h(CheckCircle2, { class: 'w-3 h-3 mr-1' }),
+          t('qa.jobOrderMgmt.completed'),
+        ]);
+      }
+      return h(Badge, { class: 'bg-amber-500 text-white border-0 shadow-sm font-bold' }, () => [
+        h(Clock, { class: 'w-3 h-3 mr-1' }),
+        t('qa.jobOrderMgmt.inProgress'),
+      ]);
+    },
+  },
+  {
+    id: 'actions',
+    header: () =>
+      h(
+        'div',
+        { class: 'w-[100px] text-center font-black text-slate-700' },
+        t('qa.jobOrderMgmt.cols.action')
+      ),
+    cell: ({ row }) => {
+      const order = row.original;
+      return h('div', { class: 'flex items-center justify-center gap-1' }, [
+        !props.readonly
+          ? h(
+              Button,
+              {
+                variant: 'ghost',
+                size: 'icon',
+                class:
+                  'h-9 w-9 text-slate-500 hover:text-primary hover:bg-primary/10 transition-colors',
+                onClick: (e: Event) => {
+                  e.stopPropagation();
+                  handleEdit(order);
+                },
+              },
+              () => h(Edit, { class: 'w-4 h-4' })
+            )
+          : null,
+        h(
+          Button,
+          {
+            variant: 'ghost',
+            size: 'icon',
+            class: 'h-9 w-9 text-primary hover:bg-primary/10 transition-colors',
+            onClick: (e: Event) => {
+              e.stopPropagation();
+              handlePrint(order);
+            },
+          },
+          () => h(FileText, { class: 'w-4 h-4' })
+        ),
+      ]);
+    },
+  },
+];
 
 const triggerPrint = () => {
   window.print();
@@ -199,7 +356,7 @@ onMounted(() => {
       class="rounded-xl border bg-white shadow-sm p-4 px-6 relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-6"
     >
       <!-- Stats Section -->
-      <div class="flex items-center justify-center lg:justify-start gap-12 relative z-10 flex-1">
+      <div class="flex items-center justify-start gap-12 relative z-10 flex-1">
         <div class="text-center group/stat">
           <span
             class="block text-[0.6rem] font-black text-slate-500 uppercase tracking-widest mb-1 group-hover/stat:text-primary transition-colors"
@@ -227,161 +384,54 @@ onMounted(() => {
 
       <!-- Action Button -->
       <div class="relative z-10" v-if="!readonly">
-        <Button
-          @click="emit('create')"
-          class="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 shadow-primary/20 shadow-lg px-6 h-10 rounded-xl font-bold transition-all hover:scale-105 active:scale-95"
-        >
-          <Plus class="w-4 h-4" />
-          {{ t('qa.jobOrderMgmt.newOrder') }}
-        </Button>
+        <div class="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            @click="fetchJobOrders"
+            :disabled="isLoading"
+            class="h-10 gap-2 text-xs font-bold text-slate-500 hover:text-primary transition-all rounded-xl"
+          >
+            <RefreshCw :class="{ 'animate-spin': isLoading }" class="w-4 h-4" />
+            Refresh
+          </Button>
+          <Button
+            @click="emit('create')"
+            class="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 shadow-primary/20 shadow-lg px-6 h-10 rounded-xl font-bold transition-all hover:scale-105 active:scale-95"
+          >
+            <Plus class="w-4 h-4" />
+            {{ t('qa.jobOrderMgmt.newOrder') }}
+          </Button>
+        </div>
       </div>
+
+      <!-- Decorative Background Icon -->
+      <ClipboardList
+        class="absolute -right-8 -bottom-8 w-48 h-48 text-slate-100/50 -rotate-12 pointer-events-none"
+      />
     </div>
 
-    <!-- Job Orders Table -->
-    <div>
-      <div class="overflow-x-auto">
-        <Table>
-          <TableHeader class="bg-slate-50/50">
-            <TableRow class="hover:bg-transparent border-b-2">
-              <TableHead class="font-black text-slate-700">Date</TableHead>
-              <TableHead class="font-black text-slate-700">
-                {{ t('qa.jobOrderMgmt.cols.no') }}
-              </TableHead>
-              <TableHead class="font-black text-slate-700">{{
-                t('qa.jobOrderMgmt.cols.contract')
-              }}</TableHead>
-              <TableHead class="font-black text-slate-700">{{
-                t('qa.jobOrderMgmt.cols.grade')
-              }}</TableHead>
-              <TableHead class="font-black text-slate-700">{{
-                t('qa.jobOrderMgmt.cols.palletSpecs')
-              }}</TableHead>
-              <TableHead class="font-black text-slate-700 text-center">{{
-                t('qa.jobOrderForm.palletMarking')
-              }}</TableHead>
-              <TableHead class="font-black text-slate-700">{{
-                t('qa.jobOrderMgmt.cols.status')
-              }}</TableHead>
-              <TableHead class="w-[100px] text-center font-black text-slate-700">{{
-                t('qa.jobOrderMgmt.cols.action')
-              }}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow v-if="isLoading" v-for="i in 3" :key="i" class="animate-pulse">
-              <TableCell v-for="j in 7" :key="j">
-                <div class="h-4 bg-slate-100 rounded"></div>
-              </TableCell>
-            </TableRow>
-
-            <TableRow v-else-if="filteredJobOrders.length === 0">
-              <TableCell colspan="7" class="py-20 text-center">
-                <div class="flex flex-col items-center justify-center">
-                  <div class="bg-slate-50 p-6 rounded-full mb-4 border border-slate-100/50">
-                    <FileText class="h-10 w-10 text-slate-200" />
-                  </div>
-                  <h3 class="text-lg font-bold text-slate-700 tracking-tight">
-                    {{ t('qa.jobOrderMgmt.noOrders') }}
-                  </h3>
-                  <p class="text-slate-400 text-sm font-medium mt-1">
-                    Try changing the date or search query.
-                  </p>
-                </div>
-              </TableCell>
-            </TableRow>
-
-            <TableRow
-              v-for="order in filteredJobOrders"
-              :key="order.id"
-              class="group hover:bg-slate-50/50 transition-all cursor-pointer border-b"
-              @click="handleView(order)"
-            >
-              <TableCell class="font-bold text-slate-700">
-                {{ format(new Date(order.qaDate), 'dd-MMM-yyyy') }}
-              </TableCell>
-              <TableCell class="font-black text-slate-900 py-3">
-                <div class="flex items-center gap-2">
-                  <div
-                    class="w-2 h-2 rounded-full"
-                    :class="
-                      order.isClosed
-                        ? 'bg-emerald-500 shadow-emerald-200 shadow-lg'
-                        : 'bg-amber-500 shadow-amber-200 shadow-lg'
-                    "
-                  ></div>
-                  {{ order.jobOrderNo }}
-                </div>
-              </TableCell>
-              <TableCell class="font-bold text-slate-700">{{ order.contractNo }}</TableCell>
-              <TableCell>
-                <Badge
-                  variant="secondary"
-                  class="font-bold bg-blue-100 text-blue-700 border-blue-200"
-                >
-                  {{ order.grade === 'Other' ? order.otherGrade : order.grade }}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <div class="text-xs flex flex-col gap-0.5">
-                  <span class="font-bold text-slate-700">{{ order.palletType }}</span>
-                  <span class="text-slate-600"
-                    >{{ order.orderQuantity }} {{ t('qa.jobOrderMgmt.palletsCount') }} •
-                    {{ order.quantityBale }} {{ t('qa.jobOrderMgmt.balesCount') }}</span
-                  >
-                </div>
-              </TableCell>
-              <TableCell class="text-center">
-                <Badge
-                  :class="
-                    order.palletMarking
-                      ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
-                      : 'bg-slate-100 text-slate-600 border-slate-200'
-                  "
-                  variant="outline"
-                  class="font-bold"
-                >
-                  {{ order.palletMarking ? t('common.yes') : t('common.no') }}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <Badge
-                  v-if="order.isClosed"
-                  class="bg-emerald-500 text-white border-0 shadow-sm font-bold"
-                >
-                  <CheckCircle2 class="w-3 h-3 mr-1" />
-                  {{ t('qa.jobOrderMgmt.completed') }}
-                </Badge>
-                <Badge v-else class="bg-amber-500 text-white border-0 shadow-sm font-bold">
-                  <Clock class="w-3 h-3 mr-1" />
-                  {{ t('qa.jobOrderMgmt.inProgress') }}
-                </Badge>
-              </TableCell>
-              <TableCell class="text-center">
-                <div class="flex items-center justify-center gap-1">
-                  <Button
-                    v-if="!props.readonly"
-                    variant="ghost"
-                    size="icon"
-                    class="h-9 w-9 text-slate-500 hover:text-primary hover:bg-primary/10 transition-colors"
-                    @click.stop="handleEdit(order)"
-                  >
-                    <Edit class="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    class="h-9 w-9 text-primary hover:bg-primary/10 transition-colors"
-                    @click.stop="handlePrint(order)"
-                  >
-                    <FileText class="w-4 h-4" />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </div>
-    </div>
+    <!-- Job Orders DataTable -->
+    <DataTable
+      :columns="columns"
+      :data="filteredJobOrders"
+      :loading="isLoading"
+      @row-click="handleView"
+    >
+      <template #empty>
+        <div class="flex flex-col items-center justify-center py-20">
+          <div class="bg-slate-50 p-6 rounded-full mb-4 border border-slate-100/50">
+            <FileText class="h-10 w-10 text-slate-200" />
+          </div>
+          <h3 class="text-lg font-bold text-slate-700 tracking-tight">
+            {{ t('qa.jobOrderMgmt.noOrders') }}
+          </h3>
+          <p class="text-slate-400 text-sm font-medium mt-1">
+            Try changing the date or search query.
+          </p>
+        </div>
+      </template>
+    </DataTable>
 
     <!-- Form Dialog Removed -->
 

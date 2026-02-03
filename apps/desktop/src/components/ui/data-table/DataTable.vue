@@ -38,10 +38,12 @@ const props = withDefaults(
     enableSelection?: boolean;
     initialPageSize?: number;
     autoResetPageIndex?: boolean;
+    loading?: boolean;
   }>(),
   {
     initialPageSize: 5,
     autoResetPageIndex: true,
+    loading: false,
   }
 );
 
@@ -136,7 +138,14 @@ const { t } = useI18n();
           </TableRow>
         </TableHeader>
         <TableBody>
-          <template v-if="table.getRowModel().rows?.length">
+          <template v-if="loading">
+            <TableRow v-for="i in 3" :key="i" class="animate-pulse">
+              <TableCell :colspan="columnsWithSelection.length">
+                <div class="h-8 bg-slate-100 rounded-md mx-2 my-1"></div>
+              </TableCell>
+            </TableRow>
+          </template>
+          <template v-else-if="table.getRowModel().rows?.length">
             <TableRow
               v-for="row in table.getRowModel().rows"
               :key="row.id"
@@ -152,17 +161,19 @@ const { t } = useI18n();
           <template v-else>
             <TableRow class="hover:bg-transparent">
               <TableCell :colspan="columnsWithSelection.length" class="h-[300px] text-center">
-                <div class="flex flex-col items-center justify-center py-12">
-                  <div class="bg-slate-50 p-6 rounded-full mb-4 border border-slate-100/50">
-                    <Search class="h-10 w-10 text-slate-200" />
+                <slot name="empty">
+                  <div class="flex flex-col items-center justify-center py-12">
+                    <div class="bg-slate-50 p-6 rounded-full mb-4 border border-slate-100/50">
+                      <Search class="h-10 w-10 text-slate-200" />
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-700 tracking-tight">
+                      {{ t('common.table.noResults') }}
+                    </h3>
+                    <p class="text-slate-400 text-sm font-medium mt-1">
+                      We couldn't find any results for the current filters.
+                    </p>
                   </div>
-                  <h3 class="text-lg font-bold text-slate-700 tracking-tight">
-                    {{ t('common.table.noResults') }}
-                  </h3>
-                  <p class="text-slate-400 text-sm font-medium mt-1">
-                    We couldn't find any results for the current filters.
-                  </p>
-                </div>
+                </slot>
               </TableCell>
             </TableRow>
           </template>
