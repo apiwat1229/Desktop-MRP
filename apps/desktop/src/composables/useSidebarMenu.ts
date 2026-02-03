@@ -42,20 +42,26 @@ export function useSidebarMenu() {
                 {
                     name: t('services.qa.name'),
                     path: '/admin/qa',
-                    icon: FlaskConical, // Ensure FlaskConical is imported
+                    icon: FlaskConical,
                     items: [
                         { name: t('qa.rawMaterialPlan'), path: '/admin/qa/raw-material-plan-list' },
-                        { type: 'separator' as const },
-                        { name: 'Cuplump', type: 'label' as const },
-                        { name: t('services.qa.menu.clPoPri'), path: '/admin/qa/cl-po-pri' },
-                        { name: t('services.qa.menu.clLab'), path: '/admin/qa/cl-lab' },
-                        { name: t('services.qa.menu.clIncoming'), path: '/admin/qa/cl-summary' },
-                        { type: 'separator' as const },
-                        { name: 'USS', type: 'label' as const },
-                        { name: t('services.qa.menu.ussPoPri'), path: '/admin/qa/uss-po-pri' },
-                        { name: t('services.qa.menu.ussIncoming'), path: '/admin/qa/uss-summary' },
-                        { type: 'separator' as const },
-                        { name: t('production.jobOrderList'), path: '/admin/qa/job-orders' },
+                        {
+                            name: 'Cuplump',
+                            items: [
+                                { name: t('services.qa.menu.clPoPri'), path: '/admin/qa/cl-po-pri' },
+                                { name: t('services.qa.menu.clLab'), path: '/admin/qa/cl-lab' },
+                                { name: t('services.qa.menu.clIncoming'), path: '/admin/qa/cl-summary' },
+                            ],
+                        },
+                        {
+                            name: 'USS',
+                            items: [
+                                { name: t('services.qa.menu.ussPoPri'), path: '/admin/qa/uss-po-pri' },
+                                { name: t('services.qa.menu.ussIncoming'), path: '/admin/qa/uss-summary' },
+                            ],
+                        },
+                        { name: t('qa.tabs.cpkAnalysis'), path: '/admin/qa/cpk-analysis' },
+                        { name: t('qa.tabs.jobOrder'), path: '/admin/qa/job-order-list' },
                     ],
                 },
                 {

@@ -48,6 +48,8 @@
     "deleteConfirmMessage": "This action cannot be undone.",
     "clearAllConfirm": "Clear All Notifications?",
     "clearAll": "Clear All",
+    "yes": "Yes",
+    "no": "No",
     "errorLoading": "Failed to load data",
     "errorSave": "Failed to save data",
     "saved": "Saved successfully",
@@ -115,11 +117,36 @@
       "ussPoPri": "USS PO / PRI",
       "ussSummary": "USS Incoming",
       "cuplumpPool": "Cuplump Pool",
-      "jobOrderList": "Job Orders",
+      "jobOrder": "Job Order",
+      "jobOrderList": "Job Order",
       "jobOrderCreate": "Create Job Order",
       "planList": "Raw Material Plan List",
       "rawMaterialPlanList": "Raw Material Plan",
-      "rawMaterialPlanCreate": "Create Raw Material Plan"
+      "rawMaterialPlanCreate": "Create Raw Material Plan",
+      "cpkAnalysis": "CPK Analysis"
+    },
+    "cpk": {
+      "title": "Process Capability Sixpack",
+      "subtitle": "Process Capability Analysis",
+      "specs": "Specifications",
+      "subgroup": "Subgroup Size",
+      "uploadCsv": "Upload CSV",
+      "selectColumn": "Select Column",
+      "dataInput": "Data Input",
+      "charts": {
+        "xbar": "Xbar Chart",
+        "histogram": "Capability Histogram",
+        "schart": "S Chart",
+        "probPlot": "Normal Probability Plot",
+        "subgroups": "Last Subgroups"
+      },
+      "stats": {
+        "title": "Capability Stats",
+        "within": "Within (Short-term)",
+        "overall": "Overall (Long-term)"
+      },
+      "noDataTitle": "Waiting for data input...",
+      "noDataSubtitle": "Upload a CSV file or enter data manually above."
     },
     "searchPlaceholder": "Search items...",
     "pickDate": "Pick a date",
@@ -273,7 +300,7 @@
     "title": "Production & Quality",
     "subtitle": "Manage and record daily production reports",
     "reportList": "Production & Quality",
-    "jobOrderList": "Job Order List",
+    "jobOrderList": "Job Order",
     "history": {
       "empty": "No production history found"
     },

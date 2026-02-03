@@ -10,11 +10,13 @@ import { toast } from 'vue-sonner';
 
 import { useNavigationStore } from '@/stores/navigation';
 
+import JobOrderDetails from './components/JobOrderDetails.vue';
 import JobOrderForm from './components/JobOrderForm.vue';
 import CuplumpPoolManagement from './CuplumpPoolManagement.vue';
 import ClLabTab from './tabs/ClLabTab.vue';
 import ClPoPriTab from './tabs/ClPoPriTab.vue';
 import ClSummaryTab from './tabs/ClSummaryTab.vue';
+import CpkAnalysisTab from './tabs/CpkAnalysisTab.vue';
 import JobOrderTab from './tabs/JobOrderTab.vue';
 import RawMaterialPlanForm from './tabs/RawMaterialPlanForm.vue';
 import RawMaterialPlanList from './tabs/RawMaterialPlanList.vue';
@@ -44,8 +46,16 @@ const selectedDateObject = computed({
   set: (val) => (navigationStore.date = val),
 });
 
-const selectedDate = computed(() => {
-  return selectedDateObject.value ? selectedDateObject.value.toString() : '';
+const selectedDateRange = computed({
+  get: () => navigationStore.dateRange,
+  set: (val) => (navigationStore.dateRange = val),
+});
+
+const selectedDateRangeString = computed(() => {
+  return {
+    start: selectedDateRange.value.start ? selectedDateRange.value.start.toString() : '',
+    end: selectedDateRange.value.end ? selectedDateRange.value.end.toString() : '',
+  };
 });
 
 // Date Persistence Logic
@@ -78,6 +88,29 @@ const getInitialDate = () => {
   return now;
 };
 
+const getInitialDateRange = () => {
+  const now = today(getLocalTimeZone());
+  const storedRangeStr = localStorage.getItem('qa_selected_date_range');
+
+  if (storedRangeStr) {
+    try {
+      const range = JSON.parse(storedRangeStr);
+      return {
+        start: new CalendarDate(range.start.year, range.start.month, range.start.day),
+        end: new CalendarDate(range.end.year, range.end.month, range.end.day),
+      };
+    } catch (e) {
+      // Default to last 30 days
+      const startDate = now.subtract({ days: 30 });
+      return { start: startDate, end: now };
+    }
+  }
+
+  // Default to last 30 days
+  const startDate = now.subtract({ days: 30 });
+  return { start: startDate, end: now };
+};
+
 // Watchers
 watch(selectedDateObject, (newDate) => {
   if (newDate) {
@@ -95,6 +128,32 @@ watch(selectedDateObject, (newDate) => {
 });
 
 watch(
+  selectedDateRange,
+  (newRange) => {
+    if (newRange.start && newRange.end) {
+      localStorage.setItem(
+        'qa_selected_date_range',
+        JSON.stringify({
+          start: {
+            year: newRange.start.year,
+            month: newRange.start.month,
+            day: newRange.start.day,
+          },
+          end: {
+            year: newRange.end.year,
+            month: newRange.end.month,
+            day: newRange.end.day,
+          },
+        })
+      );
+    } else {
+      localStorage.removeItem('qa_selected_date_range');
+    }
+  },
+  { deep: true }
+);
+
+watch(
   () => route.params.tab,
   (newTab) => {
     if (newTab && typeof newTab === 'string') {
@@ -106,16 +165,25 @@ watch(
   { immediate: true }
 );
 
+// Restore state from query params on mount or navigation
+watch(
+  () => route.query.id,
+  (newId) => {
+    if (newId && typeof newId === 'string') {
+      if (currentTab.value === 'raw-material-plan-create' && !selectedRawMaterialPlan.value) {
+        selectedRawMaterialPlan.value = { id: newId } as any;
+      }
+      if (currentTab.value === 'job-order-create' && !selectedJobOrder.value) {
+        selectedJobOrder.value = { id: newId } as any;
+      }
+    }
+  },
+  { immediate: true }
+);
+
 watch(
   currentTab,
   (newTab) => {
-    if (newTab !== 'raw-material-plan-create') {
-      selectedRawMaterialPlan.value = undefined;
-    }
-    if (newTab !== 'job-order-create') {
-      selectedJobOrder.value = undefined;
-    }
-
     // Update Navbar Title to match current tab
     const titleKey = `qa.tabs.${newTab.replace(/-([a-z])/g, (g) => g[1].toUpperCase())}`;
     navigationStore.setTitle(t(titleKey));
@@ -124,18 +192,45 @@ watch(
 );
 
 // Handlers
+const handleJobOrderCreate = () => {
+  selectedJobOrder.value = undefined;
+  router.push({ name: 'QualityAssurance', params: { tab: 'job-order-create' } });
+};
+
 const handleStatsUpdate = (stats: { total: number; complete: number; incomplete: number }) => {
   currentStats.value = stats;
 };
 
 const handleJobOrderEdit = (order: JobOrder) => {
   selectedJobOrder.value = order;
-  router.push({ name: 'QualityAssurance', params: { tab: 'job-order-create' } });
+  router.push({
+    name: 'QualityAssurance',
+    params: { tab: 'job-order-create' },
+    query: { id: order.id || (order as any)._id },
+  });
+};
+
+const handleViewJobOrder = (order: JobOrder) => {
+  selectedJobOrder.value = order;
+  currentTab.value = 'job-order-details';
 };
 
 const handleRawMaterialPlanEdit = (plan: any) => {
   selectedRawMaterialPlan.value = plan;
-  router.push({ name: 'QualityAssurance', params: { tab: 'raw-material-plan-create' } });
+  router.push({
+    name: 'QualityAssurance',
+    params: { tab: 'raw-material-plan-create' },
+    query: { id: plan.id || plan._id },
+  });
+};
+
+const handleRawMaterialPlanCreate = () => {
+  selectedRawMaterialPlan.value = undefined;
+  router.push({
+    name: 'QualityAssurance',
+    params: { tab: 'raw-material-plan-create' },
+    query: { id: undefined },
+  });
 };
 
 const handleJobOrderSave = async (formData: JobOrder) => {
@@ -193,6 +288,7 @@ onMounted(() => {
   fetchData();
   navigationStore.showControls = true;
   navigationStore.date = getInitialDate();
+  navigationStore.dateRange = getInitialDateRange();
 });
 </script>
 
@@ -205,7 +301,8 @@ onMounted(() => {
         <ClPoPriTab
           key="component-cl-po-pri"
           :search-query="searchQuery"
-          :date="selectedDate"
+          :start-date="selectedDateRangeString.start"
+          :end-date="selectedDateRangeString.end"
           :status-filter="statusFilter"
           @update:stats="handleStatsUpdate"
         />
@@ -214,7 +311,8 @@ onMounted(() => {
         <ClLabTab
           key="component-cl-lab"
           :search-query="searchQuery"
-          :date="selectedDate"
+          :start-date="selectedDateRangeString.start"
+          :end-date="selectedDateRangeString.end"
           :status-filter="statusFilter"
           @update:stats="handleStatsUpdate"
         />
@@ -222,7 +320,8 @@ onMounted(() => {
       <div v-else-if="currentTab === 'cl-summary'">
         <ClSummaryTab
           :search-query="searchQuery"
-          :date="selectedDate"
+          :start-date="selectedDateRangeString.start"
+          :end-date="selectedDateRangeString.end"
           :status-filter="statusFilter"
           @update:stats="handleStatsUpdate"
         />
@@ -233,7 +332,8 @@ onMounted(() => {
       <div v-else-if="currentTab === 'uss-po-pri'">
         <UssPoPriTab
           :search-query="searchQuery"
-          :date="selectedDate"
+          :start-date="selectedDateRangeString.start"
+          :end-date="selectedDateRangeString.end"
           :status-filter="statusFilter"
           @update:stats="handleStatsUpdate"
         />
@@ -255,8 +355,22 @@ onMounted(() => {
         <JobOrderTab
           key="component-job-order-list"
           :search-query="searchQuery"
-          :date="selectedDate"
+          :start-date="selectedDateRangeString.start"
+          :end-date="selectedDateRangeString.end"
+          @create="handleJobOrderCreate"
           @edit="handleJobOrderEdit"
+          @view="handleViewJobOrder"
+        />
+      </div>
+      <div v-else-if="currentTab === 'job-order-details'" key="tab-job-order-details">
+        <JobOrderDetails
+          v-if="selectedJobOrder"
+          :jobOrder="selectedJobOrder"
+          :readonly="true"
+          @back="
+            currentTab = 'job-order-list';
+            selectedJobOrder = undefined;
+          "
         />
       </div>
       <div v-else-if="currentTab === 'job-order-create'" key="tab-job-order-create">
@@ -273,12 +387,18 @@ onMounted(() => {
       <div v-if="currentTab === 'raw-material-plan-list'" key="tab-raw-material-plan-list">
         <RawMaterialPlanList
           :search-query="searchQuery"
-          :date="selectedDate"
+          :start-date="selectedDateRangeString.start"
+          :end-date="selectedDateRangeString.end"
+          @create="handleRawMaterialPlanCreate"
           @edit="handleRawMaterialPlanEdit"
         />
       </div>
+      <div v-else-if="currentTab === 'cpk-analysis'" key="tab-cpk-analysis">
+        <CpkAnalysisTab />
+      </div>
       <div v-else-if="currentTab === 'raw-material-plan-create'" key="tab-raw-material-plan-create">
         <RawMaterialPlanForm
+          :key="(route.query.id as string) || 'new'"
           :initial-data="selectedRawMaterialPlan"
           @cancel="
             router.push({ name: 'QualityAssurance', params: { tab: 'raw-material-plan-list' } });

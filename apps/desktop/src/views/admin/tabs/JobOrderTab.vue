@@ -12,7 +12,8 @@ import {
 } from '@/components/ui/table';
 import { jobOrdersApi, type JobOrder } from '@/services/jobOrders';
 import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date';
-import { CheckCircle2, Clock, Edit, FileText } from 'lucide-vue-next';
+import { format } from 'date-fns';
+import { CheckCircle2, Clock, Edit, FileText, Plus } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { toast } from 'vue-sonner';
@@ -22,11 +23,15 @@ const { t } = useI18n();
 
 const props = defineProps<{
   searchQuery: string;
-  date: string;
+  date?: string; // For backward compatibility with Production view
+  startDate?: string; // For date range in QA view
+  endDate?: string; // For date range in QA view
   readonly?: boolean;
+  hideStats?: boolean;
 }>();
 
 const emit = defineEmits<{
+  (e: 'create'): void;
   (e: 'edit', jobOrder: JobOrder): void;
   (e: 'view', jobOrder: JobOrder): void;
 }>();
@@ -50,7 +55,20 @@ const selectedJobOrder = ref<JobOrder | null>(null);
 
 // Initialize from props
 const searchQuery = ref(props.searchQuery || '');
-const selectedDate = ref<any>(parseDateString(props.date) || today(getLocalTimeZone()));
+
+// Check if we're in date range mode or single date mode
+const isDateRangeMode = computed(() => !!props.startDate || !!props.endDate);
+
+const startDate = ref<any>(
+  props.startDate
+    ? parseDateString(props.startDate)
+    : today(getLocalTimeZone()).subtract({ days: 30 })
+);
+const endDate = ref<any>(
+  props.endDate ? parseDateString(props.endDate) : today(getLocalTimeZone())
+);
+const singleDate = ref<any>(props.date ? parseDateString(props.date) : today(getLocalTimeZone()));
+
 const isPrintDialogOpen = ref(false);
 
 // Watch props
@@ -64,8 +82,26 @@ watch(
 watch(
   () => props.date,
   (newVal) => {
+    if (newVal && !isDateRangeMode.value) {
+      singleDate.value = parseDateString(newVal);
+    }
+  }
+);
+
+watch(
+  () => props.startDate,
+  (newVal) => {
     if (newVal) {
-      selectedDate.value = parseDateString(newVal);
+      startDate.value = parseDateString(newVal);
+    }
+  }
+);
+
+watch(
+  () => props.endDate,
+  (newVal) => {
+    if (newVal) {
+      endDate.value = parseDateString(newVal);
     }
   }
 );
@@ -73,13 +109,29 @@ watch(
 const filteredJobOrders = computed(() => {
   let filtered = jobOrders.value;
 
-  // Filter by date
-  if (selectedDate.value) {
-    const targetDate = `${selectedDate.value.year}-${String(selectedDate.value.month).padStart(2, '0')}-${String(selectedDate.value.day).padStart(2, '0')}`;
-    filtered = filtered.filter((order) => {
-      const orderDate = order.qaDate ? order.qaDate.split('T')[0] : '';
-      return orderDate === targetDate;
-    });
+  // Filter by date - use range mode or single date mode
+  if (isDateRangeMode.value) {
+    // Date range mode (for QA view)
+    if (startDate.value) {
+      const startDateStr = `${startDate.value.year}-${String(startDate.value.month).padStart(2, '0')}-${String(startDate.value.day).padStart(2, '0')}`;
+      const endDateStr = endDate.value
+        ? `${endDate.value.year}-${String(endDate.value.month).padStart(2, '0')}-${String(endDate.value.day).padStart(2, '0')}`
+        : startDateStr;
+
+      filtered = filtered.filter((order) => {
+        const orderDate = order.qaDate ? order.qaDate.split('T')[0] : '';
+        return orderDate >= startDateStr && orderDate <= endDateStr;
+      });
+    }
+  } else {
+    // Single date mode (for Production view)
+    if (singleDate.value) {
+      const targetDate = `${singleDate.value.year}-${String(singleDate.value.month).padStart(2, '0')}-${String(singleDate.value.day).padStart(2, '0')}`;
+      filtered = filtered.filter((order) => {
+        const orderDate = order.qaDate ? order.qaDate.split('T')[0] : '';
+        return orderDate === targetDate;
+      });
+    }
   }
 
   // Filter by search query
@@ -95,6 +147,12 @@ const filteredJobOrders = computed(() => {
 
   return filtered;
 });
+
+const stats = computed(() => ({
+  total: filteredJobOrders.value.length,
+  active: filteredJobOrders.value.filter((j) => !j.isClosed).length,
+  completed: filteredJobOrders.value.filter((j) => j.isClosed).length,
+}));
 
 const fetchJobOrders = async () => {
   isLoading.value = true;
@@ -135,8 +193,49 @@ onMounted(() => {
 
 <template>
   <div class="space-y-6">
-    <!-- Header with Search, Date (Removed Button) -->
-    <!-- Button removed as user requested moving Create to Tab -->
+    <!-- Premium Stats Card with NEW ORDER button -->
+    <div
+      v-if="!hideStats"
+      class="rounded-xl border bg-white shadow-sm p-4 px-6 relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-6"
+    >
+      <!-- Stats Section -->
+      <div class="flex items-center justify-center lg:justify-start gap-12 relative z-10 flex-1">
+        <div class="text-center group/stat">
+          <span
+            class="block text-[0.6rem] font-black text-slate-500 uppercase tracking-widest mb-1 group-hover/stat:text-primary transition-colors"
+            >TOTAL ORDERS</span
+          >
+          <span class="text-xl font-black text-slate-900 tabular-nums">{{ stats.total }}</span>
+        </div>
+        <div class="text-center group/stat">
+          <span
+            class="block text-[0.6rem] font-black text-blue-500 uppercase tracking-widest mb-1 group-hover/stat:text-blue-600 transition-colors"
+            >ACTIVE JOBS</span
+          >
+          <span class="text-xl font-black text-blue-600 tabular-nums">{{ stats.active }}</span>
+        </div>
+        <div class="text-center group/stat">
+          <span
+            class="block text-[0.6rem] font-black text-emerald-500 uppercase tracking-widest mb-1 group-hover/stat:text-emerald-600 transition-colors"
+            >COMPLETED</span
+          >
+          <span class="text-xl font-black text-emerald-600 tabular-nums">{{
+            stats.completed
+          }}</span>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <div class="relative z-10" v-if="!readonly">
+        <Button
+          @click="emit('create')"
+          class="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 shadow-primary/20 shadow-lg px-6 h-10 rounded-xl font-bold transition-all hover:scale-105 active:scale-95"
+        >
+          <Plus class="w-4 h-4" />
+          {{ t('qa.jobOrderMgmt.newOrder') }}
+        </Button>
+      </div>
+    </div>
 
     <!-- Job Orders Table -->
     <div>
@@ -144,6 +243,7 @@ onMounted(() => {
         <Table>
           <TableHeader class="bg-slate-50/50">
             <TableRow class="hover:bg-transparent border-b-2">
+              <TableHead class="font-black text-slate-700">Date</TableHead>
               <TableHead class="font-black text-slate-700">
                 {{ t('qa.jobOrderMgmt.cols.no') }}
               </TableHead>
@@ -155,6 +255,9 @@ onMounted(() => {
               }}</TableHead>
               <TableHead class="font-black text-slate-700">{{
                 t('qa.jobOrderMgmt.cols.palletSpecs')
+              }}</TableHead>
+              <TableHead class="font-black text-slate-700 text-center">{{
+                t('qa.jobOrderForm.palletMarking')
               }}</TableHead>
               <TableHead class="font-black text-slate-700">{{
                 t('qa.jobOrderMgmt.cols.status')
@@ -193,6 +296,9 @@ onMounted(() => {
               class="group hover:bg-slate-50/50 transition-all cursor-pointer border-b"
               @click="handleView(order)"
             >
+              <TableCell class="font-bold text-slate-700">
+                {{ format(new Date(order.qaDate), 'dd-MMM-yyyy') }}
+              </TableCell>
               <TableCell class="font-black text-slate-900 py-3">
                 <div class="flex items-center gap-2">
                   <div
@@ -223,6 +329,19 @@ onMounted(() => {
                     {{ order.quantityBale }} {{ t('qa.jobOrderMgmt.balesCount') }}</span
                   >
                 </div>
+              </TableCell>
+              <TableCell class="text-center">
+                <Badge
+                  :class="
+                    order.palletMarking
+                      ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                      : 'bg-slate-100 text-slate-600 border-slate-200'
+                  "
+                  variant="outline"
+                  class="font-bold"
+                >
+                  {{ order.palletMarking ? t('common.yes') : t('common.no') }}
+                </Badge>
               </TableCell>
               <TableCell>
                 <Badge

@@ -51,13 +51,17 @@ const searchQuery = computed({
   get: () => navigationStore.searchQuery,
   set: (val) => (navigationStore.searchQuery = val),
 });
-const selectedDateObject = computed({
-  get: () => navigationStore.date,
-  set: (val) => (navigationStore.date = val),
+
+const selectedDateRange = computed({
+  get: () => navigationStore.dateRange,
+  set: (val) => (navigationStore.dateRange = val),
 });
 
-const selectedDate = computed(() => {
-  return selectedDateObject.value ? selectedDateObject.value.toString() : undefined;
+const selectedDateRangeString = computed(() => {
+  return {
+    start: selectedDateRange.value.start ? selectedDateRange.value.start.toString() : '',
+    end: selectedDateRange.value.end ? selectedDateRange.value.end.toString() : '',
+  };
 });
 
 // Production Report State
@@ -163,12 +167,15 @@ const fetchStats = async () => {
     if (activeContext.value === 'production') {
       let reports = await productionReportsApi.getAll();
 
-      // Filter by date
-      if (selectedDate.value) {
+      // Filter by date range
+      if (selectedDateRangeString.value.start && selectedDateRangeString.value.end) {
+        const startDateStr = selectedDateRangeString.value.start.split('T')[0];
+        const endDateStr = selectedDateRangeString.value.end.split('T')[0];
         reports = reports.filter((r) => {
           const dateVal =
             r.productionDate instanceof Date ? r.productionDate.toISOString() : r.productionDate;
-          return dateVal?.split('T')[0] === selectedDate.value;
+          const reportDate = dateVal?.split('T')[0];
+          return reportDate && reportDate >= startDateStr && reportDate <= endDateStr;
         });
       }
 
@@ -190,9 +197,14 @@ const fetchStats = async () => {
     } else {
       let jobs = await jobOrdersApi.getAll();
 
-      // Filter by date
-      if (selectedDate.value) {
-        jobs = jobs.filter((j) => j.qaDate?.split('T')[0] === selectedDate.value);
+      // Filter by date range
+      if (selectedDateRangeString.value.start && selectedDateRangeString.value.end) {
+        const startDateStr = selectedDateRangeString.value.start.split('T')[0];
+        const endDateStr = selectedDateRangeString.value.end.split('T')[0];
+        jobs = jobs.filter((j) => {
+          const jobDate = j.qaDate?.split('T')[0];
+          return jobDate && jobDate >= startDateStr && jobDate <= endDateStr;
+        });
       }
 
       stats.value.jobOrder = {
@@ -213,11 +225,15 @@ onUnmounted(() => {
 onMounted(() => {
   fetchStats();
   navigationStore.showControls = true;
-  if (!navigationStore.date) {
-    navigationStore.date = today(getLocalTimeZone());
+  if (!navigationStore.dateRange.start || !navigationStore.dateRange.end) {
+    const now = today(getLocalTimeZone());
+    navigationStore.dateRange = {
+      start: now.subtract({ days: 30 }),
+      end: now,
+    };
   }
 });
-watch([activeContext, selectedDate], fetchStats);
+watch([activeContext, selectedDateRangeString], fetchStats);
 
 // Sync Title
 watch(
@@ -244,7 +260,7 @@ import { onUnmounted } from 'vue';
       </div>
 
       <!-- Stats Section -->
-      <div class="flex items-center justify-center gap-8 relative z-10 flex-1">
+      <div class="flex items-center justify-center lg:justify-start gap-12 relative z-10 flex-1">
         <template v-if="activeContext === 'production'">
           <div class="text-center group/stat">
             <span
@@ -327,7 +343,8 @@ import { onUnmounted } from 'vue';
           <template v-if="activeContext === 'production'">
             <ProductionReportList
               :search-query="searchQuery"
-              :date="selectedDate"
+              :start-date="selectedDateRangeString.start"
+              :end-date="selectedDateRangeString.end"
               @edit="handleEditReport"
             />
           </template>
@@ -335,8 +352,10 @@ import { onUnmounted } from 'vue';
             <JobOrderTab
               :key="jobOrderListKey"
               :search-query="searchQuery"
-              :date="selectedDate || ''"
+              :start-date="selectedDateRangeString.start"
+              :end-date="selectedDateRangeString.end"
               :readonly="isReadonly"
+              :hide-stats="true"
               @view="handleViewJobOrder"
               @edit="handleEditJobOrder"
             />

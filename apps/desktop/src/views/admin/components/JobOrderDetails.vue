@@ -253,7 +253,7 @@ onMounted(() => {
           </div>
         </CardHeader>
         <CardContent class="p-4">
-          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+          <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-6">
             <div>
               <Label
                 class="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1 block"
@@ -297,6 +297,23 @@ onMounted(() => {
               <p class="font-bold text-slate-700 leading-tight">
                 {{ localJobOrder.quantityBale || 35 }} Bales
               </p>
+            </div>
+            <div>
+              <Label
+                class="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-1 block"
+                >Pallet Marking</Label
+              >
+              <Badge
+                :class="
+                  localJobOrder.palletMarking
+                    ? 'bg-emerald-100 text-emerald-700 border-emerald-200'
+                    : 'bg-slate-100 text-slate-600 border-slate-200'
+                "
+                variant="outline"
+                class="font-bold"
+              >
+                {{ localJobOrder.palletMarking ? t('common.yes') : t('common.no') }}
+              </Badge>
             </div>
             <div>
               <Label

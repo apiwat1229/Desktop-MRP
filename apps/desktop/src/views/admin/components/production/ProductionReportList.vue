@@ -27,7 +27,9 @@ const isLoading = ref(false);
 
 const props = defineProps<{
   searchQuery?: string;
-  date?: string;
+  date?: string; // For backward compatibility
+  startDate?: string; // For date range
+  endDate?: string; // For date range
 }>();
 
 const emit = defineEmits(['edit']);
@@ -45,22 +47,45 @@ const parseDateString = (dateStr: string) => {
   }
 };
 
+const isDateRangeMode = computed(() => !!props.startDate || !!props.endDate);
+
 const filteredReports = computed(() => {
   let filtered = reports.value;
 
-  // Filter by date
-  if (props.date) {
-    const targetDateObj = parseDateString(props.date);
-    if (targetDateObj) {
-      const targetDateStr = `${targetDateObj.year}-${String(targetDateObj.month).padStart(2, '0')}-${String(targetDateObj.day).padStart(2, '0')}`;
-      filtered = filtered.filter((report) => {
-        const dateVal =
-          report.productionDate instanceof Date
-            ? report.productionDate.toISOString()
-            : report.productionDate;
-        const reportDate = dateVal ? dateVal.split('T')[0] : '';
-        return reportDate === targetDateStr;
-      });
+  // Filter by date - use range mode or single date mode
+  if (isDateRangeMode.value) {
+    // Date range mode
+    if (props.startDate && props.endDate) {
+      const startDateObj = parseDateString(props.startDate);
+      const endDateObj = parseDateString(props.endDate);
+      if (startDateObj && endDateObj) {
+        const startDateStr = `${startDateObj.year}-${String(startDateObj.month).padStart(2, '0')}-${String(startDateObj.day).padStart(2, '0')}`;
+        const endDateStr = `${endDateObj.year}-${String(endDateObj.month).padStart(2, '0')}-${String(endDateObj.day).padStart(2, '0')}`;
+        filtered = filtered.filter((report) => {
+          const dateVal =
+            report.productionDate instanceof Date
+              ? report.productionDate.toISOString()
+              : report.productionDate;
+          const reportDate = dateVal ? dateVal.split('T')[0] : '';
+          return reportDate >= startDateStr && reportDate <= endDateStr;
+        });
+      }
+    }
+  } else {
+    // Single date mode
+    if (props.date) {
+      const targetDateObj = parseDateString(props.date);
+      if (targetDateObj) {
+        const targetDateStr = `${targetDateObj.year}-${String(targetDateObj.month).padStart(2, '0')}-${String(targetDateObj.day).padStart(2, '0')}`;
+        filtered = filtered.filter((report) => {
+          const dateVal =
+            report.productionDate instanceof Date
+              ? report.productionDate.toISOString()
+              : report.productionDate;
+          const reportDate = dateVal ? dateVal.split('T')[0] : '';
+          return reportDate === targetDateStr;
+        });
+      }
     }
   }
 

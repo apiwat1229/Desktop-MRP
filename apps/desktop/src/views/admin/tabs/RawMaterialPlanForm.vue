@@ -42,15 +42,15 @@ import { addDays, format } from 'date-fns';
 import {
   Calendar as CalendarIcon,
   FileEdit,
+  Loader2,
   PlusCircle,
   RotateCcw,
   Save,
   Trash2,
   X,
 } from 'lucide-vue-next';
-import { computed, onMounted, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
-import { useRouter } from 'vue-router';
 import { toast } from 'vue-sonner';
 
 const props = defineProps<{
@@ -61,18 +61,39 @@ const emit = defineEmits(['cancel']);
 
 const { t } = useI18n();
 const authStore = useAuthStore();
-const router = useRouter();
 
-const isEditMode = computed(() => !!props.initialData?.id);
+const isEditMode = computed(
+  () =>
+    !!(plan.value.id || (plan.value as any)._id) ||
+    !!(props.initialData?.id || props.initialData?._id)
+);
 const isDeleteAlertOpen = ref(false);
 const isResetAlertOpen = ref(false);
 
 const handleCancel = () => {
   emit('cancel');
-  router.push({ query: { tab: 'raw-material-plan-list' } });
+};
+
+const isLoadingData = ref(false);
+
+const fetchPlanDetails = async (id: string) => {
+  isLoadingData.value = true;
+  try {
+    const response = await api.get(`/raw-material-plans/${id}`);
+    const actualData = response.data?.data || response.data;
+    if (actualData) {
+      initializeData(actualData);
+    }
+  } catch (error) {
+    console.error('Failed to fetch plan details:', error);
+    toast.error('Failed to load plan details');
+  } finally {
+    isLoadingData.value = false;
+  }
 };
 
 const getDefaultPlan = () => ({
+  id: undefined as string | undefined,
   planNo: '',
   revisionNo: '',
   refProductionNo: '',
@@ -138,11 +159,12 @@ const handleReset = () => {
 };
 
 const handleDelete = async () => {
-  if (!props.initialData?.id) return;
+  const planId = props.initialData?.id || props.initialData?._id;
+  if (!planId) return;
 
   try {
     isSubmitting.value = true;
-    await api.delete(`/raw-material-plans/${props.initialData.id}`);
+    await api.delete(`/raw-material-plans/${planId}`);
     toast.success('Plan deleted successfully');
     isDeleteAlertOpen.value = false;
     handleCancel(); // Redirect
@@ -155,42 +177,74 @@ const handleDelete = async () => {
 };
 
 const initializeData = (data: any) => {
-  plan.value.planNo = data.planNo || '';
-  plan.value.revisionNo = data.revisionNo || '';
-  plan.value.refProductionNo = data.refProductionNo || '';
+  if (!data) return;
+  console.log('Initializing Raw Material Plan data:', data);
+
+  // Robust ID assignment: prefer _id or id from the incoming data, fallback to props
+  const incomingId = data.id || data._id;
+  const propId = props.initialData?.id || props.initialData?._id;
+  plan.value.id = incomingId || propId;
+
+  plan.value.planNo = data.planNo || plan.value.planNo || '';
+  plan.value.revisionNo = data.revisionNo || plan.value.revisionNo || '';
+  plan.value.refProductionNo = String(data.refProductionNo || plan.value.refProductionNo || '');
   if (data.issuedDate) {
-    plan.value.issuedDate = format(new Date(data.issuedDate), 'dd MMM yy');
+    try {
+      plan.value.issuedDate = format(new Date(data.issuedDate), 'dd MMM yy');
+    } catch (e) {
+      plan.value.issuedDate = data.issuedDate;
+    }
   }
 
-  if (data.rows && data.rows.length > 0) {
+  if (data.rows && Array.isArray(data.rows)) {
     plan.value.rows = data.rows.map((r: any) => {
+      let formattedDate = r.date || '';
+      if (r.date) {
+        try {
+          formattedDate = format(new Date(r.date), 'dd MMM yy');
+        } catch (e) {
+          formattedDate = r.date;
+        }
+      }
       return {
         ...r,
-        date: r.date ? format(new Date(r.date), 'dd MMM yy') : '',
+        date: formattedDate,
         plan1Pool:
           typeof r.plan1Pool === 'string'
             ? r.plan1Pool.split(',').filter(Boolean)
-            : r.plan1Pool || [],
+            : Array.isArray(r.plan1Pool)
+              ? r.plan1Pool
+              : [],
         plan1Grades:
           typeof r.plan1Grades === 'string'
             ? r.plan1Grades.split(',').filter(Boolean)
-            : r.plan1Grades || [],
+            : Array.isArray(r.plan1Grades)
+              ? r.plan1Grades
+              : [],
         plan2Pool:
           typeof r.plan2Pool === 'string'
             ? r.plan2Pool.split(',').filter(Boolean)
-            : r.plan2Pool || [],
+            : Array.isArray(r.plan2Pool)
+              ? r.plan2Pool
+              : [],
         plan2Grades:
           typeof r.plan2Grades === 'string'
             ? r.plan2Grades.split(',').filter(Boolean)
-            : r.plan2Grades || [],
+            : Array.isArray(r.plan2Grades)
+              ? r.plan2Grades
+              : [],
         plan3Pool:
           typeof r.plan3Pool === 'string'
             ? r.plan3Pool.split(',').filter(Boolean)
-            : r.plan3Pool || [],
+            : Array.isArray(r.plan3Pool)
+              ? r.plan3Pool
+              : [],
         plan3Grades:
           typeof r.plan3Grades === 'string'
             ? r.plan3Grades.split(',').filter(Boolean)
-            : r.plan3Grades || [],
+            : Array.isArray(r.plan3Grades)
+              ? r.plan3Grades
+              : [],
         ratioUSS: String(r.ratioUSS ?? '0'),
         ratioCL: String(r.ratioCL ?? '0'),
         ratioBK: String(r.ratioBK ?? '0'),
@@ -203,18 +257,33 @@ const initializeData = (data: any) => {
     });
   }
 
-  if (data.poolDetails && data.poolDetails.length > 0) {
-    plan.value.poolDetails = data.poolDetails.map((p: any) => ({
-      ...p,
-      clearDate: p.clearDate ? format(new Date(p.clearDate), 'dd MMM yy') : '',
-      grade: typeof p.grade === 'string' ? p.grade.split(',').filter(Boolean) : p.grade || [],
-      grossWeight: String(p.grossWeight ?? '0'),
-      netWeight: String(p.netWeight ?? '0'),
-      drc: String(p.drc ?? '0'),
-      moisture: String(p.moisture ?? '0'),
-      p0: String(p.p0 ?? '0'),
-      pri: String(p.pri ?? '0'),
-    }));
+  if (data.poolDetails && Array.isArray(data.poolDetails)) {
+    plan.value.poolDetails = data.poolDetails.map((p: any) => {
+      let formattedClearDate = p.clearDate || '';
+      if (p.clearDate) {
+        try {
+          formattedClearDate = format(new Date(p.clearDate), 'dd MMM yy');
+        } catch (e) {
+          formattedClearDate = p.clearDate;
+        }
+      }
+      return {
+        ...p,
+        clearDate: formattedClearDate,
+        grade:
+          typeof p.grade === 'string'
+            ? p.grade.split(',').filter(Boolean)
+            : Array.isArray(p.grade)
+              ? p.grade
+              : [],
+        grossWeight: String(p.grossWeight ?? '0'),
+        netWeight: String(p.netWeight ?? '0'),
+        drc: String(p.drc ?? '0'),
+        moisture: String(p.moisture ?? '0'),
+        p0: String(p.p0 ?? '0'),
+        pri: String(p.pri ?? '0'),
+      };
+    });
   }
 };
 
@@ -235,24 +304,40 @@ const togglePoolGrade = (pool: any, grade: string) => {
 const plan = ref(getDefaultPlan());
 
 const fetchNextPlanNo = async () => {
+  if (isEditMode.value || isSubmitting.value || plan.value.id || (plan.value as any)._id) return;
   try {
-    const response = await api.get('/raw-material-plans/next-plan-no');
-    if (response.data) {
+    const response = await api.get('/raw-material-plans/next-no');
+    if (!isEditMode.value && !plan.value.id) {
       plan.value.planNo = response.data;
     }
   } catch (error) {
-    console.error('Failed to fetch next plan number:', error);
+    console.error('Failed to fetch next plan no:', error);
   }
 };
 
-onMounted(() => {
-  if (props.initialData) {
-    initializeData(props.initialData);
-  } else {
-    // New plan: auto generate plan no.
-    fetchNextPlanNo();
-  }
-});
+// Initial data handled by watch(props.initialData, ..., { immediate: true })
+// to ensure it runs during setup and on updates from parent.
+
+watch(
+  () => props.initialData,
+  (newVal) => {
+    if (newVal) {
+      const id = newVal.id || newVal._id;
+      if (id) {
+        // Always fetch full details when editing to ensure we have complete data
+        fetchPlanDetails(id);
+      } else {
+        // No ID means create mode with pre-filled data
+        initializeData(newVal);
+      }
+    } else {
+      // No initial data means create mode
+      plan.value = getDefaultPlan();
+      fetchNextPlanNo();
+    }
+  },
+  { immediate: true }
+);
 
 const plainPoolOptions = computed(() => {
   return Array.from({ length: 23 }, (_, i) => String(i + 1));
@@ -372,8 +457,9 @@ const handleSave = async () => {
       })),
     };
 
-    if (props.initialData?.id) {
-      await api.patch(`/raw-material-plans/${props.initialData.id}`, payload);
+    const planId = plan.value.id || (plan.value as any)._id;
+    if (planId) {
+      await api.patch(`/raw-material-plans/${planId}`, payload);
       toast.success('Successfully updated Raw Material Plan');
     } else {
       await api.post('/raw-material-plans', payload);
@@ -394,6 +480,17 @@ const handleSave = async () => {
 
 <template>
   <div class="raw-material-plan-print-container">
+    <!-- Loading Overlay -->
+    <div
+      v-if="isLoadingData"
+      class="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center"
+    >
+      <div class="flex flex-col items-center gap-3">
+        <Loader2 class="w-8 h-8 animate-spin text-primary" />
+        <p class="text-sm font-bold text-slate-600">Loading plan details...</p>
+      </div>
+    </div>
+
     <div class="space-y-6 p-4 bg-white rounded-xl shadow-sm border">
       <!-- Plan Header Segment -->
       <div class="grid grid-cols-3 gap-8 pb-4 border-b border-slate-100">

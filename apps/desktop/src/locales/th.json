@@ -48,6 +48,8 @@
     "deleteConfirmMessage": "การกระทำนี้ไม่สามารถย้อนกลับได้",
     "clearAllConfirm": "ล้างการแจ้งเตือนทั้งหมด?",
     "clearAll": "ล้างทั้งหมด",
+    "yes": "ใช่",
+    "no": "ไม่ใช่",
     "errorLoading": "โหลดข้อมูลไม่สำเร็จ",
     "errorSave": "บันทึกข้อมูลไม่สำเร็จ",
     "saved": "บันทึกสำเร็จ",
@@ -113,17 +115,42 @@
       "clLab": "Cuplump Lab",
       "clSummary": "สรุปข้อมูล Cuplump",
       "cuplumpPool": "บ่อยางก้อนถ้วย",
+      "jobOrder": "ใบงานสั่งผลิต",
       "planList": "รายการแผน",
       "createPlan": "สร้างแผน",
       "ussPoPri": "ยางแผ่น PO PRI",
       "ussSummary": "สรุปยางแผ่น",
       "labOrders": "ใบงานสั่งผลิต",
-      "jobOrderList": "รายการใบสั่งผลิต",
+      "jobOrderList": "ใบงานสั่งผลิต",
       "jobOrderCreate": "สร้างใบสั่งผลิต",
       "rawMaterialPlanList": "รายการแผนรับวัตถุดิบ",
       "rawMaterialPlanCreate": "สร้างแผนรับวัตถุดิบ",
       "editPlan": "แก้ไขแผน",
-      "editJobOrder": "แก้ไขใบสั่งผลิต"
+      "editJobOrder": "แก้ไขใบสั่งผลิต",
+      "cpkAnalysis": "วิเคราะห์ CPK"
+    },
+    "cpk": {
+      "title": "Process Capability Sixpack",
+      "subtitle": "วิเคราะห์ความสามารถของกระบวนการ",
+      "specs": "ขีดจำกัด (Specifications)",
+      "subgroup": "ขนาดกลุ่ม (Subgroup)",
+      "uploadCsv": "อัปโหลด CSV",
+      "selectColumn": "เลือกคอลัมน์",
+      "dataInput": "ข้อมูลนำเข้า",
+      "charts": {
+        "xbar": "Xbar Chart (แผนภูมิค่าเฉลี่ย)",
+        "histogram": "Capability Histogram (ฮิสโตแกรม)",
+        "schart": "S Chart (ส่วนเบี่ยงเบนมาตรฐาน)",
+        "probPlot": "Normal Probability Plot (การกระจายตัว)",
+        "subgroups": "Last Subgroups (จุดข้อมูลดิบ)"
+      },
+      "stats": {
+        "title": "ดัชนีความสามารถ (Capability Stats)",
+        "within": "ระยะสั้น (Within)",
+        "overall": "ระยะยาว (Overall)"
+      },
+      "noDataTitle": "รอการนำเข้าข้อมูลเพื่อเริ่มการวิเคราะห์...",
+      "noDataSubtitle": "คุณสามารถคัดลอกข้อมูลมาวาง หรือกดปุ่มอัปโหลดไฟล์ CSV ด้านบน"
     },
     "searchPlaceholder": "ค้นหารายการ...",
     "pickDate": "เลือกวันที่",
@@ -275,7 +302,7 @@
     "name": "การผลิต",
     "description": "ติดตามสายการผลิต, ฉลาก QR งานระหว่างทำ & ยืนยันกระบวนการ",
     "reportList": "รายงานการผลิต & คุณภาพ",
-    "jobOrderList": "รายการใบสั่งผลิต",
+    "jobOrderList": "ใบงานสั่งผลิต",
     "history": {
       "empty": "ไม่พบประวัติการผลิต"
     },

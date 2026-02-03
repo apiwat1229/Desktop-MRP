@@ -7,6 +7,7 @@ export const useNavigationStore = defineStore('navigation', () => {
     const showControls = ref(false);
     const searchQuery = ref('');
     const date = ref<DateValue | undefined>(undefined);
+    const dateRange = ref<{ start: DateValue | undefined, end: DateValue | undefined }>({ start: undefined, end: undefined });
 
     const setTitle = (newTitle: string) => {
         title.value = newTitle;
@@ -21,6 +22,7 @@ export const useNavigationStore = defineStore('navigation', () => {
         showControls.value = false;
         searchQuery.value = '';
         date.value = undefined;
+        dateRange.value = { start: undefined, end: undefined };
     };
 
     return {
@@ -28,6 +30,7 @@ export const useNavigationStore = defineStore('navigation', () => {
         showControls,
         searchQuery,
         date,
+        dateRange,
         setTitle,
         setControlsVisible,
         reset

@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { RangeCalendar } from '@/components/ui/range-calendar';
 import { useSidebar } from '@/components/ui/sidebar';
 import { usePermissions } from '@/composables/usePermissions';
 import approvalsApi from '@/services/approvals';
@@ -105,10 +106,38 @@ const pageTitle = computed(() => {
 
 // Date Handling
 const df = new DateFormatter('en-GB', {
-  dateStyle: 'medium',
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+});
+
+const isJobOrderTab = computed(() => {
+  return (
+    route.path.includes('/qa/job-order') ||
+    route.path.includes('/qa/raw-material-plan') ||
+    route.path.includes('/production/job-orders') ||
+    route.path.includes('/production')
+  );
 });
 
 const formattedDate = computed(() => {
+  if (isJobOrderTab.value) {
+    // Show date range for job order tab
+    if (navigationStore.dateRange.start && navigationStore.dateRange.end) {
+      const startStr = df.format(navigationStore.dateRange.start.toDate(getLocalTimeZone()));
+      const endStr = df.format(navigationStore.dateRange.end.toDate(getLocalTimeZone()));
+      // If same date, show only once
+      if (startStr === endStr) {
+        return startStr;
+      }
+      return `${startStr} - ${endStr}`;
+    } else if (navigationStore.dateRange.start) {
+      // Show start date even if end is not selected yet
+      return df.format(navigationStore.dateRange.start.toDate(getLocalTimeZone()));
+    }
+    return '-';
+  }
+  // Show single date for other tabs
   if (!navigationStore.date) return '-';
   return df.format(navigationStore.date.toDate(getLocalTimeZone()));
 });
@@ -494,14 +523,30 @@ onUnmounted(() => {
             <Button
               variant="outline"
               size="sm"
-              class="h-8 min-w-[140px] px-3 justify-center text-foreground font-semibold bg-primary/5 hover:bg-primary/10 transition-all border-primary/20 hover:border-primary/30 rounded-lg shadow-none"
+              :class="[
+                'h-8 px-3 justify-center text-foreground font-semibold bg-primary/5 hover:bg-primary/10 transition-all border-primary/20 hover:border-primary/30 rounded-lg shadow-none',
+                isJobOrderTab ? 'min-w-[200px]' : 'min-w-[110px]',
+              ]"
             >
               <span class="text-xs">{{ formattedDate }}</span>
               <CalendarIcon class="ml-2 h-3.5 w-3.5 text-primary" />
             </Button>
           </PopoverTrigger>
           <PopoverContent class="w-auto p-0" align="end" :side-offset="12">
+            <!-- Show RangeCalendar for job-order-list tab -->
+            <RangeCalendar
+              v-if="isJobOrderTab"
+              :model-value="navigationStore.dateRange as any"
+              @update:model-value="
+                (range: any) => {
+                  navigationStore.dateRange = range;
+                  isCalendarOpen = false;
+                }
+              "
+            />
+            <!-- Show single Calendar for other tabs -->
             <Calendar
+              v-else
               :model-value="navigationStore.date as any"
               @update:model-value="
                 (date: any) => {

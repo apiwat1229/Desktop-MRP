@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/table';
 import api from '@/services/api';
 import { format } from 'date-fns';
-import { Loader2, X } from 'lucide-vue-next';
+import { Edit, Loader2, X } from 'lucide-vue-next';
 import QrcodeVue from 'qrcode.vue';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 
@@ -27,7 +27,7 @@ const props = defineProps<{
   autoPrint?: boolean;
 }>();
 
-const emit = defineEmits(['update:open']);
+const emit = defineEmits(['update:open', 'edit']);
 
 const plan = ref<any>(null);
 const isLoading = ref(false);
@@ -182,6 +182,15 @@ const getPlanPoolLabel = (row: any, planIndex: number) => {
           </h3>
         </div>
         <div class="flex items-center gap-2">
+          <Button
+            @click="emit('edit', plan)"
+            variant="outline"
+            size="sm"
+            class="h-9 gap-2 font-bold text-blue-600 border-blue-200 hover:bg-blue-50"
+          >
+            <Edit class="w-4 h-4" />
+            Edit Plan
+          </Button>
           <Button @click="emit('update:open', false)" variant="ghost" size="icon" class="h-9 w-9">
             <X class="w-4 h-4" />
           </Button>

@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/table';
 import api from '@/services/api';
 import { format } from 'date-fns';
-import { FileText, Loader2, Plus, Printer, RefreshCw } from 'lucide-vue-next';
+import { Edit, FileText, Loader2, Plus, Printer, RefreshCw } from 'lucide-vue-next';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import RawMaterialPlanViewModal from './RawMaterialPlanViewModal.vue';
@@ -19,7 +19,9 @@ import RawMaterialPlanViewModal from './RawMaterialPlanViewModal.vue';
 const { t } = useI18n();
 const props = defineProps<{
   searchQuery?: string;
-  date?: any;
+  date?: any; // For backward compatibility
+  startDate?: string; // For date range
+  endDate?: string; // For date range
 }>();
 
 const emit = defineEmits<{
@@ -87,18 +89,59 @@ const formatDate = (date: string | Date) => {
   }
 };
 
+const isDateRangeMode = computed(() => !!props.startDate || !!props.endDate);
+
 const filteredPlans = computed(() => {
-  if (!props.searchQuery) return plans.value;
-  const q = props.searchQuery.toLowerCase();
-  return plans.value.filter(
-    (p) =>
-      p.planNo.toLowerCase().includes(q) ||
-      p.refProductionNo?.toLowerCase().includes(q) ||
-      p.status.toLowerCase().includes(q) ||
-      p.creator?.toLowerCase().includes(q) ||
-      p.revisionNo?.toLowerCase().includes(q)
-  );
+  let filtered = plans.value;
+
+  // Filter by date - use range mode or single date mode
+  if (isDateRangeMode.value) {
+    // Date range mode
+    if (props.startDate) {
+      const startDateStr = props.startDate.split('T')[0];
+      const endDateStr = props.endDate ? props.endDate.split('T')[0] : startDateStr;
+      filtered = filtered.filter((plan) => {
+        const rawDate = plan.planDate || plan.issuedDate;
+        const planDate = rawDate ? rawDate.split('T')[0] : '';
+        return planDate >= startDateStr && planDate <= endDateStr;
+      });
+    }
+  } else {
+    // Single date mode (backward compatibility)
+    if (props.date) {
+      const targetDate =
+        typeof props.date === 'string'
+          ? props.date.split('T')[0]
+          : props.date.toString().split('T')[0];
+      filtered = filtered.filter((plan) => {
+        const rawDate = plan.planDate || plan.issuedDate;
+        const planDate = rawDate ? rawDate.split('T')[0] : '';
+        return planDate === targetDate;
+      });
+    }
+  }
+
+  // Filter by search query
+  if (props.searchQuery) {
+    const q = props.searchQuery.toLowerCase();
+    filtered = filtered.filter(
+      (p) =>
+        p.planNo.toLowerCase().includes(q) ||
+        p.refProductionNo?.toLowerCase().includes(q) ||
+        p.status.toLowerCase().includes(q) ||
+        p.creator?.toLowerCase().includes(q) ||
+        p.revisionNo?.toLowerCase().includes(q)
+    );
+  }
+
+  return filtered;
 });
+
+const stats = computed(() => ({
+  total: filteredPlans.value.length,
+  approved: filteredPlans.value.filter((p) => p.status === 'APPROVED').length,
+  draft: filteredPlans.value.filter((p) => p.status === 'DRAFT').length,
+}));
 
 const getStatusVariant = (status: string) => {
   switch (status) {
@@ -115,43 +158,58 @@ const getStatusVariant = (status: string) => {
 </script>
 
 <template>
-  <div class="space-y-4">
-    <!-- Independent Header -->
-    <!-- Header with Refresh Button -->
-    <div class="flex items-center justify-between px-1">
-      <div class="flex items-center gap-2">
-        <h3 class="text-sm font-black text-slate-800 uppercase tracking-tight">
-          {{ t('qa.tabs.planList') }}
-        </h3>
-        <Badge
-          v-if="filteredPlans.length"
-          variant="outline"
-          class="text-[10px] h-5 px-1.5 font-bold"
-        >
-          {{ filteredPlans.length }} plans
-        </Badge>
+  <div class="space-y-6">
+    <!-- Premium Stats Card with NEW PLAN button -->
+    <div
+      class="rounded-xl border bg-white shadow-sm p-4 px-6 relative overflow-hidden flex flex-col lg:flex-row items-center justify-between gap-6"
+    >
+      <!-- Stats Section -->
+      <div class="flex items-center justify-center lg:justify-start gap-12 relative z-10 flex-1">
+        <div class="text-center group/stat">
+          <span
+            class="block text-[0.6rem] font-black text-slate-500 uppercase tracking-widest mb-1 group-hover/stat:text-primary transition-colors"
+            >TOTAL PLANS</span
+          >
+          <span class="text-xl font-black text-slate-900 tabular-nums">{{ stats.total }}</span>
+        </div>
+        <div class="text-center group/stat">
+          <span
+            class="block text-[0.6rem] font-black text-emerald-500 uppercase tracking-widest mb-1 group-hover/stat:text-emerald-600 transition-colors"
+            >APPROVED</span
+          >
+          <span class="text-xl font-black text-emerald-600 tabular-nums">{{ stats.approved }}</span>
+        </div>
+        <div class="text-center group/stat">
+          <span
+            class="block text-[0.6rem] font-black text-amber-500 uppercase tracking-widest mb-1 group-hover/stat:text-amber-600 transition-colors"
+            >DRAFT</span
+          >
+          <span class="text-xl font-black text-amber-600 tabular-nums">{{ stats.draft }}</span>
+        </div>
       </div>
-      <div class="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          @click="fetchPlans"
-          :disabled="isLoading"
-          class="h-8 gap-2 text-xs font-bold text-slate-500 hover:text-primary transition-all rounded-md"
-        >
-          <RefreshCw :class="{ 'animate-spin': isLoading }" class="w-3.5 h-3.5" />
-          {{ t('common.refresh') || 'Refresh' }}
-        </Button>
 
-        <Button
-          variant="default"
-          size="sm"
-          @click="emit('create')"
-          class="h-8 gap-2 text-xs font-bold transition-all rounded-md shadow-sm"
-        >
-          <Plus class="w-3.5 h-3.5" />
-          {{ t('qa.tabs.rawMaterialPlanCreate') }}
-        </Button>
+      <!-- Action Button -->
+      <div class="relative z-10">
+        <div class="flex items-center gap-3">
+          <Button
+            variant="ghost"
+            size="sm"
+            @click="fetchPlans"
+            :disabled="isLoading"
+            class="h-10 gap-2 text-xs font-bold text-slate-500 hover:text-primary transition-all rounded-xl"
+          >
+            <RefreshCw :class="{ 'animate-spin': isLoading }" class="w-4 h-4" />
+            {{ t('common.refresh') || 'Refresh' }}
+          </Button>
+
+          <Button
+            @click="emit('create')"
+            class="bg-primary hover:bg-primary/90 text-primary-foreground gap-2 shadow-primary/20 shadow-lg px-6 h-10 rounded-xl font-bold transition-all hover:scale-105 active:scale-95"
+          >
+            <Plus class="w-4 h-4" />
+            {{ t('qa.tabs.rawMaterialPlanCreate') }}
+          </Button>
+        </div>
       </div>
     </div>
 
@@ -191,13 +249,13 @@ const getStatusVariant = (status: string) => {
             :key="plan.id"
             class="hover:bg-slate-50 transition-colors"
           >
-            <TableCell class="font-medium text-slate-500">{{
-              formatDate(plan.issuedDate)
-            }}</TableCell>
+            <TableCell class="font-bold text-slate-700">
+              {{ formatDate(plan.planDate || plan.issuedDate) }}
+            </TableCell>
             <TableCell>
               <span
                 class="font-bold text-primary cursor-pointer hover:underline"
-                @click="emit('edit', plan)"
+                @click="openViewModal(plan.id, false)"
               >
                 {{ plan.planNo }}
               </span>
@@ -219,16 +277,27 @@ const getStatusVariant = (status: string) => {
                   variant="ghost"
                   size="icon"
                   class="h-8 w-8 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
-                  @click="openViewModal(plan.id, false)"
+                  @click.stop="openViewModal(plan.id, false)"
+                  title="View Details"
                 >
                   <FileText class="w-4 h-4" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
-                  class="h-8 w-8 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors"
+                  class="h-8 w-8 text-slate-500 hover:bg-primary/10 hover:text-primary transition-colors"
+                  @click.stop="emit('edit', plan)"
+                  title="Edit Plan"
+                >
+                  <Edit class="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-8 w-8 text-slate-500 hover:bg-primary/10 hover:text-primary transition-colors"
                   :disabled="!!processingId"
-                  @click="openViewModal(plan.id, true)"
+                  @click.stop="openViewModal(plan.id, true)"
+                  title="Print Plan"
                 >
                   <Loader2
                     v-if="processingId === plan.id"
@@ -272,6 +341,12 @@ const getStatusVariant = (status: string) => {
       :plan-id="selectedPlanId"
       :open="isViewModalOpen"
       @update:open="handleModalClose"
+      @edit="
+        (plan) => {
+          handleModalClose(false);
+          emit('edit', plan);
+        }
+      "
       :auto-print="isAutoPrint"
     />
   </div>

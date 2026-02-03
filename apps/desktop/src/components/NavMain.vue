@@ -26,6 +26,10 @@ defineProps<{
         name?: string;
         path?: string;
         type?: 'separator' | 'label';
+        items?: {
+          name?: string;
+          path?: string;
+        }[];
       }[];
     }[];
   }[];
@@ -78,30 +82,65 @@ const handleItemClick = () => {
             <!-- Submenu Items -->
             <CollapsibleContent v-if="item.items?.length">
               <SidebarMenuSub>
-                <SidebarMenuSubItem
+                <Collapsible
                   v-for="(subItem, index) in item.items"
                   :key="subItem.name || index"
+                  as-child
+                  :default-open="false"
+                  class="group/nested"
                 >
-                  <div
-                    v-if="subItem.type === 'separator'"
-                    class="h-px bg-border/50 mx-2 my-1"
-                  ></div>
-                  <div
-                    v-else-if="subItem.type === 'label'"
-                    class="px-2 py-1.5 text-xs font-medium text-muted-foreground/70"
-                  >
-                    {{ subItem.name }}
-                  </div>
-                  <SidebarMenuSubButton as-child v-else>
-                    <router-link
-                      :to="subItem.path || '#'"
-                      active-class="bg-primary/10 text-primary font-medium"
-                      @click="handleItemClick"
+                  <SidebarMenuSubItem>
+                    <div
+                      v-if="subItem.type === 'separator'"
+                      class="h-px bg-border/50 mx-2 my-1"
+                    ></div>
+                    <div
+                      v-else-if="subItem.type === 'label'"
+                      class="px-2 py-1.5 text-xs font-medium text-muted-foreground/70"
                     >
-                      <span>{{ subItem.name }}</span>
-                    </router-link>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
+                      {{ subItem.name }}
+                    </div>
+                    <!-- Nested submenu with items -->
+                    <template v-else-if="subItem.items?.length">
+                      <CollapsibleTrigger as-child>
+                        <SidebarMenuSubButton>
+                          <span>{{ subItem.name }}</span>
+                          <ChevronRight
+                            class="ml-auto h-3 w-3 transition-transform duration-200 group-data-[state=open]/nested:rotate-90"
+                          />
+                        </SidebarMenuSubButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub class="ml-2">
+                          <SidebarMenuSubItem
+                            v-for="(nestedItem, nestedIndex) in subItem.items"
+                            :key="nestedItem.name || nestedIndex"
+                          >
+                            <SidebarMenuSubButton as-child>
+                              <router-link
+                                :to="nestedItem.path || '#'"
+                                active-class="bg-primary/10 text-primary font-medium"
+                                @click="handleItemClick"
+                              >
+                                <span>{{ nestedItem.name }}</span>
+                              </router-link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </template>
+                    <!-- Regular submenu item -->
+                    <SidebarMenuSubButton as-child v-else>
+                      <router-link
+                        :to="subItem.path || '#'"
+                        active-class="bg-primary/10 text-primary font-medium"
+                        @click="handleItemClick"
+                      >
+                        <span>{{ subItem.name }}</span>
+                      </router-link>
+                    </SidebarMenuSubButton>
+                  </SidebarMenuSubItem>
+                </Collapsible>
               </SidebarMenuSub>
             </CollapsibleContent>
           </SidebarMenuItem>
