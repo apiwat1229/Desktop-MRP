@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import DataTable from '@/components/ui/data-table/DataTable.vue';
 import { usePermissions } from '@/composables/usePermissions';
 import { productionReportsApi, type ProductionReport } from '@/services/productionReports';
-import { CalendarDate } from '@internationalized/date';
 import type { ColumnDef } from '@tanstack/vue-table';
 import { format } from 'date-fns';
 import { Edit2, FileText, Search } from 'lucide-vue-next';
@@ -28,20 +27,12 @@ const props = defineProps<{
 
 const emit = defineEmits(['edit']);
 
-// Helper to parse string date back to CalendarDate-like object
-const parseDateString = (dateStr: string) => {
-  if (!dateStr) return null;
-  try {
-    const cleanDate = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
-    const [year, month, day] = cleanDate.split('-').map(Number);
-    if (isNaN(year) || isNaN(month) || isNaN(day)) return null;
-    return new CalendarDate(year, month, day);
-  } catch (e) {
-    return null;
-  }
-};
-
 const isDateRangeMode = computed(() => !!props.startDate || !!props.endDate);
+
+// Standardize dates to YYYY-MM-DD
+const startDateStr = computed(() => props.startDate?.split('T')[0] || '');
+const endDateStr = computed(() => props.endDate?.split('T')[0] || startDateStr.value);
+const singleDateStr = computed(() => props.date?.split('T')[0] || '');
 
 const filteredReports = computed(() => {
   let filtered = reports.value;
@@ -49,37 +40,27 @@ const filteredReports = computed(() => {
   // Filter by date - use range mode or single date mode
   if (isDateRangeMode.value) {
     // Date range mode
-    if (props.startDate && props.endDate) {
-      const startDateObj = parseDateString(props.startDate);
-      const endDateObj = parseDateString(props.endDate);
-      if (startDateObj && endDateObj) {
-        const startDateStr = `${startDateObj.year}-${String(startDateObj.month).padStart(2, '0')}-${String(startDateObj.day).padStart(2, '0')}`;
-        const endDateStr = `${endDateObj.year}-${String(endDateObj.month).padStart(2, '0')}-${String(endDateObj.day).padStart(2, '0')}`;
-        filtered = filtered.filter((report) => {
-          const dateVal =
-            report.productionDate instanceof Date
-              ? report.productionDate.toISOString()
-              : report.productionDate;
-          const reportDate = dateVal ? dateVal.split('T')[0] : '';
-          return reportDate >= startDateStr && reportDate <= endDateStr;
-        });
-      }
+    if (startDateStr.value) {
+      filtered = filtered.filter((report) => {
+        const dateVal =
+          report.productionDate instanceof Date
+            ? report.productionDate.toISOString()
+            : report.productionDate;
+        const reportDate = dateVal ? dateVal.split('T')[0] : '';
+        return reportDate >= startDateStr.value && reportDate <= endDateStr.value;
+      });
     }
   } else {
     // Single date mode
-    if (props.date) {
-      const targetDateObj = parseDateString(props.date);
-      if (targetDateObj) {
-        const targetDateStr = `${targetDateObj.year}-${String(targetDateObj.month).padStart(2, '0')}-${String(targetDateObj.day).padStart(2, '0')}`;
-        filtered = filtered.filter((report) => {
-          const dateVal =
-            report.productionDate instanceof Date
-              ? report.productionDate.toISOString()
-              : report.productionDate;
-          const reportDate = dateVal ? dateVal.split('T')[0] : '';
-          return reportDate === targetDateStr;
-        });
-      }
+    if (singleDateStr.value) {
+      filtered = filtered.filter((report) => {
+        const dateVal =
+          report.productionDate instanceof Date
+            ? report.productionDate.toISOString()
+            : report.productionDate;
+        const reportDate = dateVal ? dateVal.split('T')[0] : '';
+        return reportDate === singleDateStr.value;
+      });
     }
   }
 
@@ -134,7 +115,7 @@ const columns: ColumnDef<ProductionReport>[] = [
       return h(
         'div',
         {
-          class: 'text-center font-medium cursor-pointer hover:text-blue-600 hover:underline',
+          class: 'text-center font-bold text-primary cursor-pointer hover:underline',
           onClick: () => emit('edit', row.original),
         },
         format(new Date(date), 'dd-MMM-yyyy')
@@ -178,10 +159,10 @@ const columns: ColumnDef<ProductionReport>[] = [
   },
   {
     accessorKey: 'status',
-    header: () => h('div', { class: 'text-center' }, t('common.status')),
+    header: () => h('div', { class: 'w-full text-center' }, t('common.status')),
     cell: ({ row }) => {
       const status = row.original.status;
-      return h('div', { class: 'text-center' }, [
+      return h('div', { class: 'w-full flex justify-center' }, [
         h(
           'span',
           {
@@ -199,13 +180,13 @@ const columns: ColumnDef<ProductionReport>[] = [
   },
   {
     id: 'actions',
-    header: () => h('div', { class: 'text-right' }, t('common.actions')),
+    header: () => h('div', { class: 'w-full text-center' }, t('common.actions')),
     cell: ({ row }) => {
       const report = row.original;
       const isReadonly = report.status === 'SUBMITTED' || !canUpdate.value;
       return h(
         'div',
-        { class: 'flex justify-end gap-2' },
+        { class: 'w-full flex justify-center gap-2' },
         h(
           Button,
           {

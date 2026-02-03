@@ -7,15 +7,7 @@ import { jobOrdersApi, type JobOrder } from '@/services/jobOrders';
 import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date';
 import type { ColumnDef } from '@tanstack/vue-table';
 import { format } from 'date-fns';
-import {
-  CheckCircle2,
-  ClipboardList,
-  Clock,
-  Edit,
-  FileText,
-  Plus,
-  RefreshCw,
-} from 'lucide-vue-next';
+import { CheckCircle2, ClipboardList, Clock, FileText, Plus, RefreshCw } from 'lucide-vue-next';
 import { computed, h, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { toast } from 'vue-sonner';
@@ -173,10 +165,6 @@ const handleView = (jobOrder: JobOrder) => {
   emit('view', jobOrder);
 };
 
-const handleEdit = (jobOrder: JobOrder) => {
-  emit('edit', jobOrder);
-};
-
 const handlePrint = (order: JobOrder) => {
   selectedJobOrder.value = order;
   isPrintDialogOpen.value = true;
@@ -252,12 +240,12 @@ const columns: ColumnDef<JobOrder>[] = [
     header: () =>
       h(
         'div',
-        { class: 'font-black text-slate-700 text-center' },
+        { class: 'font-black text-slate-700 w-full text-center' },
         t('qa.jobOrderForm.palletMarking')
       ),
     cell: ({ row }) => {
       const order = row.original;
-      return h('div', { class: 'text-center' }, [
+      return h('div', { class: 'w-full flex justify-center' }, [
         h(
           Badge,
           {
@@ -277,19 +265,24 @@ const columns: ColumnDef<JobOrder>[] = [
   {
     accessorKey: 'status',
     header: () =>
-      h('div', { class: 'font-black text-slate-700' }, t('qa.jobOrderMgmt.cols.status')),
+      h(
+        'div',
+        { class: 'font-black text-slate-700 w-full text-center' },
+        t('qa.jobOrderMgmt.cols.status')
+      ),
     cell: ({ row }) => {
       const order = row.original;
-      if (order.isClosed) {
-        return h(Badge, { class: 'bg-emerald-500 text-white border-0 shadow-sm font-bold' }, () => [
-          h(CheckCircle2, { class: 'w-3 h-3 mr-1' }),
-          t('qa.jobOrderMgmt.completed'),
-        ]);
-      }
-      return h(Badge, { class: 'bg-amber-500 text-white border-0 shadow-sm font-bold' }, () => [
-        h(Clock, { class: 'w-3 h-3 mr-1' }),
-        t('qa.jobOrderMgmt.inProgress'),
-      ]);
+      const content = order.isClosed
+        ? h(Badge, { class: 'bg-emerald-500 text-white border-0 shadow-sm font-bold' }, () => [
+            h(CheckCircle2, { class: 'w-3 h-3 mr-1' }),
+            t('qa.jobOrderMgmt.completed'),
+          ])
+        : h(Badge, { class: 'bg-amber-500 text-white border-0 shadow-sm font-bold' }, () => [
+            h(Clock, { class: 'w-3 h-3 mr-1' }),
+            t('qa.jobOrderMgmt.inProgress'),
+          ]);
+
+      return h('div', { class: 'w-full flex justify-center' }, [content]);
     },
   },
   {
@@ -297,28 +290,12 @@ const columns: ColumnDef<JobOrder>[] = [
     header: () =>
       h(
         'div',
-        { class: 'w-[100px] text-center font-black text-slate-700' },
+        { class: 'w-full text-center font-black text-slate-700' },
         t('qa.jobOrderMgmt.cols.action')
       ),
     cell: ({ row }) => {
       const order = row.original;
-      return h('div', { class: 'flex items-center justify-center gap-1' }, [
-        !props.readonly
-          ? h(
-              Button,
-              {
-                variant: 'ghost',
-                size: 'icon',
-                class:
-                  'h-9 w-9 text-slate-500 hover:text-primary hover:bg-primary/10 transition-colors',
-                onClick: (e: Event) => {
-                  e.stopPropagation();
-                  handleEdit(order);
-                },
-              },
-              () => h(Edit, { class: 'w-4 h-4' })
-            )
-          : null,
+      return h('div', { class: 'w-full flex items-center justify-center' }, [
         h(
           Button,
           {

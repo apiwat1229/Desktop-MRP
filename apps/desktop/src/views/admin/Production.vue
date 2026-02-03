@@ -70,6 +70,7 @@ const selectedReport = ref<ProductionReport | undefined>(undefined);
 // Job Order State
 const selectedJobOrder = ref<JobOrder | undefined>(undefined);
 const jobOrderListKey = ref(0); // To force refresh list
+const reportListKey = ref(0); // To force refresh report list
 
 // Production Handlers
 const handleEditReport = (report: ProductionReport) => {
@@ -79,6 +80,7 @@ const handleEditReport = (report: ProductionReport) => {
 
 const handleReportSaved = () => {
   activeTab.value = 'list';
+  reportListKey.value++; // Refresh list
 };
 
 const handleReportCancel = () => {
@@ -170,9 +172,11 @@ const fetchStats = async () => {
       let reports = await productionReportsApi.getAll();
 
       // Filter by date range
-      if (selectedDateRangeString.value.start && selectedDateRangeString.value.end) {
+      if (selectedDateRangeString.value.start) {
         const startDateStr = selectedDateRangeString.value.start.split('T')[0];
-        const endDateStr = selectedDateRangeString.value.end.split('T')[0];
+        const endDateStr = selectedDateRangeString.value.end
+          ? selectedDateRangeString.value.end.split('T')[0]
+          : startDateStr;
         reports = reports.filter((r) => {
           const dateVal =
             r.productionDate instanceof Date ? r.productionDate.toISOString() : r.productionDate;
@@ -200,9 +204,11 @@ const fetchStats = async () => {
       let jobs = await jobOrdersApi.getAll();
 
       // Filter by date range
-      if (selectedDateRangeString.value.start && selectedDateRangeString.value.end) {
+      if (selectedDateRangeString.value.start) {
         const startDateStr = selectedDateRangeString.value.start.split('T')[0];
-        const endDateStr = selectedDateRangeString.value.end.split('T')[0];
+        const endDateStr = selectedDateRangeString.value.end
+          ? selectedDateRangeString.value.end.split('T')[0]
+          : startDateStr;
         jobs = jobs.filter((j) => {
           const jobDate = j.qaDate?.split('T')[0];
           return jobDate && jobDate >= startDateStr && jobDate <= endDateStr;
@@ -215,6 +221,10 @@ const fetchStats = async () => {
         closed: jobs.filter((j) => j.isClosed).length,
       };
     }
+
+    // Also force refresh list keys to ensure sync
+    reportListKey.value++;
+    jobOrderListKey.value++;
   } catch (error) {
     console.error('Failed to fetch stats:', error);
   }
@@ -354,6 +364,7 @@ import { onUnmounted } from 'vue';
         <TabsContent value="list" class="h-full mt-0 border-0 p-0">
           <template v-if="activeContext === 'production'">
             <ProductionReportList
+              :key="reportListKey"
               :search-query="searchQuery"
               :start-date="selectedDateRangeString.start"
               :end-date="selectedDateRangeString.end"

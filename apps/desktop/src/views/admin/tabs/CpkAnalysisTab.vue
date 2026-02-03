@@ -4,18 +4,80 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { BarChart3, Calculator, FileSpreadsheet, Upload } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
+import { computed, defineComponent, h, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
+
+defineOptions({
+  name: 'CapabilityAnalysis',
+});
+
+// --- Local Components ---
+const StatItem = defineComponent({
+  props: {
+    label: { type: String, required: true },
+    value: { type: [String, Number], required: true },
+    highlight: { type: Boolean, default: false },
+    color: { type: String, default: 'text-slate-700' },
+  },
+  setup(props) {
+    return () =>
+      h('div', { class: 'flex items-center justify-between' }, [
+        h('span', { class: 'text-[10px] font-bold text-slate-400 uppercase' }, props.label),
+        h(
+          'span',
+          {
+            class: [
+              'text-xs font-black tabular-nums',
+              props.highlight ? 'bg-slate-50 px-2 py-0.5 rounded border border-slate-100' : '',
+              props.color,
+            ],
+          },
+          props.value
+        ),
+      ]);
+  },
+});
+
+const ChartContainer = defineComponent({
+  props: { title: String },
+  setup(props, { slots }) {
+    return () =>
+      h(
+        Card,
+        { class: 'bg-white border-none shadow-sm transition-all hover:shadow-md overflow-hidden' },
+        {
+          default: () =>
+            h(
+              CardContent,
+              { class: 'p-6' },
+              {
+                default: () => [
+                  h(
+                    'h3',
+                    {
+                      class:
+                        'text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2',
+                    },
+                    [h('div', { class: 'w-1.5 h-1.5 bg-blue-500 rounded-full' }), props.title]
+                  ),
+                  slots.default?.(),
+                ],
+              }
+            ),
+        }
+      );
+  },
+});
 
 const { t } = useI18n();
 
 // --- State ---
 const dataInput = ref(
-  '43\n40.5\n42\n40.5\n42\n42.5\n41.5\n45.5\n43\n42\n45\n43.5\n43\n43\n42.5\n42\n43.5\n43\n41.5\n40\n41.5\n43\n40\n41.5\n44.5'
+  '42\n41\n42.5\n41.5\n41\n42\n42.5\n41.5\n42.5\n42.5\n42\n42.5\n43\n42\n41.5\n42.5\n42\n42.5\n40.5\n41.5\n41\n42.5\n41.5\n42\n42.5\n42\n42\n42\n41.5\n44\n44\n44\n43\n43\n42\n42\n42.5\n41.5\n43\n43\n43\n42.5\n42\n43.5\n44\n44.5\n42.5\n42.5\n43\n42\n42\n42\n41.5\n40.5\n42.5\n42.5\n42\n41.5\n42\n43\n42.5\n42\n42.5\n42\n42.5\n42.5\n42\n43\n43.5\n41.5\n42\n42.5\n41.5\n42\n42.5\n42\n43\n43\n41.5\n42.5\n42.5\n43\n42.5\n42.5\n42.5\n42\n44\n43.5\n42\n42\n42.5\n43\n42.5\n43\n42\n42.5\n42\n41.5\n42\n42.5\n42\n41\n43\n42.5\n43\n41.5\n42\n43\n42\n43\n42\n42\n43\n42\n42.5\n40\n41\n42\n41\n41\n42\n42\n42\n41\n41.5\n41\n43.5\n42\n41.5\n42.5\n42.5\n41.5\n43\n45\n43\n42\n43\n42.5\n43\n44.5\n43\n44\n42.5\n43\n42\n46.5\n44\n44.5\n43\n46.5\n43\n43\n43.5\n44\n45\n44\n44.5\n44\n43\n43.5\n45\n44.5\n45\n45\n44.5\n43\n44.5\n43.5\n45\n43.5\n44\n45\n43.5\n43\n42\n43\n44.5\n43\n45\n43.5\n46\n43\n45.5\n45\n43\n45.5\n46\n43.5\n46\n46\n43\n43\n45\n43.5\n44.5\n43.5\n45\n45\n44\n44.5\n45\n44.5\n45\n44.5\n44\n44.5\n46\n45\n45\n45.5\n43\n44\n44\n45.5\n45\n42.5\n47\n45.5\n43.5\n44\n45.5\n46\n44\n45.5\n45.5\n44\n43.5\n44\n43\n44.5\n43\n46\n44\n45.5\n44.5\n45.5\n44.5\n45.5\n44.5\n42\n45.5\n45\n43\n44.5\n45.5\n45\n42.5\n44.5\n44.5\n45.5\n44.5\n43.5\n45.5\n43.5\n42.5\n43.5\n44.5\n44.5\n44.5\n43.5\n44\n43\n43.5\n41.5\n44.5\n43.5\n43.5\n42\n42.5\n43.5\n45.5\n41.5\n42\n42.5\n44.5\n42\n42.5\n43.5\n43\n43\n44.5\n43.5\n44\n42.5\n44.5\n42.5\n44.5\n43.5\n43.5\n43\n41.5\n42\n43.5\n44.5\n42.5\n42.5\n43\n43\n45.5\n44.5\n41\n43.5\n42.5\n42.5\n42.5\n42.5\n42.5\n43.5\n43\n43\n42.5\n41\n44\n43.5\n43\n43.5\n43.5\n43\n42\n43.5\n45\n42.5\n44\n44.5\n43.5\n44.5\n43.5\n42\n44.5\n42\n42.5\n42.5\n41.5\n42.5\n44\n43\n43.5\n42.5\n41.5\n41.5\n42.5\n43.5\n43\n45.5\n45.5\n44.5\n45\n41.5\n42.5\n41.5\n41.5\n41\n42.5\n42.5\n42\n44.5\n42.5\n42\n43\n42.5\n43\n41.5\n42.5\n42.5\n41.5\n41.5\n41\n42\n42.5\n41\n43.5\n43\n41\n42.5\n41.5\n43\n42.5\n41.5\n41.5\n43.5\n41\n42.5\n44.5\n42.5\n41.5\n42.5\n44.5\n42.5\n41.5\n43.5\n41.5\n42.5\n44.5\n41\n43.5\n43\n43.5\n44.5\n44\n42\n43\n43.5\n44\n42.5\n43.5\n41\n41.5\n42.5\n41\n43\n41.5\n43\n45.5\n42\n43.5\n43\n44\n42\n41.5\n41.5\n42\n41.5\n42\n43.5\n41\n42.5\n40.5\n42\n43.5\n42.5\n43\n41.5\n42\n44.5\n45\n42.5\n41.5\n43\n42\n41.5\n42.5\n46\n45\n42.5\n45\n44\n45\n45.5\n41\n41\n42\n42.5\n41\n41.5\n42.5\n42.5\n44\n44.5\n44\n42\n42.5\n41\n42.5\n41.5\n44.5\n41\n40.5\n41\n44\n43\n44\n42.5\n41.5\n41.5\n41.5\n42.5\n43.5\n41.5\n42.5\n43\n44.5\n42\n43\n42.5\n42.5\n43\n41.5\n44\n42\n42.5\n41.5\n41\n42.5\n42.5\n41\n42.5\n43.5'
 );
-const lsl = ref(33);
-const usl = ref(43);
-const subgroupSize = ref(5);
+const lsl = ref(38);
+const usl = ref(48);
+const subgroupSize = ref(18);
 const csvColumns = ref<string[]>([]);
 const selectedColumn = ref('');
 const rawCsvData = ref<string[][]>([]);
@@ -42,13 +104,17 @@ const normalPDF = (x: number, mean: number, std: number) => {
 
 const normalCDF = (x: number, mean: number, std: number) => {
   const z = (x - mean) / std;
-  const t = 1 / (1 + 0.2316419 * Math.abs(z));
-  const d = 0.3989423 * Math.exp((-z * z) / 2);
-  const p =
-    d *
-    t *
-    (0.31938153 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))));
-  return z >= 0 ? 1 - p : p;
+  const absZ = Math.abs(z);
+  // Abramowitz & Stegun 7.1.26 - Higher precision than previous
+  const t = 1.0 / (1.0 + 0.2316419 * absZ);
+  const a1 = 0.31938153;
+  const a2 = -0.356563782;
+  const a3 = 1.781477937;
+  const a4 = -1.821255978;
+  const a5 = 1.330274429;
+  const d = 0.3989422804; // 1/sqrt(2pi)
+  const p = d * Math.exp(-(z * z) / 2.0) * t * (a1 + t * (a2 + t * (a3 + t * (a4 + t * a5))));
+  return z >= 0 ? 1.0 - p : p;
 };
 
 // --- CSV Handling ---
@@ -98,10 +164,12 @@ const results = computed(() => {
 
   const nTotal = numbers.length;
   const meanTotal = numbers.reduce((a, b) => a + b, 0) / nTotal;
-  const constants = getStatsConstants(subgroupSize.value);
 
   // Subgroup Analysis
   const subgroupData = [];
+  let sumOfSquaresWithin = 0;
+  let totalDfWithin = 0;
+
   for (let i = 0; i < numbers.length; i += subgroupSize.value) {
     const group = numbers.slice(i, i + subgroupSize.value);
     if (group.length > 0) {
@@ -110,6 +178,12 @@ const results = computed(() => {
         group.length > 1
           ? group.reduce((sq, n) => sq + Math.pow(n - gMean, 2), 0) / (group.length - 1)
           : 0;
+
+      if (group.length > 1) {
+        sumOfSquaresWithin += (group.length - 1) * gVar;
+        totalDfWithin += group.length - 1;
+      }
+
       subgroupData.push({
         index: Math.floor(i / subgroupSize.value) + 1,
         mean: gMean,
@@ -119,16 +193,44 @@ const results = computed(() => {
     }
   }
 
+  // Within Standard Deviation Calculation
+  // Minitab uses pooled standard deviation: sqrt(sum of squared deviations / total df)
+  // Then applies c4 correction based on total degrees of freedom
+
   const validSubgroups = subgroupData.filter((g) => g.stdev >= 0);
-  const avgMean = validSubgroups.reduce((a, b) => a + b.mean, 0) / validSubgroups.length;
   const avgS = validSubgroups.reduce((a, b) => a + b.stdev, 0) / validSubgroups.length;
 
-  const stdevWithin = avgS / constants.c4;
+  // Calculate pooled standard deviation
+  const sPooled = totalDfWithin > 0 ? Math.sqrt(sumOfSquaresWithin / totalDfWithin) : 0;
+
+  // For c4 correction, use total degrees of freedom
+  const getC4 = (df: number): number => {
+    if (df <= 0) return 1;
+    if (df === 1) return 0.7979;
+    if (df === 2) return 0.8862;
+    if (df === 3) return 0.9213;
+    if (df === 4) return 0.94;
+    if (df === 5) return 0.9515;
+    if (df === 6) return 0.9594;
+    if (df === 7) return 0.965;
+    if (df === 8) return 0.9693;
+    if (df === 9) return 0.9727;
+    if (df === 10) return 0.9754;
+    // For larger df, use high-precision approximation
+    return 1 - 1 / (4 * df) - 7 / (32 * df * df);
+  };
+
+  const c4 = getC4(totalDfWithin);
+  const stdevWithin = sPooled / c4;
+
   const stdevOverall = Math.sqrt(
     numbers.reduce((sq, n) => sq + Math.pow(n - meanTotal, 2), 0) / (nTotal - 1)
   );
 
+  const avgMean = validSubgroups.reduce((a, b) => a + b.mean, 0) / validSubgroups.length;
+
   // Control Limits
+  const constants = getStatsConstants(subgroupSize.value);
   const xbarUCL = avgMean + constants.a3 * avgS;
   const xbarLCL = avgMean - constants.a3 * avgS;
   const sUCL = constants.b4 * avgS;
@@ -214,8 +316,8 @@ const xbarChartOptions = computed(() => {
   if (!results.value) return {};
   const { xbarUCL, xbarLCL, avgMean } = results.value;
   return {
-    chart: { type: 'line', toolbar: { show: false }, zoom: { enabled: false } },
-    stroke: { width: [3, 1, 1, 1], dashArray: [0, 5, 0, 5], curve: 'straight' },
+    chart: { type: 'line' as const, toolbar: { show: false }, zoom: { enabled: false } },
+    stroke: { width: [3, 1, 1, 1], dashArray: [0, 5, 0, 5], curve: 'straight' as const },
     colors: ['#1e293b', '#ef4444', '#10b981', '#ef4444'],
     xaxis: { labels: { style: { fontSize: '10px' } } },
     yaxis: { labels: { style: { fontSize: '10px' } }, decimalsInFloat: 2 },
@@ -233,7 +335,7 @@ const sChartOptions = computed(() => {
   if (!results.value) return {};
   const { sUCL, sLCL, avgS } = results.value;
   return {
-    chart: { type: 'line', toolbar: { show: false } },
+    chart: { type: 'line' as const, toolbar: { show: false } },
     colors: ['#1e293b'],
     xaxis: { labels: { style: { fontSize: '10px' } } },
     yaxis: { labels: { style: { fontSize: '10px' } }, min: 0 },
@@ -255,13 +357,13 @@ const histChartOptions = computed(() => {
     yaxis: { show: false },
     plotOptions: { bar: { borderRadius: 4 } },
     colors: ['#e2e8f0', '#3b82f6', '#ef4444'],
-    stroke: { width: [0, 2, 2], dashArray: [0, 0, 5], curve: 'smooth' },
+    stroke: { width: [0, 2, 2], dashArray: [0, 0, 5], curve: 'smooth' as const },
   };
 });
 
 const probChartOptions = computed(() => ({
-  chart: { type: 'scatter', toolbar: { show: false } },
-  xaxis: { type: 'numeric', title: { text: 'Value', style: { fontSize: '10px' } } },
+  chart: { type: 'scatter' as const, toolbar: { show: false } },
+  xaxis: { type: 'numeric' as const, title: { text: 'Value', style: { fontSize: '10px' } } },
   yaxis: { title: { text: 'Z-score', style: { fontSize: '10px' } }, min: -3, max: 3 },
 }));
 </script>
@@ -314,7 +416,6 @@ const probChartOptions = computed(() => ({
                 v-model="subgroupSize"
                 class="w-16 h-8 text-xs font-bold"
                 :min="1"
-                :max="10"
               />
             </div>
             <div class="flex items-center gap-2">
@@ -371,52 +472,20 @@ const probChartOptions = computed(() => ({
     </Card>
 
     <!-- Results Display -->
-    <div v-if="results" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- 1. Xbar Chart -->
-      <ChartContainer :title="t('qa.cpk.charts.xbar')">
-        <apexchart
-          height="220"
-          type="line"
-          :options="xbarChartOptions"
-          :series="[{ name: 'Mean', data: results.subgroupData.map((d) => d.mean.toFixed(2)) }]"
-        />
-      </ChartContainer>
-
-      <!-- 2. Capability Histogram -->
-      <ChartContainer :title="t('qa.cpk.charts.histogram')">
-        <apexchart
-          height="220"
-          type="line"
-          :options="histChartOptions"
-          :series="[
-            { name: 'Count', type: 'column', data: results.histogramBins.map((d) => d.count) },
-            {
-              name: 'Within',
-              type: 'line',
-              data: results.histogramBins.map((d) => d.within.toFixed(2)),
-            },
-            {
-              name: 'Overall',
-              type: 'line',
-              data: results.histogramBins.map((d) => d.overall.toFixed(2)),
-            },
-          ]"
-        />
-      </ChartContainer>
-
-      <!-- 3. Capability Stats -->
+    <div v-if="results" class="max-w-4xl mx-auto">
+      <!-- Capability Stats -->
       <Card class="bg-white border-none shadow-sm flex flex-col overflow-hidden">
-        <CardContent class="p-6 flex flex-col h-full">
-          <div class="flex items-center gap-2 mb-6 pb-4 border-b border-slate-100">
-            <div class="w-1.5 h-5 bg-blue-600 rounded-full"></div>
-            <h3 class="font-bold text-sm text-slate-800">{{ t('qa.cpk.stats.title') }}</h3>
+        <CardContent class="p-8">
+          <div class="flex items-center gap-2 mb-8 pb-6 border-b border-slate-100">
+            <div class="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+            <h3 class="font-bold text-lg text-slate-800">{{ t('qa.cpk.stats.title') }}</h3>
           </div>
-          <div class="grid grid-cols-2 gap-8 flex-1">
-            <div class="space-y-4">
-              <h4 class="text-[10px] font-black text-slate-300 uppercase italic">
+          <div class="grid grid-cols-2 gap-12">
+            <div class="space-y-5">
+              <h4 class="text-xs font-black text-slate-300 uppercase italic mb-6">
                 {{ t('qa.cpk.stats.within') }}
               </h4>
-              <StatItem label="StDev" :value="results.stdevWithin.toFixed(4)" />
+              <StatItem label="StDev" :value="results.stdevWithin.toFixed(3)" />
               <StatItem label="Cp" :value="results.cp.toFixed(2)" highlight />
               <StatItem
                 label="Cpk"
@@ -426,11 +495,11 @@ const probChartOptions = computed(() => ({
               />
               <StatItem label="PPM" :value="results.ppmWithin.toFixed(2)" />
             </div>
-            <div class="space-y-4">
-              <h4 class="text-[10px] font-black text-slate-300 uppercase italic">
+            <div class="space-y-5">
+              <h4 class="text-xs font-black text-slate-300 uppercase italic mb-6">
                 {{ t('qa.cpk.stats.overall') }}
               </h4>
-              <StatItem label="StDev" :value="results.stdevOverall.toFixed(4)" />
+              <StatItem label="StDev" :value="results.stdevOverall.toFixed(3)" />
               <StatItem label="Pp" :value="results.pp.toFixed(2)" highlight />
               <StatItem
                 label="Ppk"
@@ -442,61 +511,24 @@ const probChartOptions = computed(() => ({
               <StatItem label="PPM" :value="results.ppmOverall.toFixed(2)" />
             </div>
           </div>
-          <div class="mt-auto pt-6 border-t border-slate-100 grid grid-cols-3 gap-2 text-center">
+          <div class="mt-8 pt-8 border-t border-slate-100 grid grid-cols-3 gap-4 text-center">
             <div>
-              <span class="text-[9px] font-bold text-slate-400 uppercase">LSL</span>
-              <p class="text-xs font-black text-slate-700">{{ lsl }}</p>
+              <span class="text-xs font-bold text-slate-400 uppercase">LSL</span>
+              <p class="text-sm font-black text-slate-700 mt-1">{{ lsl }}</p>
             </div>
             <div>
-              <span class="text-[9px] font-bold text-slate-400 uppercase">Target</span>
-              <p class="text-xs font-black text-slate-700">{{ ((lsl + usl) / 2).toFixed(1) }}</p>
+              <span class="text-xs font-bold text-slate-400 uppercase">Target</span>
+              <p class="text-sm font-black text-slate-700 mt-1">
+                {{ ((lsl + usl) / 2).toFixed(1) }}
+              </p>
             </div>
             <div>
-              <span class="text-[9px] font-bold text-slate-400 uppercase">USL</span>
-              <p class="text-xs font-black text-slate-700">{{ usl }}</p>
+              <span class="text-xs font-bold text-slate-400 uppercase">USL</span>
+              <p class="text-sm font-black text-slate-700 mt-1">{{ usl }}</p>
             </div>
           </div>
         </CardContent>
       </Card>
-
-      <!-- 4. S Chart -->
-      <ChartContainer :title="t('qa.cpk.charts.schart')">
-        <apexchart
-          height="220"
-          type="line"
-          :options="sChartOptions"
-          :series="[{ name: 'StDev', data: results.subgroupData.map((d) => d.stdev.toFixed(2)) }]"
-        />
-      </ChartContainer>
-
-      <!-- 5. Probability Plot -->
-      <ChartContainer :title="t('qa.cpk.charts.probPlot')">
-        <apexchart
-          height="220"
-          type="scatter"
-          :options="probChartOptions"
-          :series="[{ name: 'Points', data: results.probData }]"
-        />
-      </ChartContainer>
-
-      <!-- 6. Last Subgroups -->
-      <ChartContainer :title="t('qa.cpk.charts.subgroups')">
-        <apexchart
-          height="220"
-          type="scatter"
-          :options="{
-            chart: { toolbar: { show: false } },
-            xaxis: { show: false },
-            yaxis: { decimalsInFloat: 2 },
-          }"
-          :series="[
-            {
-              name: 'Subgroups',
-              data: results.subgroupData.flatMap((g) => g.points.map((p) => [g.index, p])),
-            },
-          ]"
-        />
-      </ChartContainer>
     </div>
 
     <!-- Empty State -->
@@ -512,29 +544,6 @@ const probChartOptions = computed(() => ({
     </div>
   </div>
 </template>
-
-<script lang="ts">
-import { defineComponent } from 'vue';
-
-const ChartContainer = defineComponent({
-  props: { title: String },
-  template: `
-    <Card class="bg-white border-none shadow-sm transition-all hover:shadow-md overflow-hidden">
-      <CardContent class="p-6">
-        <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-          <div class="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-          {{ title }}
-        </h3>
-        <slot />
-      </CardContent>
-    </Card>
-  `,
-});
-
-export default defineComponent({
-  components: { ChartContainer },
-});
-</script>
 
 <style scoped>
 textarea::-webkit-scrollbar {

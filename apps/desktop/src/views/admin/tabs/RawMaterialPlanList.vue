@@ -221,13 +221,13 @@ const columns: ColumnDef<any>[] = [
         'div',
         {
           class:
-            'w-24 font-black text-slate-700 uppercase tracking-tighter text-[10px] text-center',
+            'w-full font-black text-slate-700 uppercase tracking-tighter text-[10px] text-center',
         },
         'Status'
       ),
     cell: ({ row }) => {
       const status = row.original.status;
-      return h('div', { class: 'text-center' }, [
+      return h('div', { class: 'w-full flex justify-center' }, [
         h(
           Badge,
           {
@@ -245,13 +245,14 @@ const columns: ColumnDef<any>[] = [
       h(
         'div',
         {
-          class: 'w-32 font-black text-slate-700 uppercase tracking-tighter text-[10px] text-right',
+          class:
+            'w-full font-black text-slate-700 uppercase tracking-tighter text-[10px] text-center',
         },
         'Actions'
       ),
     cell: ({ row }) => {
       const plan = row.original;
-      return h('div', { class: 'flex items-center justify-end gap-1' }, [
+      return h('div', { class: 'w-full flex items-center justify-center gap-1' }, [
         h(
           Button,
           {
