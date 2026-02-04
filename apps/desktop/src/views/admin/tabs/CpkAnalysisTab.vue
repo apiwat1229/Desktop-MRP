@@ -1,24 +1,36 @@
 <script setup lang="ts">
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import api from '@/services/api';
 import { useThemeStore } from '@/stores/theme';
-import axios from 'axios';
 import ExcelJS from 'exceljs';
+import html2canvas from 'html2canvas';
 import {
+  BarChart3,
   Calculator,
   Download,
   FileSpreadsheet,
   History,
+  LineChart,
   Loader2,
   Plus,
   Save,
+  Search,
   Trash2,
-  Upload,
   XCircle,
 } from 'lucide-vue-next';
 import { computed, onMounted, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
 import { toast } from 'vue-sonner';
 import VueApexCharts from 'vue3-apexcharts';
 
@@ -30,7 +42,6 @@ defineOptions({
 
 // --- Local Components ---
 
-const { t } = useI18n();
 const ApexChart = VueApexCharts;
 
 // --- State ---
@@ -39,13 +50,26 @@ const analysisTitle = ref('');
 const savedAnalyses = ref<any[]>([]);
 const isSaving = ref(false);
 const isLoadingHistory = ref(false);
-const API_URL = 'http://localhost:2530/cpk-analyses';
+const API_PATH = '/cpk-analyses';
 const lsl = ref<number | null>(38);
 const usl = ref<number | null>(48);
 const subgroupSize = ref<number>(18);
-const csvColumns = ref<string[]>([]);
-const selectedColumn = ref('');
-const rawCsvData = ref<string[][]>([]);
+const analysisNote = ref('');
+const isSaveDialogOpen = ref(false);
+const isDeleteDialogOpen = ref(false);
+const idToDelete = ref<string | null>(null);
+const searchQuery = ref('');
+
+const statsRef = ref<any>(null);
+const xbarCardRef = ref<any>(null);
+const histogramCardRef = ref<any>(null);
+
+const filteredHistory = computed(() => {
+  if (!searchQuery.value) return savedAnalyses.value;
+  return savedAnalyses.value.filter((item) =>
+    item.title.toLowerCase().includes(searchQuery.value.toLowerCase())
+  );
+});
 
 // --- Statistical Constants ---
 const getStatsConstants = (n: number) => {
@@ -78,42 +102,6 @@ const normalCDF = (x: number, mean: number, std: number) => {
   const d = 0.3989422804;
   const p = d * Math.exp(-(z * z) / 2.0) * t * (a1 + t * (a2 + t * (a3 + t * (a4 + t * a5))));
   return z >= 0 ? 1.0 - p : p;
-};
-
-// --- CSV Handling ---
-const handleFileUpload = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  const file = target.files?.[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    const content = e.target?.result as string;
-    const lines = content.split(/\r?\n/);
-    if (lines.length < 2) return;
-
-    const headers = lines[0].split(',').map((h) => h.trim());
-    csvColumns.value = headers;
-
-    rawCsvData.value = lines.slice(1).map((line) => line.split(','));
-
-    if (headers.length > 0) {
-      handleColumnChange(headers[0]);
-    }
-  };
-  reader.readAsText(file);
-};
-
-const handleColumnChange = (colName: string) => {
-  selectedColumn.value = colName;
-  const colIndex = csvColumns.value.indexOf(colName);
-  if (colIndex === -1) return;
-
-  const columnValues = rawCsvData.value
-    .map((row) => row[colIndex])
-    .filter((val) => val !== undefined && val !== '')
-    .join('\n');
-  dataInput.value = columnValues;
 };
 
 // --- Theme Colors ---
@@ -304,51 +292,304 @@ const results = computed(() => {
   };
 });
 
+const xbarChartOptions = computed(() => {
+  if (!results.value) return {};
+
+  const UCL = results.value.xbarUCL;
+  const LCL = results.value.xbarLCL;
+
+  return {
+    chart: { toolbar: { show: false }, zoom: { enabled: false } },
+    stroke: {
+      width: [2, 1.5, 1.5, 1.5],
+      dashArray: [0, 0, 0, 0],
+      curve: 'smooth' as const,
+    },
+    markers: {
+      size: [4, 0, 0, 0],
+      colors: [primaryColor.value],
+      strokeColors: '#fff',
+      strokeWidth: 2,
+      hover: { size: 6 },
+      discrete: results.value.subgroupData
+        .map((d, i) => {
+          if (d.mean > UCL || d.mean < LCL) {
+            return {
+              seriesIndex: 0,
+              dataPointIndex: i,
+              fillColor: '#ef4444',
+              strokeColor: '#fff',
+              size: 5,
+              shape: 'square' as const,
+            };
+          }
+          return null;
+        })
+        .filter((v): v is any => v !== null),
+    },
+    dataLabels: {
+      enabled: true,
+      enabledOnSeries: [0],
+      formatter: function (val: any) {
+        const num = Number(val);
+        if (num > UCL || num < LCL) return '1';
+        return '';
+      },
+      offsetY: -10,
+      style: {
+        fontSize: '10px',
+        fontWeight: 'bold',
+        colors: ['#ef4444'],
+      },
+      background: { enabled: false },
+    },
+    xaxis: {
+      categories: results.value.subgroupData.map((d) => d.index),
+      labels: {
+        show: true,
+        style: { fontSize: '9px', fontWeight: 600, colors: '#64748b' },
+      },
+      axisBorder: { show: true, color: '#e2e8f0' },
+      tooltip: { enabled: false },
+    },
+    yaxis: {
+      labels: {
+        style: { fontSize: '10px', fontWeight: 600 },
+        formatter: (val: number) => val.toFixed(0),
+      },
+    },
+    grid: {
+      borderColor: '#f1f5f9',
+      xaxis: { lines: { show: false } },
+    },
+    legend: { show: false },
+    colors: [primaryColor.value, '#ef4444', '#ef4444', '#22c55e'],
+    tooltip: {
+      x: { show: false },
+      y: {
+        formatter: (val: number) => val.toFixed(3),
+        title: { formatter: (name: string) => name + ':' },
+      },
+    },
+  };
+});
+
+const histogramChartOptions = computed(() => {
+  return {
+    chart: { toolbar: { show: false } },
+    stroke: { width: [0, 2.5, 2], dashArray: [0, 0, 5], curve: 'smooth' as const },
+    colors: [primaryColor.value, '#ef4444', '#000000'],
+    plotOptions: {
+      bar: {
+        borderRadius: 0,
+        columnWidth: '95%',
+      },
+    },
+    fill: { opacity: [1, 1, 1] },
+    xaxis: {
+      type: 'numeric' as const,
+      labels: { style: { fontSize: '10px', fontWeight: 600 } },
+      axisBorder: { show: true, color: '#e2e8f0' },
+    },
+    yaxis: { show: false },
+    grid: { show: false },
+    legend: {
+      position: 'top' as const,
+      fontSize: '10px',
+      fontWeight: 700,
+    },
+    tooltip: {
+      x: { show: false },
+      y: {
+        formatter: (val: number) => val.toFixed(3),
+        title: { formatter: (name: string) => name + ':' },
+      },
+    },
+  };
+});
+
 // --- Actions ---
 
 const exportToExcel = async () => {
   if (!results.value) return;
 
+  const toastId = toast.loading('Generating professional CPK report...');
+
   try {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('CPK Analysis');
 
-    // Styles
-    const headerFont = { bold: true, size: 12 };
-    const titleFont = { bold: true, size: 14 };
+    // Define column widths for the entire sheet (for better layout control)
+    worksheet.columns = Array(18).fill({ width: 10 });
+    worksheet.getColumn(1).width = 18; // Label column
+    worksheet.getColumn(2).width = 18; // Value column
+    worksheet.getColumn(3).width = 2; // Spacer
 
-    // Title
-    worksheet.mergeCells('A1:D1');
-    worksheet.getCell('A1').value = 'CPK Analysis Report';
-    worksheet.getCell('A1').font = titleFont;
+    // --- Title & Header ---
+    worksheet.mergeCells('A1:O1');
+    const titleCell = worksheet.getCell('A1');
+    titleCell.value = 'CPK Analysis Report';
+    titleCell.font = { bold: true, size: 20, color: { argb: 'FF0F172A' } };
+    titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    worksheet.getRow(1).height = 40;
 
-    // Stats
-    worksheet.addRow([]);
-    worksheet.addRow(['Statistics Summary']).font = headerFont;
-    worksheet.addRow(['Mean', results.value.mean.toFixed(3)]);
-    worksheet.addRow(['StDev (Within)', results.value.stdevWithin.toFixed(3)]);
-    worksheet.addRow(['StDev (Overall)', results.value.stdevOverall.toFixed(3)]);
-    worksheet.addRow(['Cp', results.value.cp.toFixed(2)]);
-    worksheet.addRow(['Cpk', results.value.cpk.toFixed(2)]);
-    worksheet.addRow(['Pp', results.value.pp.toFixed(2)]);
-    worksheet.addRow(['Ppk', results.value.ppk.toFixed(2)]);
-    worksheet.addRow(['PPM (Within)', results.value.ppmWithin.toFixed(2)]);
-    worksheet.addRow(['PPM (Overall)', results.value.ppmOverall.toFixed(2)]);
+    worksheet.mergeCells('A2:O2');
+    const subtitleCell = worksheet.getCell('A2');
+    subtitleCell.value = analysisTitle.value || 'Untitled Analysis';
+    subtitleCell.font = { bold: true, size: 14, color: { argb: 'FF64748B' } };
+    subtitleCell.alignment = { horizontal: 'center' };
+    worksheet.getRow(2).height = 25;
 
-    // Specs
-    worksheet.addRow([]);
-    worksheet.addRow(['Specifications']).font = headerFont;
-    worksheet.addRow(['LSL', lsl.value]);
-    worksheet.addRow(['USL', usl.value]);
-    worksheet.addRow(['Subgroup Size', subgroupSize.value]);
+    // --- Styles ---
+    const headerStyle: Partial<ExcelJS.Style> = {
+      font: { bold: true, color: { argb: 'FFFFFFFF' } },
+      fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E293B' } },
+      alignment: { horizontal: 'center' },
+    };
 
-    // Raw Data
-    worksheet.addRow([]);
-    worksheet.addRow(['Raw Data Points']).font = headerFont;
-    const dataRows = results.value.subgroupData.flatMap((g) => g.points.map((p) => [p]));
-    worksheet.addRows(dataRows);
+    const borderStyle: Partial<ExcelJS.Borders> = {
+      top: { style: 'thin' },
+      left: { style: 'thin' },
+      bottom: { style: 'thin' },
+      right: { style: 'thin' },
+    };
 
-    // Save
+    // --- Statistics Text Block (Left Side) ---
+    const startRow = 4;
+
+    // General Summary
+    worksheet.mergeCells(`A${startRow}:B${startRow}`);
+    const genSumHeader = worksheet.getCell(`A${startRow}`);
+    genSumHeader.value = 'GENERAL SUMMARY';
+    genSumHeader.style = headerStyle;
+
+    const summaryData = [
+      ['Generated Date', new Date().toLocaleString()],
+      ['Data Points (n)', results.value.dataPointsCount],
+      ['Subgroup Size', subgroupSize.value],
+      ['LSL / USL', `${lsl.value} / ${usl.value}`],
+      ['Note', analysisNote.value || '-'],
+    ];
+
+    summaryData.forEach((row, i) => {
+      const r = worksheet.getRow(startRow + 1 + i);
+      r.getCell(1).value = row[0];
+      r.getCell(2).value = row[1];
+      r.getCell(1).border = borderStyle;
+      r.getCell(2).border = borderStyle;
+    });
+
+    // Statistical Results
+    const statsStartRow = startRow + 6;
+    worksheet.mergeCells(`A${statsStartRow}:B${statsStartRow}`);
+    const statsHeader = worksheet.getCell(`A${statsStartRow}`);
+    statsHeader.value = 'STATISTICAL RESULTS';
+    statsHeader.style = headerStyle;
+
+    const statsData = [
+      ['Mean', results.value.avgMean.toFixed(3)],
+      ['StDev (Within)', results.value.stdevWithin.toFixed(3)],
+      ['StDev (Overall)', results.value.stdevOverall.toFixed(3)],
+      ['Cp', results.value.cp.toFixed(2)],
+      ['Cpk', results.value.cpk.toFixed(2)],
+      ['Pp', results.value.pp.toFixed(2)],
+      ['Ppk', results.value.ppk.toFixed(2)],
+      ['PPM (Within)', results.value.ppmWithin.toFixed(2)],
+      ['PPM (Overall)', results.value.ppmOverall.toFixed(2)],
+    ];
+
+    statsData.forEach((row, i) => {
+      const r = worksheet.getRow(statsStartRow + 1 + i);
+      r.getCell(1).value = row[0];
+      r.getCell(2).value = row[1];
+      r.getCell(1).border = borderStyle;
+      r.getCell(2).border = borderStyle;
+    });
+
+    // --- Image Capture Block ---
+    const captureOptions = {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#f1f5f9', // Light gray background for better contrast in Excel
+    };
+
+    try {
+      // 1. Capture Stats Card
+      if (statsRef.value?.$el) {
+        const statsCanvas = await html2canvas(statsRef.value.$el, captureOptions);
+        const statsImg = workbook.addImage({
+          base64: statsCanvas.toDataURL('image/png'),
+          extension: 'png',
+        });
+        worksheet.addImage(statsImg, {
+          tl: { col: 3, row: 3 }, // D4
+          ext: { width: 440, height: 260 },
+        });
+      }
+
+      // 2. Capture Histogram (Top Right)
+      if (histogramCardRef.value?.$el) {
+        const histCanvas = await html2canvas(histogramCardRef.value.$el, captureOptions);
+        const histImg = workbook.addImage({
+          base64: histCanvas.toDataURL('image/png'),
+          extension: 'png',
+        });
+        worksheet.addImage(histImg, {
+          tl: { col: 10, row: 3 }, // K4
+          ext: { width: 440, height: 260 },
+        });
+      }
+
+      // 3. Capture Xbar Chart (Below)
+      if (xbarCardRef.value?.$el) {
+        const xbarCanvas = await html2canvas(xbarCardRef.value.$el, captureOptions);
+        const xbarImg = workbook.addImage({
+          base64: xbarCanvas.toDataURL('image/png'),
+          extension: 'png',
+        });
+        worksheet.addImage(xbarImg, {
+          tl: { col: 0, row: 20 }, // A21
+          ext: { width: 880, height: 280 },
+        });
+      }
+    } catch (imgError) {
+      console.warn('Image capture for Excel failed:', imgError);
+    }
+
+    // --- Raw Data Table (Starting below everything) ---
+    const rawDataStartRow = 38;
+    worksheet.mergeCells(`A${rawDataStartRow}:O${rawDataStartRow}`);
+    const rawHeader = worksheet.getCell(`A${rawDataStartRow}`);
+    rawHeader.value = 'RAW DATA POINTS';
+    rawHeader.style = headerStyle;
+
+    const dataPoints = dataInput.value
+      .split(/[\s,\n,]+/)
+      .map((v) => parseFloat(v))
+      .filter((v) => !isNaN(v));
+
+    let currentRow = rawDataStartRow + 1;
+    for (let i = 0; i < dataPoints.length; i += 10) {
+      const chunk = dataPoints.slice(i, i + 10);
+      const row = worksheet.getRow(currentRow);
+      chunk.forEach((val, colIdx) => {
+        const cell = row.getCell(colIdx + 1);
+        cell.value = val;
+        cell.border = borderStyle;
+        cell.alignment = { horizontal: 'center' };
+      });
+      currentRow++;
+    }
+
+    // --- Footer ---
+    const footerRow = currentRow + 1;
+    worksheet.mergeCells(`A${footerRow}:O${footerRow}`);
+    const footerCell = worksheet.getCell(`A${footerRow}`);
+    footerCell.value = `Exported by YTRC CPK System • ${new Date().toLocaleString()}`;
+    footerCell.font = { italic: true, size: 9, color: { argb: 'FF94A3B8' } };
+    footerCell.alignment = { horizontal: 'right' };
+
+    // Final Save
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], {
       type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -356,18 +597,18 @@ const exportToExcel = async () => {
     const url = window.URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `CPK_Analysis_${new Date().toISOString().slice(0, 10)}.xlsx`;
+    anchor.download = `CPK_Report_${analysisTitle.value || 'Analysis'}_${new Date().toISOString().slice(0, 10)}.xlsx`;
     anchor.click();
     window.URL.revokeObjectURL(url);
 
-    toast.success('Excel report exported successfully');
+    toast.success('Professional Excel report exported!', { id: toastId });
   } catch (error) {
     console.error('Excel Export Error:', error);
-    toast.error('Failed to export Excel report');
+    toast.error('Failed to export professional Excel report', { id: toastId });
   }
 };
 
-const saveAnalysis = async () => {
+const saveAnalysis = () => {
   if (!analysisTitle.value || analysisTitle.value.trim() === '') {
     toast.warning('Please enter an analysis title before saving');
     return;
@@ -376,6 +617,11 @@ const saveAnalysis = async () => {
     toast.warning('No analysis data to save');
     return;
   }
+  isSaveDialogOpen.value = true;
+};
+
+const handleSaveConfirm = async () => {
+  if (!results.value) return;
   isSaving.value = true;
   try {
     const payload = {
@@ -383,12 +629,13 @@ const saveAnalysis = async () => {
       lsl: lsl.value,
       usl: usl.value,
       subgroupSize: subgroupSize.value,
+      note: analysisNote.value,
       dataPoints: dataInput.value
         .split('\n')
         .map((v) => parseFloat(v))
         .filter((v) => !isNaN(v)),
     };
-    await axios.post(API_URL, payload);
+    await api.post(API_PATH, payload);
     toast.success('CPK Analysis saved successfully');
     await fetchHistory();
   } catch (error) {
@@ -402,7 +649,7 @@ const saveAnalysis = async () => {
 const fetchHistory = async () => {
   isLoadingHistory.value = true;
   try {
-    const response = await axios.get(API_URL);
+    const response = await api.get(API_PATH);
     savedAnalyses.value = response.data;
   } catch (error) {
     console.error('Fetch History Error:', error);
@@ -414,12 +661,13 @@ const fetchHistory = async () => {
 
 const loadAnalysis = async (id: string) => {
   try {
-    const response = await axios.get(`${API_URL}/${id}`);
+    const response = await api.get(`${API_PATH}/${id}`);
     const data = response.data;
     analysisTitle.value = data.title;
     lsl.value = data.lsl;
     usl.value = data.usl;
     subgroupSize.value = data.subgroupSize;
+    analysisNote.value = data.note || '';
     dataInput.value = data.dataPoints.join('\n');
     toast.success(`Loaded: ${data.title}`);
   } catch (error) {
@@ -428,14 +676,22 @@ const loadAnalysis = async (id: string) => {
   }
 };
 
-const deleteAnalysis = async (id: string) => {
+const deleteAnalysis = (id: string) => {
+  idToDelete.value = id;
+  isDeleteDialogOpen.value = true;
+};
+
+const handleDeleteConfirm = async () => {
+  if (!idToDelete.value) return;
   try {
-    await axios.delete(`${API_URL}/${id}`);
+    await api.delete(`${API_PATH}/${idToDelete.value}`);
     toast.success('Analysis deleted');
     await fetchHistory();
   } catch (error) {
     console.error('Delete Error:', error);
     toast.error('Failed to delete analysis');
+  } finally {
+    idToDelete.value = null;
   }
 };
 
@@ -445,9 +701,7 @@ const startNewAnalysis = () => {
   lsl.value = 38;
   usl.value = 48;
   subgroupSize.value = 18;
-  selectedColumn.value = '';
-  csvColumns.value = [];
-  rawCsvData.value = [];
+  analysisNote.value = '';
   toast.info('New analysis started');
 };
 
@@ -486,13 +740,6 @@ onMounted(fetchHistory);
           <Plus :size="16" class="text-primary" />
           <span>New</span>
         </Button>
-        <label
-          class="h-10 cursor-pointer bg-white border-2 border-slate-200 hover:bg-slate-50 px-4 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-sm active:scale-95"
-        >
-          <Upload :size="16" class="text-primary" />
-          <span>{{ t('qa.cpk.uploadCsv') }}</span>
-          <input type="file" accept=".csv" class="hidden" @change="handleFileUpload" />
-        </label>
         <Button
           variant="outline"
           class="h-10 px-4 bg-white border-2 border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-all flex items-center gap-2 group shadow-sm"
@@ -514,44 +761,28 @@ onMounted(fetchHistory);
       </div>
     </div>
 
-    <!-- CSV Column Selection -->
-    <div
-      v-if="csvColumns.length > 0"
-      class="mt-4 flex items-center gap-2 animate-in fade-in slide-in-from-top-2"
-    >
-      <FileSpreadsheet :size="14" class="text-green-600" />
-      <span class="text-[10px] font-bold text-slate-500 uppercase"
-        >{{ t('qa.cpk.selectColumn') }}:</span
-      >
-      <div class="flex gap-2 flex-wrap">
-        <button
-          v-for="col in csvColumns"
-          :key="col"
-          variant="ghost"
-          size="sm"
-          :class="[
-            'h-7 px-3 rounded-full text-[10px] font-bold transition-all',
-            selectedColumn === col
-              ? 'bg-primary text-white hover:bg-primary/90 shadow-md'
-              : 'bg-slate-100 text-slate-500 hover:bg-slate-200',
-          ]"
-          @click="handleColumnChange(col)"
-        >
-          {{ col }}
-        </button>
-      </div>
-    </div>
-
     <div class="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
       <!-- Left: History -->
       <Card
-        class="lg:col-span-2 border-2 border-slate-100 shadow-none overflow-hidden flex flex-col h-[320px]"
+        class="lg:col-span-3 border-2 border-slate-100 shadow-none overflow-hidden flex flex-col h-[320px]"
       >
-        <div class="px-4 py-3 bg-slate-50/50 border-b border-slate-100 flex items-center gap-2">
-          <History :size="14" class="text-slate-400" />
-          <span class="text-[10px] font-black uppercase tracking-widest text-slate-500"
-            >History</span
-          >
+        <div
+          class="px-4 py-2 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between"
+        >
+          <div class="flex items-center gap-2">
+            <History :size="14" class="text-slate-400" />
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500"
+              >History</span
+            >
+          </div>
+          <div class="relative">
+            <Search :size="11" class="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              v-model="searchQuery"
+              class="w-24 h-6 pl-6 pr-2 bg-white border border-slate-200 rounded-lg text-[9px] font-bold focus:w-32 transition-all outline-none"
+              placeholder="Search..."
+            />
+          </div>
         </div>
         <CardContent class="p-0 overflow-y-auto flex-1">
           <div v-if="isLoadingHistory" class="p-8 flex flex-col items-center justify-center gap-2">
@@ -560,16 +791,16 @@ onMounted(fetchHistory);
               >Loading...</span
             >
           </div>
-          <div v-else-if="savedAnalyses.length === 0" class="p-8 text-center">
+          <div v-else-if="filteredHistory.length === 0" class="p-8 text-center">
             <p
               class="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed"
             >
-              No history found
+              {{ searchQuery ? 'No results found' : 'No history found' }}
             </p>
           </div>
           <div v-else class="divide-y divide-slate-100">
             <div
-              v-for="item in savedAnalyses"
+              v-for="item in filteredHistory"
               :key="item.id"
               class="p-2 hover:bg-slate-50 transition-colors cursor-pointer group relative"
               @click="loadAnalysis(item.id)"
@@ -649,27 +880,43 @@ onMounted(fetchHistory);
         <CardContent class="p-0 flex-1">
           <textarea
             v-model="dataInput"
-            class="w-full h-full p-4 text-xs font-medium text-slate-600 bg-white border-none focus:ring-0 transition-all resize-none leading-relaxed"
+            class="w-full h-[180px] p-4 text-xs font-medium text-slate-600 bg-white border-none focus:ring-0 transition-all resize-none leading-relaxed"
             placeholder="Paste your numerical data here..."
           ></textarea>
+          <div class="p-3 border-t border-dashed border-slate-100 bg-slate-50/30">
+            <textarea
+              v-model="analysisNote"
+              class="w-full h-16 p-2 text-[10px] font-medium text-slate-500 bg-white border border-slate-200 rounded-lg focus:border-primary/30 focus:ring-0 transition-all resize-none"
+              placeholder="Add additional notes or comments here..."
+            ></textarea>
+          </div>
         </CardContent>
       </Card>
 
       <!-- Right: Results / Empty State -->
       <Card
-        class="lg:col-span-6 border-2 border-slate-100 shadow-none overflow-hidden flex flex-col h-[320px]"
+        ref="statsRef"
+        class="lg:col-span-5 border-2 border-slate-100 shadow-none overflow-hidden flex flex-col h-[320px]"
       >
         <div class="px-4 py-3 bg-slate-50/50 border-b border-slate-100 flex items-center gap-2">
           <Calculator :size="14" class="text-slate-400" />
           <span class="text-[10px] font-black uppercase tracking-widest text-slate-500"
             >CPK Statistics</span
           >
+          <div
+            v-if="analysisTitle"
+            class="ml-auto px-2 py-0.5 bg-primary/5 rounded border border-primary/10 max-w-[150px]"
+          >
+            <span class="text-[9px] font-black text-primary truncate block uppercase">
+              {{ analysisTitle }}
+            </span>
+          </div>
         </div>
 
         <CardContent class="p-0 flex-1 overflow-hidden bg-white">
           <div v-if="results" class="h-full flex flex-col">
             <!-- Content Grid -->
-            <div class="grid grid-cols-[140px,1fr,140px] divide-x divide-slate-100 flex-1">
+            <div class="grid grid-cols-[120px,1fr,120px] divide-x divide-slate-100 flex-1">
               <!-- Within Stats -->
               <div class="p-4 flex flex-col items-center justify-center">
                 <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
@@ -818,67 +1065,39 @@ onMounted(fetchHistory);
     <!-- CPK Analysis Dashboard -->
     <div v-if="results" class="grid grid-cols-1 xl:grid-cols-2 gap-8 mt-8">
       <!-- Row 1: Xbar and CPK Histogram -->
-      <Card class="border-2 border-slate-100 shadow-none overflow-hidden h-[300px]">
+      <Card
+        ref="xbarCardRef"
+        class="border-2 border-slate-100 shadow-none overflow-hidden h-[300px]"
+      >
         <div
           class="px-4 py-2 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between"
         >
           <span class="text-[10px] font-black uppercase tracking-widest text-slate-500"
             >Xbar Chart</span
           >
-          <div class="flex gap-4 text-[9px] font-bold text-slate-400">
+          <div class="flex gap-4 text-[9px] font-bold">
             <span class="text-red-500">UCL: {{ results.xbarUCL.toFixed(3) }}</span>
-            <span class="text-green-600">CL: {{ results.avgMean.toFixed(3) }}</span>
+            <span class="text-primary">CL: {{ results.avgMean.toFixed(3) }}</span>
             <span class="text-red-500">LCL: {{ results.xbarLCL.toFixed(3) }}</span>
           </div>
         </div>
         <ApexChart
           type="line"
           height="250"
-          :options="{
-            chart: { toolbar: { show: false }, zoom: { enabled: false } },
-            stroke: {
-              width: [2, 1.5, 1.5, 1.5],
-              dashArray: [0, 0, 0, 0],
-              colors: ['#000000', '#ef4444', '#ef4444', '#22c55e'],
-            },
-            markers: {
-              size: [4, 0, 0, 0],
-              colors: ['#000000'],
-              strokeColors: '#fff',
-              strokeWidth: 2,
-              hover: { size: 6 },
-            },
-            xaxis: {
-              labels: { show: false },
-              axisBorder: { show: true, color: '#e2e8f0' },
-            },
-            yaxis: {
-              labels: { style: { fontSize: '10px', fontWeight: 600 } },
-            },
-            grid: {
-              borderColor: '#f1f5f9',
-              xaxis: { lines: { show: false } },
-            },
-            legend: { show: false },
-            colors: ['#000000', '#ef4444', '#ef4444', '#22c55e'],
-            tooltip: {
-              x: { show: false },
-              y: {
-                formatter: (val: number) => val.toFixed(3),
-                title: { formatter: (name: string) => name + ':' },
-              },
-            },
-          }"
+          :options="xbarChartOptions"
           :series="[
-            { name: 'Mean', data: results.subgroupData.map((d) => d.mean.toFixed(3)) },
-            { name: 'UCL', data: results.subgroupData.map(() => results?.xbarUCL.toFixed(3)) },
-            { name: 'LCL', data: results.subgroupData.map(() => results?.xbarLCL.toFixed(3)) },
-            { name: 'CL', data: results.subgroupData.map(() => results?.avgMean.toFixed(3)) },
+            { name: 'Mean', data: results.subgroupData.map((d) => d.mean) },
+            { name: 'UCL', data: results.subgroupData.map(() => results?.xbarUCL) },
+            { name: 'LCL', data: results.subgroupData.map(() => results?.xbarLCL) },
+            { name: 'CL', data: results.subgroupData.map(() => results?.avgMean) },
           ]"
         />
       </Card>
 
-      <Card class="border-2 border-slate-100 shadow-none overflow-hidden h-[300px]">
+      <Card
+        ref="histogramCardRef"
+        class="border-2 border-slate-100 shadow-none overflow-hidden h-[300px]"
+      >
         <div class="px-4 py-2 bg-slate-50/50 border-b border-slate-100">
           <span class="text-[10px] font-black uppercase tracking-widest text-slate-500"
             >CPK Histogram</span
@@ -887,37 +1106,7 @@ onMounted(fetchHistory);
         <ApexChart
           type="line"
           height="250"
-          :options="{
-            chart: { toolbar: { show: false } },
-            stroke: { width: [0, 2.5, 2], dashArray: [0, 0, 5], curve: 'smooth' },
-            colors: [primaryColor, '#ef4444', '#000000'],
-            plotOptions: {
-              bar: {
-                borderRadius: 0,
-                columnWidth: '95%',
-              },
-            },
-            fill: { opacity: [1, 1, 1] },
-            xaxis: {
-              type: 'numeric',
-              labels: { style: { fontSize: '10px', fontWeight: 600 } },
-              axisBorder: { show: true, color: '#e2e8f0' },
-            },
-            yaxis: { show: false },
-            grid: { show: false },
-            legend: {
-              position: 'top',
-              fontSize: '10px',
-              fontWeight: 700,
-            },
-            tooltip: {
-              x: { show: false },
-              y: {
-                formatter: (val: number) => val.toFixed(3),
-                title: { formatter: (name: string) => name + ':' },
-              },
-            },
-          }"
+          :options="histogramChartOptions"
           :series="[
             { name: 'Data', type: 'column', data: results.histogramData },
             { name: 'Overall', type: 'line', data: results.overallCurve },
@@ -926,6 +1115,80 @@ onMounted(fetchHistory);
         />
       </Card>
     </div>
+
+    <!-- Empty State Placeholder Grid -->
+    <div v-else class="grid grid-cols-1 xl:grid-cols-2 gap-8 mt-8">
+      <Card
+        class="border-2 border-slate-100 border-dashed shadow-none bg-slate-50/10 h-[300px] flex flex-col items-center justify-center group/card transition-all duration-500"
+      >
+        <div
+          class="p-6 bg-white rounded-3xl border border-slate-100 shadow-sm mb-4 group-hover/card:scale-110 group-hover/card:border-primary/20 transition-all duration-500"
+        >
+          <LineChart
+            :size="32"
+            class="text-slate-300 group-hover/card:text-primary/30 transition-colors duration-500"
+          />
+        </div>
+        <h3
+          class="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover/card:text-slate-600 transition-colors"
+        >
+          Xbar Chart
+        </h3>
+        <p class="text-[9px] text-slate-400 mt-2 font-medium">Input data to see control limits</p>
+      </Card>
+
+      <Card
+        class="border-2 border-slate-100 border-dashed shadow-none bg-slate-50/10 h-[300px] flex flex-col items-center justify-center group/card transition-all duration-500"
+      >
+        <div
+          class="p-6 bg-white rounded-3xl border border-slate-100 shadow-sm mb-4 group-hover/card:scale-110 group-hover/card:border-primary/20 transition-all duration-500"
+        >
+          <BarChart3
+            :size="32"
+            class="text-slate-300 group-hover/card:text-primary/30 transition-colors duration-500"
+          />
+        </div>
+        <h3
+          class="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover/card:text-slate-600 transition-colors"
+        >
+          Distribution Histogram
+        </h3>
+        <p class="text-[9px] text-slate-400 mt-2 font-medium">Process capability visualization</p>
+      </Card>
+    </div>
+    <!-- Delete Confirmation Dialog -->
+    <AlertDialog v-model:open="isDeleteDialogOpen">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone. This will permanently delete your saved analysis.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction @click="handleDeleteConfirm" class="bg-red-600 hover:bg-red-700">
+            Delete
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    <!-- Save Confirmation Dialog -->
+    <AlertDialog v-model:open="isSaveDialogOpen">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Save CPK Analysis?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Do you want to save the current analysis titled "{{ analysisTitle }}"?
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction @click="handleSaveConfirm"> Save Analysis </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </div>
 </template>
 

@@ -1101,6 +1101,7 @@ model CpkAnalysis {
   usl          Float
   subgroupSize Int     @map("subgroup_size")
   dataPoints   Float[] @map("data_points")
+  note         String?
 
   recordedBy String?  @map("recorded_by")
   createdAt  DateTime @default(now()) @map("created_at")

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsArray, IsNumber, IsString } from 'class-validator';
+import { IsArray, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateCpkAnalysisDto {
     @ApiProperty()
@@ -22,4 +22,9 @@ export class CreateCpkAnalysisDto {
     @IsArray()
     @IsNumber({}, { each: true })
     dataPoints: number[];
+
+    @ApiProperty({ required: false })
+    @IsString()
+    @IsOptional()
+    note?: string;
 }
