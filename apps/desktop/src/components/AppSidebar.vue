@@ -10,7 +10,10 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { useSidebarMenu } from '@/composables/useSidebarMenu';
-import { ChevronLeft } from 'lucide-vue-next';
+import { ChevronLeft, Home } from 'lucide-vue-next';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
 
 const { toggleSidebar } = useSidebar();
 
@@ -25,6 +28,13 @@ const { menuGroups } = useSidebarMenu();
   <Sidebar collapsible="offcanvas" :class="props.class">
     <SidebarHeader class="flex flex-row items-center gap-2">
       <TeamSwitcher class="flex-1" />
+      <button
+        class="flex size-8 items-center justify-center rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:hidden"
+        @click="router.push('/')"
+        title="Go to Dashboard"
+      >
+        <Home class="size-4 opacity-70" />
+      </button>
       <button
         class="flex size-8 items-center justify-center rounded-md hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:hidden"
         @click="toggleSidebar"

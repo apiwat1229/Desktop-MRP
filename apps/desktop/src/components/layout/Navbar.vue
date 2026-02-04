@@ -50,6 +50,7 @@ import {
   Calendar as CalendarIcon,
   LogOut,
   Menu,
+  RefreshCw,
   RotateCw,
   Search as SearchIcon,
   Settings,
@@ -208,6 +209,16 @@ const confirmClose = () => {
 
 const handleRefresh = () => {
   window.location.reload();
+};
+
+const handleCheckUpdate = () => {
+  if ((window as any).ipcRenderer?.autoUpdate) {
+    (window as any).ipcRenderer.autoUpdate.checkForUpdates();
+    toast.info('Checking for updates...');
+  } else {
+    toast.error('Auto-update is not available in this environment.');
+    console.warn('Auto-update API not available');
+  }
 };
 
 const handleNotificationClick = async (notification: NotificationDto) => {
@@ -415,6 +426,14 @@ onMounted(() => {
   fetchPendingApprovals();
   socketService.connect();
   socketService.on('notification', handleNotificationSocket);
+
+  // Update Listeners
+  // Update Listeners
+  // Update Listeners
+  if ((window as any).ipcRenderer?.autoUpdate) {
+    // No listener for not-available for now, relying on system notifications or default behavior
+  }
+
   window.addEventListener('refresh-approvals-count', fetchPendingApprovals);
 });
 
@@ -645,6 +664,18 @@ onUnmounted(() => {
                 </div>
                 <span class="text-[11px] font-semibold">Theme Settings</span>
               </button>
+              <button
+                v-if="isElectron"
+                class="col-span-2 flex items-center justify-center gap-2 p-2.5 rounded-lg bg-muted/40 hover:bg-primary/10 hover:text-primary transition-all group"
+                @click="handleCheckUpdate"
+              >
+                <div
+                  class="p-1.5 rounded-full bg-background shadow-sm transition-transform group-hover:scale-110"
+                >
+                  <RefreshCw class="w-3.5 h-3.5" />
+                </div>
+                <span class="text-[11px] font-semibold">Check Update</span>
+              </button>
             </div>
 
             <DropdownMenuSeparator class="mx-2 my-2" />
@@ -819,12 +850,12 @@ onUnmounted(() => {
     </div>
     <!-- Theme Settings Dialog -->
     <Dialog v-model:open="showThemeSettings">
-      <DialogContent class="sm:max-w-[425px]">
-        <DialogHeader>
+      <DialogContent class="sm:max-w-[425px] flex flex-col max-h-[85vh]">
+        <DialogHeader class="flex-shrink-0">
           <DialogTitle>Theme Settings</DialogTitle>
           <DialogDescription>Customize the appearance of the application.</DialogDescription>
         </DialogHeader>
-        <div class="py-4">
+        <div class="py-4 overflow-y-auto flex-1 px-1">
           <AppearanceSettings />
         </div>
       </DialogContent>

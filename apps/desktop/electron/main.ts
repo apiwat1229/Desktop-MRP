@@ -66,12 +66,11 @@ function createWindow() {
 
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL)
-    win.webContents.openDevTools()
+
   } else {
     // win.loadFile('dist/index.html')
     win.loadFile(path.join(RENDERER_DIST, 'index.html'))
-    // Open DevTools in production for debugging
-    win.webContents.openDevTools()
+
   }
 }
 
@@ -284,6 +283,10 @@ ipcMain.on('check-for-updates', () => {
     autoUpdater.checkForUpdates()
   } else {
     log.info('Skipping update check in development mode')
+    // Simulate up-to-date for testing UI
+    setTimeout(() => {
+      win?.webContents.send('update-not-available', { version: '0.0.0-dev' })
+    }, 1000)
   }
 })
 
