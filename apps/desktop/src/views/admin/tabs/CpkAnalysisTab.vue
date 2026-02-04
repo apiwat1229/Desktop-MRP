@@ -539,25 +539,12 @@ const exportToExcel = async () => {
           ext: { width: 440, height: 260 },
         });
       }
-
-      // 3. Capture Xbar Chart (Below)
-      if (xbarCardRef.value?.$el) {
-        const xbarCanvas = await html2canvas(xbarCardRef.value.$el, captureOptions);
-        const xbarImg = workbook.addImage({
-          base64: xbarCanvas.toDataURL('image/png'),
-          extension: 'png',
-        });
-        worksheet.addImage(xbarImg, {
-          tl: { col: 0, row: 20 }, // A21
-          ext: { width: 880, height: 280 },
-        });
-      }
     } catch (imgError) {
       console.warn('Image capture for Excel failed:', imgError);
     }
 
     // --- Raw Data Table (Starting below everything) ---
-    const rawDataStartRow = 38;
+    const rawDataStartRow = 22;
     worksheet.mergeCells(`A${rawDataStartRow}:O${rawDataStartRow}`);
     const rawHeader = worksheet.getCell(`A${rawDataStartRow}`);
     rawHeader.value = 'RAW DATA POINTS';

@@ -203,9 +203,39 @@ const routes = [
                 component: () => import('../views/Placeholder.vue'),
             },
             {
-                path: 'helpdesk',
-                name: 'Help Desk',
-                component: () => import('../views/admin/HelpDesk.vue'),
+                path: 'it-helpdesk',
+                component: () => import('../views/admin/helpdesk/HelpDeskLayout.vue'),
+                children: [
+                    {
+                        path: '',
+                        redirect: { name: 'Knowledge Center' }
+                    },
+                    {
+                        path: 'knowledge-center',
+                        name: 'Knowledge Center',
+                        component: () => import('../views/admin/helpdesk/KnowledgeCenterView.vue'),
+                    },
+                    {
+                        path: 'stock',
+                        name: 'IT Stock Management',
+                        component: () => import('../views/admin/helpdesk/ITStockView.vue'),
+                    },
+                    {
+                        path: 'analytics',
+                        name: 'Printer Analytics',
+                        component: () => import('../views/admin/helpdesk/PrinterAnalyticsView.vue'),
+                    },
+                    {
+                        path: 'asset-request',
+                        name: 'Asset Request',
+                        component: () => import('../views/admin/helpdesk/AssetRequestView.vue'),
+                    },
+                    {
+                        path: 'repair-status',
+                        name: 'Repair Status',
+                        component: () => import('../views/admin/helpdesk/RepairStatusView.vue'),
+                    },
+                ]
             },
         ]
     },

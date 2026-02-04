@@ -5,11 +5,12 @@ import {
     Factory,
     FlaskConical,
     Layers,
+    Monitor,
     Package,
     Server,
     Shield,
     Truck,
-    Users
+    Users,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -91,6 +92,18 @@ export function useSidebarMenu() {
                         { name: t('admin.truckScale.scaleIn'), path: '/admin/truck-scale/scale-in' },
                         { name: t('admin.truckScale.scaleOut'), path: '/admin/truck-scale/scale-out' },
                         { name: t('admin.truckScale.dashboard'), path: '/admin/truck-scale/dashboard' },
+                    ],
+                },
+                {
+                    name: 'IT HelpDesk',
+                    path: '/admin/it-helpdesk',
+                    icon: Monitor,
+                    items: [
+                        { name: 'Knowledge Center', path: '/admin/it-helpdesk/knowledge-center' },
+                        { name: 'IT Stock Management', path: '/admin/it-helpdesk/stock' },
+                        { name: 'Printer Analytics', path: '/admin/it-helpdesk/analytics' },
+                        { name: 'Asset Request', path: '/admin/it-helpdesk/asset-request' },
+                        { name: 'Repair Status', path: '/admin/it-helpdesk/repair-status' },
                     ],
                 },
             ],
