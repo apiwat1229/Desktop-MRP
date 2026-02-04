@@ -126,7 +126,7 @@
       "cpkAnalysis": "CPK Analysis"
     },
     "cpk": {
-      "title": "Process Capability Sixpack",
+      "title": "Process Capability",
       "subtitle": "Process Capability Analysis",
       "specs": "Specifications",
       "subgroup": "Subgroup Size",

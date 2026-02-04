@@ -27,6 +27,7 @@ import { RubberTypesModule } from './rubber-types/rubber-types.module';
 import { SuppliersModule } from './suppliers/suppliers.module';
 import { UsersModule } from './users/users.module';
 
+import { CpkAnalysesModule } from './cpk-analyses/cpk-analyses.module';
 import { JobOrdersModule } from './job-orders/job-orders.module';
 import { ProductionReportsModule } from './production-reports/production-reports.module';
 import { RawMaterialPlansModule } from './raw-material-plans/raw-material-plans.module';
@@ -66,6 +67,7 @@ import { RawMaterialPlansModule } from './raw-material-plans/raw-material-plans.
         PoolsModule,
         JobOrdersModule,
         RawMaterialPlansModule,
+        CpkAnalysesModule,
         ProductionReportsModule,
         ServeStaticModule.forRoot({
             rootPath: join(process.cwd(), 'uploads'),
