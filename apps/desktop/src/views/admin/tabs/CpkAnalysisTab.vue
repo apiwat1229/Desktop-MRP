@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useThemeStore } from '@/stores/theme';
@@ -10,9 +11,11 @@ import {
   FileSpreadsheet,
   History,
   Loader2,
+  Plus,
   Save,
   Trash2,
   Upload,
+  XCircle,
 } from 'lucide-vue-next';
 import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -31,17 +34,15 @@ const { t } = useI18n();
 const ApexChart = VueApexCharts;
 
 // --- State ---
-const dataInput = ref(
-  '42\n41\n42.5\n41.5\n41\n42\n42.5\n41.5\n42.5\n42.5\n42\n42.5\n43\n42\n41.5\n42.5\n42\n42.5\n40.5\n41.5\n41\n42.5\n41.5\n42\n42.5\n42\n42\n42\n41.5\n44\n44\n44\n43\n43\n42\n42\n42.5\n41.5\n43\n43\n43\n42.5\n42\n43.5\n44\n44.5\n42.5\n42.5\n43\n42\n42\n42\n41.5\n40.5\n42.5\n42.5\n42\n41.5\n42\n43\n42.5\n42\n42.5\n42\n42.5\n42.5\n42\n43\n43.5\n41.5\n42\n42.5\n41.5\n42\n42.5\n42\n43\n43\n41.5\n42.5\n42.5\n43\n42.5\n42.5\n42.5\n42\n44\n43.5\n42\n42\n42.5\n43\n42.5\n43\n42\n42.5\n42\n41.5\n42\n42.5\n42\n41\n43\n42.5\n43\n41.5\n42\n43\n42\n43\n42\n42\n43\n42\n42.5\n40\n41\n42\n41\n41\n42\n42\n42\n41\n41.5\n41\n43.5\n42\n41.5\n42.5\n42.5\n41.5\n43\n45\n43\n42\n43\n42.5\n43\n44.5\n43\n44\n42.5\n43\n42\n46.5\n44\n44.5\n43\n46.5\n43\n43\n43.5\n44\n45\n44\n44.5\n44\n43\n43.5\n45\n44.5\n45\n45\n44.5\n43\n44.5\n43.5\n45\n43.5\n44\n45\n43.5\n43\n42\n43\n44.5\n43\n45\n43.5\n46\n43\n45.5\n45\n43\n45.5\n46\n43.5\n46\n46\n43\n43\n45\n43.5\n44.5\n43.5\n45\n45\n44\n44.5\n45\n44.5\n45\n44.5\n44\n44.5\n46\n45\n45\n45.5\n43\n44\n44\n45.5\n45\n42.5\n47\n45.5\n43.5\n44\n45.5\n46\n44\n45.5\n45.5\n44\n43.5\n44\n43\n44.5\n43\n46\n44\n45.5\n44.5\n45.5\n44.5\n45.5\n44.5\n42\n45.5\n45\n43\n44.5\n45.5\n45\n42.5\n44.5\n44.5\n45.5\n44.5\n43.5\n45.5\n43.5\n42.5\n43.5\n44.5\n44.5\n44.5\n43.5\n44\n43\n43.5\n41.5\n44.5\n43.5\n43.5\n42\n42.5\n43.5\n45.5\n41.5\n42\n42.5\n44.5\n42\n42.5\n43.5\n43\n43\n44.5\n43.5\n44\n42.5\n44.5\n42.5\n44.5\n43.5\n43.5\n43\n41.5\n42\n43.5\n44.5\n42.5\n42.5\n43\n43\n45.5\n44.5\n41\n43.5\n42.5\n42.5\n42.5\n42.5\n42.5\n43.5\n43\n43\n42.5\n41\n44\n43.5\n43\n43.5\n43.5\n43\n42\n43.5\n45\n42.5\n44\n44.5\n43.5\n44.5\n43.5\n42\n44.5\n42\n42.5\n42.5\n41.5\n42.5\n44\n43\n43.5\n42.5\n41.5\n41.5\n42.5\n43.5\n43\n45.5\n45.5\n44.5\n45\n41.5\n42.5\n41.5\n41.5\n41\n42.5\n42.5\n42\n44.5\n42.5\n42\n43\n42.5\n43\n41.5\n42.5\n42.5\n41.5\n41.5\n41\n42\n42.5\n41\n43.5\n43\n41\n42.5\n41.5\n43\n42.5\n41.5\n41.5\n43.5\n41\n42.5\n44.5\n42.5\n41.5\n42.5\n44.5\n42.5\n41.5\n43.5\n41.5\n42.5\n44.5\n41\n43.5\n43\n43.5\n44.5\n44\n42\n43\n43.5\n44\n42.5\n43.5\n41\n41.5\n42.5\n41\n43\n41.5\n43\n45.5\n42\n43.5\n43\n44\n42\n41.5\n41.5\n42\n41.5\n42\n43.5\n41\n42.5\n40.5\n42\n43.5\n42.5\n43\n41.5\n42\n44.5\n45\n42.5\n41.5\n43\n42\n41.5\n42.5\n46\n45\n42.5\n45\n44\n45\n45.5\n41\n41\n42\n42.5\n41\n41.5\n42.5\n42.5\n44\n44.5\n44\n42\n42.5\n41\n42.5\n41.5\n44.5\n41\n40.5\n41\n44\n43\n44\n42.5\n41.5\n41.5\n41.5\n42.5\n43.5\n41.5\n42.5\n43\n44.5\n42\n43\n42.5\n42.5\n43\n41.5\n44\n42\n42.5\n41.5\n41\n42.5\n42.5\n41\n42.5\n43.5'
-);
-const analysisTitle = ref('New CPK Analysis');
+const dataInput = ref('');
+const analysisTitle = ref('');
 const savedAnalyses = ref<any[]>([]);
 const isSaving = ref(false);
 const isLoadingHistory = ref(false);
 const API_URL = 'http://localhost:2530/cpk-analyses';
-const lsl = ref(38);
-const usl = ref(48);
-const subgroupSize = ref(18);
+const lsl = ref<number | null>(38);
+const usl = ref<number | null>(48);
+const subgroupSize = ref<number>(18);
 const csvColumns = ref<string[]>([]);
 const selectedColumn = ref('');
 const rawCsvData = ref<string[][]>([]);
@@ -121,6 +122,17 @@ const primaryColor = computed(() => {
   return `hsl(${color.primary})`;
 });
 
+const dataPointCount = computed(() => {
+  return dataInput.value
+    .split(/[\s,\n,]+/)
+    .map((v) => parseFloat(v))
+    .filter((v) => !isNaN(v)).length;
+});
+
+const clearDataInput = () => {
+  dataInput.value = '';
+};
+
 // --- Calculations ---
 const results = computed(() => {
   const numbers = dataInput.value
@@ -128,8 +140,10 @@ const results = computed(() => {
     .map((v) => parseFloat(v))
     .filter((v) => !isNaN(v));
 
-  if (numbers.length < 2) return null;
+  if (numbers.length < 2 || lsl.value === null || usl.value === null) return null;
 
+  const LSL = lsl.value;
+  const USL = usl.value;
   const nTotal = numbers.length;
   const meanTotal = numbers.reduce((a, b) => a + b, 0) / nTotal;
 
@@ -246,26 +260,26 @@ const results = computed(() => {
   }));
 
   // --- Capability Indices ---
-  const cp = (usl.value - lsl.value) / (6 * stdevWithin);
+  const cp = (USL - LSL) / (6 * stdevWithin);
   const cpk = Math.min(
-    (usl.value - meanTotal) / (3 * stdevWithin),
-    (meanTotal - lsl.value) / (3 * stdevWithin)
+    (USL - meanTotal) / (3 * stdevWithin),
+    (meanTotal - LSL) / (3 * stdevWithin)
   );
-  const pp = (usl.value - lsl.value) / (6 * stdevOverall);
+  const pp = (USL - LSL) / (6 * stdevOverall);
   const ppk = Math.min(
-    (usl.value - meanTotal) / (3 * stdevOverall),
-    (meanTotal - lsl.value) / (3 * stdevOverall)
+    (USL - meanTotal) / (3 * stdevOverall),
+    (meanTotal - LSL) / (3 * stdevOverall)
   );
 
-  const target = (usl.value + lsl.value) / 2;
+  const target = (USL + LSL) / 2;
   const cpm = cp / Math.sqrt(1 + Math.pow((meanTotal - target) / stdevWithin, 2));
 
-  const pAboveUslWithin = 1 - normalCDF(usl.value, meanTotal, stdevWithin);
-  const pBelowLslWithin = normalCDF(lsl.value, meanTotal, stdevWithin);
+  const pAboveUslWithin = 1 - normalCDF(USL, meanTotal, stdevWithin);
+  const pBelowLslWithin = normalCDF(LSL, meanTotal, stdevWithin);
   const ppmWithin = (pAboveUslWithin + pBelowLslWithin) * 1000000;
 
-  const pAboveUslOverall = 1 - normalCDF(usl.value, meanTotal, stdevOverall);
-  const pBelowLslOverall = normalCDF(lsl.value, meanTotal, stdevOverall);
+  const pAboveUslOverall = 1 - normalCDF(USL, meanTotal, stdevOverall);
+  const pBelowLslOverall = normalCDF(LSL, meanTotal, stdevOverall);
   const ppmOverall = (pAboveUslOverall + pBelowLslOverall) * 1000000;
 
   return {
@@ -354,8 +368,14 @@ const exportToExcel = async () => {
 };
 
 const saveAnalysis = async () => {
-  if (!results.value) return;
-
+  if (!analysisTitle.value || analysisTitle.value.trim() === '') {
+    toast.warning('Please enter an analysis title before saving');
+    return;
+  }
+  if (!results.value) {
+    toast.warning('No analysis data to save');
+    return;
+  }
   isSaving.value = true;
   try {
     const payload = {
@@ -419,6 +439,18 @@ const deleteAnalysis = async (id: string) => {
   }
 };
 
+const startNewAnalysis = () => {
+  dataInput.value = '';
+  analysisTitle.value = '';
+  lsl.value = 38;
+  usl.value = 48;
+  subgroupSize.value = 18;
+  selectedColumn.value = '';
+  csvColumns.value = [];
+  rawCsvData.value = [];
+  toast.info('New analysis started');
+};
+
 onMounted(fetchHistory);
 </script>
 
@@ -446,6 +478,14 @@ onMounted(fetchHistory);
         </div>
       </div>
       <div class="flex gap-3">
+        <Button
+          variant="outline"
+          class="h-10 px-4 bg-white border-2 border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-all flex items-center gap-2 shadow-sm"
+          @click="startNewAnalysis"
+        >
+          <Plus :size="16" class="text-primary" />
+          <span>New</span>
+        </Button>
         <label
           class="h-10 cursor-pointer bg-white border-2 border-slate-200 hover:bg-slate-50 px-4 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-sm active:scale-95"
         >
@@ -558,11 +598,26 @@ onMounted(fetchHistory);
         <div
           class="px-3 py-3 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between"
         >
-          <div class="flex items-center gap-1.5">
-            <FileSpreadsheet :size="14" class="text-slate-400" />
-            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500"
+          <div class="flex items-center gap-1.5 overflow-hidden">
+            <FileSpreadsheet :size="14" class="text-slate-400 shrink-0" />
+            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500 truncate"
               >Data Input</span
             >
+            <Badge
+              v-if="dataPointCount > 0"
+              variant="secondary"
+              class="ml-2 bg-primary/10 text-primary border-none text-[9px] font-black hover:bg-primary/20 transition-colors"
+            >
+              {{ dataPointCount }} Item
+            </Badge>
+            <button
+              v-if="dataInput.trim() !== ''"
+              @click="clearDataInput"
+              class="ml-2 p-1 text-slate-400 hover:text-red-500 transition-colors"
+              title="Clear data"
+            >
+              <XCircle :size="12" />
+            </button>
           </div>
           <div class="flex items-center gap-3">
             <div class="flex items-center gap-1.5">
@@ -624,7 +679,7 @@ onMounted(fetchHistory);
                   <div class="flex justify-between items-center group">
                     <span class="text-[11px] font-bold text-slate-600">StDev</span>
                     <span class="text-[11px] font-black text-slate-900 tabular-nums">{{
-                      results.stdevWithin.toFixed(2)
+                      results.stdevWithin.toFixed(3)
                     }}</span>
                   </div>
                   <div class="flex justify-between items-center group">
@@ -645,7 +700,7 @@ onMounted(fetchHistory);
                   <div class="flex justify-between items-center group">
                     <span class="text-[11px] font-bold text-slate-600">PPM</span>
                     <span class="text-[11px] font-black text-slate-900 tabular-nums">{{
-                      Math.round(results.ppmWithin)
+                      results.ppmWithin.toFixed(2)
                     }}</span>
                   </div>
                 </div>
@@ -703,7 +758,7 @@ onMounted(fetchHistory);
                   <div class="flex justify-between items-center group">
                     <span class="text-[11px] font-bold text-slate-600">StDev</span>
                     <span class="text-[11px] font-black text-slate-900 tabular-nums">{{
-                      results.stdevOverall.toFixed(2)
+                      results.stdevOverall.toFixed(3)
                     }}</span>
                   </div>
                   <div class="flex justify-between items-center group">
@@ -725,6 +780,12 @@ onMounted(fetchHistory);
                     <span class="text-[11px] font-bold text-slate-600">Cpm</span>
                     <span class="text-xs font-black text-orange-600 tabular-nums">{{
                       results.cpm.toFixed(2)
+                    }}</span>
+                  </div>
+                  <div class="flex justify-between items-center group">
+                    <span class="text-[11px] font-bold text-slate-600">PPM</span>
+                    <span class="text-[11px] font-black text-slate-900 tabular-nums">{{
+                      results.ppmOverall.toFixed(2)
                     }}</span>
                   </div>
                 </div>
@@ -765,9 +826,9 @@ onMounted(fetchHistory);
             >Xbar Chart</span
           >
           <div class="flex gap-4 text-[9px] font-bold text-slate-400">
-            <span class="text-red-500">UCL: {{ results.xbarUCL.toFixed(2) }}</span>
-            <span class="text-green-600">CL: {{ results.avgMean.toFixed(2) }}</span>
-            <span class="text-red-500">LCL: {{ results.xbarLCL.toFixed(2) }}</span>
+            <span class="text-red-500">UCL: {{ results.xbarUCL.toFixed(3) }}</span>
+            <span class="text-green-600">CL: {{ results.avgMean.toFixed(3) }}</span>
+            <span class="text-red-500">LCL: {{ results.xbarLCL.toFixed(3) }}</span>
           </div>
         </div>
         <ApexChart
@@ -800,6 +861,13 @@ onMounted(fetchHistory);
             },
             legend: { show: false },
             colors: ['#000000', '#ef4444', '#ef4444', '#22c55e'],
+            tooltip: {
+              x: { show: false },
+              y: {
+                formatter: (val: number) => val.toFixed(3),
+                title: { formatter: (name: string) => name + ':' },
+              },
+            },
           }"
           :series="[
             { name: 'Mean', data: results.subgroupData.map((d) => d.mean.toFixed(3)) },
@@ -841,6 +909,13 @@ onMounted(fetchHistory);
               position: 'top',
               fontSize: '10px',
               fontWeight: 700,
+            },
+            tooltip: {
+              x: { show: false },
+              y: {
+                formatter: (val: number) => val.toFixed(3),
+                title: { formatter: (name: string) => name + ':' },
+              },
             },
           }"
           :series="[
