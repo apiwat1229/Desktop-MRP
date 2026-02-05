@@ -7,6 +7,9 @@
     "view": "View",
     "download": "Download",
     "confirmDelete": "Confirm Delete",
+    "confirmDeleteDescription": "Are you sure you want to remove this record? This action cannot be undone.",
+    "finishJobConfirm": "Finish Job Order",
+    "finishJobDescription": "Are you sure you want to finish this job? This will mark it as completed and prevent further production batch mapping.",
     "deleteWarning": "This action cannot be undone. This will permanently delete the record.",
     "areYouSure": "Are you absolutely sure?",
     "add": "Add",
@@ -123,7 +126,8 @@
       "planList": "Raw Material Plan List",
       "rawMaterialPlanList": "Raw Material Plan",
       "rawMaterialPlanCreate": "Create Raw Material Plan",
-      "cpkAnalysis": "CPK Analysis"
+      "cpkAnalysis": "CPK Analysis",
+      "jobOrderDetails": "Job Order Details"
     },
     "cpk": {
       "title": "Process Capability",
@@ -287,11 +291,13 @@
     },
     "jobOrderDetails": {
       "productionAllocation": "PRODUCTION BATCH ALLOCATION",
-      "mapBatch": "ALLOCATED BATCH DATA",
+      "mapBatch": "Add Production",
       "selectBatch": "Select Production Batch",
       "noAllocation": "No production batches allocated to this job.",
       "mappedDate": "Allocation Date",
-      "map": "Map Batch"
+      "recordData": "Record Date",
+      "map": "Map Batch",
+      "finishJob": "Finish Job"
     }
   },
   "production": {
@@ -307,6 +313,7 @@
     "createReport": "Create Report",
     "saveDraft": "Save Draft",
     "submitReport": "Submit Report",
+    "ratioLimitWarning": "Total ratio cannot exceed 100%",
     "dryerName": "Dryer Name",
     "bookNo": "Book No",
     "pageNo": "Page No",

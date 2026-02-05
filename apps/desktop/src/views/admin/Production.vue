@@ -27,21 +27,21 @@ const route = useRoute();
 
 // Context: 'production' | 'job-order'
 const activeContext = computed(() => {
-  if (route.name === 'JobOrders' || route.path.includes('production/job-orders')) {
+  const path = route.path.toLowerCase();
+  if (route.name === 'JobOrders' || path.includes('production/job-order')) {
     return 'job-order';
   }
-  if (route.name === 'QaJobOrders' || route.path.includes('qa/job-orders')) {
+  if (route.name === 'QaJobOrders' || path.includes('qa/job-order')) {
     return 'job-order';
   }
   return 'production';
 });
 
-const isQaContext = computed(
-  () => route.name === 'QaJobOrders' || route.path.includes('qa/job-orders')
-);
-const isReadonly = computed(
-  () => activeContext.value === 'job-order' && !isQaContext.value && !isAdmin.value
-);
+const isQaContext = computed(() => {
+  const path = route.path.toLowerCase();
+  return route.name === 'QaJobOrders' || path.includes('qa/job-order');
+});
+const isReadonly = computed(() => activeContext.value === 'job-order' && !isQaContext.value);
 // View: 'list' | 'create' | 'details'
 const activeTab = ref('list');
 
@@ -397,7 +397,9 @@ import { onUnmounted } from 'vue';
             </template>
             <template v-else>
               <JobOrderForm
+                :key="selectedJobOrder?.id || 'new'"
                 :initial-data="selectedJobOrder || {}"
+                :readonly="isReadonly"
                 @save="handleJobOrderSave"
                 @delete="handleJobOrderDelete"
                 @cancel="handleJobOrderCancel"
@@ -412,7 +414,7 @@ import { onUnmounted } from 'vue';
             <JobOrderDetails
               v-if="selectedJobOrder"
               :job-order="selectedJobOrder"
-              :readonly="isReadonly"
+              :readonly="false"
               @back="activeTab = 'list'"
               @updated="selectedJobOrder = $event"
             />

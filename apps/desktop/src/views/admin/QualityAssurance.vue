@@ -168,13 +168,26 @@ watch(
 // Restore state from query params on mount or navigation
 watch(
   () => route.query.id,
-  (newId) => {
+  async (newId) => {
     if (newId && typeof newId === 'string') {
       if (currentTab.value === 'raw-material-plan-create' && !selectedRawMaterialPlan.value) {
+        // Fetch full data if possible, or just set ID
         selectedRawMaterialPlan.value = { id: newId } as any;
       }
-      if (currentTab.value === 'job-order-create' && !selectedJobOrder.value) {
-        selectedJobOrder.value = { id: newId } as any;
+      if (
+        currentTab.value === 'job-order-create' &&
+        (!selectedJobOrder.value || selectedJobOrder.value.id !== newId)
+      ) {
+        try {
+          isLoading.value = true;
+          const data = await jobOrdersApi.getById(newId);
+          selectedJobOrder.value = data;
+        } catch (error) {
+          console.error('Failed to restore job order from query:', error);
+          selectedJobOrder.value = { id: newId } as any;
+        } finally {
+          isLoading.value = false;
+        }
       }
     }
   },
@@ -360,6 +373,7 @@ onMounted(() => {
           @create="handleJobOrderCreate"
           @edit="handleJobOrderEdit"
           @view="handleViewJobOrder"
+          @delete="handleJobOrderDelete"
         />
       </div>
       <div v-else-if="currentTab === 'job-order-details'" key="tab-job-order-details">
@@ -367,14 +381,13 @@ onMounted(() => {
           v-if="selectedJobOrder"
           :jobOrder="selectedJobOrder"
           :readonly="true"
-          @back="
-            currentTab = 'job-order-list';
-            selectedJobOrder = undefined;
-          "
+          @back="currentTab = 'job-order-list'"
+          @updated="selectedJobOrder = $event"
         />
       </div>
       <div v-else-if="currentTab === 'job-order-create'" key="tab-job-order-create">
         <JobOrderForm
+          :key="selectedJobOrder?.id || 'new'"
           :initial-data="selectedJobOrder"
           @save="handleJobOrderSave"
           @delete="handleJobOrderDelete"
@@ -384,7 +397,7 @@ onMounted(() => {
           "
         />
       </div>
-      <div v-if="currentTab === 'raw-material-plan-list'" key="tab-raw-material-plan-list">
+      <div v-else-if="currentTab === 'raw-material-plan-list'" key="tab-raw-material-plan-list">
         <RawMaterialPlanList
           :search-query="searchQuery"
           :start-date="selectedDateRangeString.start"

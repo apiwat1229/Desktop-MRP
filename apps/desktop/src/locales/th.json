@@ -7,6 +7,9 @@
     "view": "ดู",
     "download": "ดาวน์โหลด",
     "confirmDelete": "ยืนยันการลบ",
+    "confirmDeleteDescription": "คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้",
+    "finishJobConfirm": "จบงาน Job Order",
+    "finishJobDescription": "คุณแน่ใจหรือไม่ว่าต้องการจบงานนี้? การดำเนินการนี้จะทำเครื่องหมายว่าเสร็จสิ้นและป้องกันการแมปผลิตเพิ่มเติม",
     "deleteWarning": "การกระทำนี้ไม่สามารถย้อนกลับได้ ข้อมูลจะถูกลบออกจากระบบอย่างถาวร",
     "areYouSure": "คุณแน่ใจหรือไม่?",
     "add": "เพิ่ม",
@@ -127,7 +130,8 @@
       "rawMaterialPlanCreate": "สร้างแผนรับวัตถุดิบ",
       "editPlan": "แก้ไขแผน",
       "editJobOrder": "แก้ไขใบสั่งผลิต",
-      "cpkAnalysis": "วิเคราะห์ CPK"
+      "cpkAnalysis": "วิเคราะห์ CPK",
+      "jobOrderDetails": "รายละเอียดใบสั่งผลิต"
     },
     "cpk": {
       "title": "Process Capability",
@@ -291,11 +295,13 @@
     },
     "jobOrderDetails": {
       "productionAllocation": "การจัดสรรชุดการผลิต",
-      "mapBatch": "ข้อมูลชุดการผลิตที่จัดสรร",
+      "mapBatch": "เพิ่มผลผลิต",
       "selectBatch": "เลือกชุดการผลิต",
       "noAllocation": "ยังไม่มีการจัดสรรชุดการผลิตสำหรับงานนี้",
       "mappedDate": "วันที่จัดสรร",
-      "map": "จัดสรร"
+      "recordData": "วันที่บันทึก",
+      "map": "เพิ่มผลผลิต",
+      "finishJob": "จบงาน"
     }
   },
   "production": {
@@ -352,6 +358,7 @@
     "totalSamples": "จำนวนตัวอย่างรวม",
     "saveDraft": "บันทึกฉบับร่าง",
     "submitReport": "ส่งรายงาน",
+    "ratioLimitWarning": "สัดส่วนรวมต้องไม่เกิน 100%",
     "shifts": {
       "first": "1st",
       "second": "2nd"

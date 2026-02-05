@@ -184,6 +184,31 @@ const totalBales = computed(() => {
 });
 
 const handleSave = async (status: 'DRAFT' | 'SUBMITTED') => {
+  if (!form.grade) {
+    toast.error(t('common.fillAllRequiredFields'));
+    return;
+  }
+
+  // Ensure ratios total sum <= 100
+  const totalRatio =
+    (parseFloat(form.ratioCL?.toString() || '0') || 0) +
+    (parseFloat(form.ratioUSS?.toString() || '0') || 0) +
+    (parseFloat(form.ratioCutting?.toString() || '0') || 0);
+
+  if (totalRatio > 100) {
+    toast.error('Ratio total cannot exceed 100%');
+    return;
+  }
+
+  // Ensure each row has Time and Pallet Type
+  for (let i = 0; i < form.rows.length; i++) {
+    const row = form.rows[i];
+    if (!row.startTime || !row.palletType) {
+      toast.error(`Row ${i + 1}: Time and Pallet Type are required`);
+      return;
+    }
+  }
+
   try {
     form.status = status;
     if (props.initialData?.id || form.id) {
@@ -288,6 +313,29 @@ watch(lotNoPrefix, (newPrefix, oldPrefix) => {
     }
   });
 });
+
+// Real-time Ratio Validation (Total sum <= 100)
+watch(
+  [() => form.ratioCL, () => form.ratioUSS, () => form.ratioCutting],
+  ([newCL, newUSS, newCut]: any[], [oldCL, oldUSS, oldCut]: any[]) => {
+    const cl = parseFloat(newCL?.toString() || '0') || 0;
+    const uss = parseFloat(newUSS?.toString() || '0') || 0;
+    const cut = parseFloat(newCut?.toString() || '0') || 0;
+
+    if (cl + uss + cut > 100) {
+      toast.warning(t('production.ratioLimitWarning') || 'Total ratio cannot exceed 100%');
+
+      // Revert the one that changed to a valid value
+      if (newCL !== oldCL) {
+        form.ratioCL = Math.max(0, 100 - uss - cut);
+      } else if (newUSS !== oldUSS) {
+        form.ratioUSS = Math.max(0, 100 - cl - cut);
+      } else if (newCut !== oldCut) {
+        form.ratioCutting = Math.max(0, 100 - cl - uss);
+      }
+    }
+  }
+);
 </script>
 
 <template>
@@ -335,7 +383,7 @@ watch(lotNoPrefix, (newPrefix, oldPrefix) => {
               </Select>
             </div>
             <div class="space-y-2">
-              <Label>{{ t('production.grade') }}</Label>
+              <Label>{{ t('production.grade') }} <span class="text-destructive">*</span></Label>
               <Select v-model="form.grade" :disabled="isReadOnly">
                 <SelectTrigger>
                   <SelectValue placeholder="e.g. H0276" />
@@ -349,7 +397,10 @@ watch(lotNoPrefix, (newPrefix, oldPrefix) => {
               </Select>
             </div>
             <div class="space-y-2 col-span-1">
-              <Label class="text-xs">{{ t('production.ratio') }} (CL / USS / Cut)</Label>
+              <Label class="text-xs"
+                >{{ t('production.ratio') }} (CL / USS / Cut)
+                <span class="text-destructive">*</span></Label
+              >
               <div class="flex items-center gap-2 h-10">
                 <div class="flex-1 relative">
                   <KeypadInput
@@ -357,7 +408,7 @@ watch(lotNoPrefix, (newPrefix, oldPrefix) => {
                     :title="t('production.ratioCL')"
                     :disabled="isReadOnly"
                     button-class="h-9 px-2 text-xs text-center"
-                    :max-length="2"
+                    :max-length="3"
                   />
                 </div>
                 <div class="flex-1 relative">
@@ -366,7 +417,7 @@ watch(lotNoPrefix, (newPrefix, oldPrefix) => {
                     :title="t('production.ratioUSS')"
                     :disabled="isReadOnly"
                     button-class="h-9 px-2 text-xs text-center"
-                    :max-length="2"
+                    :max-length="3"
                   />
                 </div>
                 <div class="flex-1 relative">
@@ -375,7 +426,7 @@ watch(lotNoPrefix, (newPrefix, oldPrefix) => {
                     :title="t('production.ratioCutting')"
                     :disabled="isReadOnly"
                     button-class="h-9 px-2 text-xs text-center"
-                    :max-length="2"
+                    :max-length="3"
                   />
                 </div>
               </div>
@@ -389,12 +440,14 @@ watch(lotNoPrefix, (newPrefix, oldPrefix) => {
             <Table>
               <TableHeader class="bg-muted/30">
                 <TableRow>
-                  <TableHead class="w-24 whitespace-nowrap text-center">{{
-                    t('production.table.startTime')
-                  }}</TableHead>
-                  <TableHead class="w-32 whitespace-nowrap text-center">{{
-                    t('production.table.palletType')
-                  }}</TableHead>
+                  <TableHead class="w-24 whitespace-nowrap text-center"
+                    >{{ t('production.table.startTime') }}
+                    <span class="text-destructive">*</span></TableHead
+                  >
+                  <TableHead class="w-32 whitespace-nowrap text-center"
+                    >{{ t('production.table.palletType') }}
+                    <span class="text-destructive">*</span></TableHead
+                  >
                   <TableHead class="w-40 whitespace-nowrap text-center">{{
                     t('production.table.lotNo')
                   }}</TableHead>
@@ -650,15 +703,35 @@ watch(lotNoPrefix, (newPrefix, oldPrefix) => {
               </AlertDialog>
 
               <!-- Submit Button (Enabled only if saved as draft once) -->
-              <Button
-                v-if="props.initialData?.id || form.id"
-                @click="handleSave('SUBMITTED')"
-                class="bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-200 gap-2"
-                :disabled="!canUpdate"
-              >
-                <Check class="h-4 w-4" />
-                {{ t('production.submitReport') }}
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger as-child>
+                  <Button
+                    v-if="props.initialData?.id || form.id"
+                    class="bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-200 gap-2"
+                    :disabled="!canUpdate"
+                  >
+                    <Check class="h-4 w-4" />
+                    {{ t('production.submitReport') }}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>{{ t('common.confirm') }}</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {{ t('common.areYouSure') }}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>{{ t('common.cancel') }}</AlertDialogCancel>
+                    <AlertDialogAction
+                      @click="handleSave('SUBMITTED')"
+                      class="bg-emerald-500 text-white hover:bg-emerald-600"
+                    >
+                      {{ t('common.confirm') }}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </template>
 
             <Button
@@ -677,17 +750,35 @@ watch(lotNoPrefix, (newPrefix, oldPrefix) => {
               {{ t('common.back') }}
             </Button>
 
-            <Button
+            <AlertDialog
               v-if="
                 !isReadOnly &&
                 ((props.initialData?.id && canUpdate) || (!props.initialData?.id && canCreate))
               "
-              variant="outline"
-              @click="handleSave('DRAFT')"
-              class="bg-white border-slate-200 shadow-sm"
             >
-              {{ t('production.saveDraft') }}
-            </Button>
+              <AlertDialogTrigger as-child>
+                <Button variant="outline" class="bg-white border-slate-200 shadow-sm">
+                  {{ t('production.saveDraft') }}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>{{ t('common.confirm') }}</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {{ t('common.areYouSure') }}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>{{ t('common.cancel') }}</AlertDialogCancel>
+                  <AlertDialogAction
+                    @click="handleSave('DRAFT')"
+                    class="bg-primary text-primary-foreground hover:bg-primary/90"
+                  >
+                    {{ t('common.save') }}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
 

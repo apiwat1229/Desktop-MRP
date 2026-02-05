@@ -1,13 +1,38 @@
 <script setup lang="ts">
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import DataTable from '@/components/ui/data-table/DataTable.vue';
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { jobOrdersApi, type JobOrder } from '@/services/jobOrders';
 import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date';
 import type { ColumnDef } from '@tanstack/vue-table';
 import { format } from 'date-fns';
-import { CheckCircle2, ClipboardList, Clock, FileText, Plus, RefreshCw } from 'lucide-vue-next';
+import {
+  CheckCircle2,
+  Clock,
+  Eye,
+  Pencil,
+  Plus,
+  Printer,
+  RefreshCw,
+  Trash2,
+} from 'lucide-vue-next';
 import { computed, h, onMounted, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { toast } from 'vue-sonner';
@@ -28,6 +53,7 @@ const emit = defineEmits<{
   (e: 'create'): void;
   (e: 'edit', jobOrder: JobOrder): void;
   (e: 'view', jobOrder: JobOrder): void;
+  (e: 'delete', id: string): void;
 }>();
 
 // Helper to parse string date back to CalendarDate-like object
@@ -170,8 +196,18 @@ const handlePrint = (order: JobOrder) => {
   isPrintDialogOpen.value = true;
 };
 
+const handleEdit = (order: JobOrder) => {
+  emit('edit', order);
+};
+
+const handleDelete = async (order: JobOrder) => {
+  if (order.id) {
+    emit('delete', order.id);
+  }
+};
+
 // DataTable Columns
-const columns: ColumnDef<JobOrder>[] = [
+const columns = computed<ColumnDef<JobOrder>[]>(() => [
   {
     accessorKey: 'qaDate',
     header: () => h('div', { class: 'font-black text-slate-700' }, 'Date'),
@@ -295,24 +331,110 @@ const columns: ColumnDef<JobOrder>[] = [
       ),
     cell: ({ row }) => {
       const order = row.original;
-      return h('div', { class: 'w-full flex items-center justify-center' }, [
+      const actions = [];
+
+      // View Button
+      actions.push(
         h(
           Button,
           {
             variant: 'ghost',
             size: 'icon',
-            class: 'h-9 w-9 text-primary hover:bg-primary/10 transition-colors',
+            class: 'h-8 w-8 text-primary hover:bg-primary/10 transition-colors',
+            title: 'View Details',
+            onClick: (e: Event) => {
+              e.stopPropagation();
+              handleView(order);
+            },
+          },
+          () => h(Eye, { class: 'w-4 h-4' })
+        )
+      );
+
+      // Edit Button (Conditionally Shown)
+      if (!props.readonly && !order.isClosed) {
+        actions.push(
+          h(
+            Button,
+            {
+              variant: 'ghost',
+              size: 'icon',
+              class: 'h-8 w-8 text-blue-600 hover:bg-blue-50 transition-colors',
+              title: 'Edit',
+              onClick: (e: Event) => {
+                e.stopPropagation();
+                handleEdit(order);
+              },
+            },
+            () => h(Pencil, { class: 'w-4 h-4' })
+          )
+        );
+      }
+
+      // Print Button
+      actions.push(
+        h(
+          Button,
+          {
+            variant: 'ghost',
+            size: 'icon',
+            class: 'h-8 w-8 text-amber-600 hover:bg-amber-50 transition-colors',
+            title: 'Print',
             onClick: (e: Event) => {
               e.stopPropagation();
               handlePrint(order);
             },
           },
-          () => h(FileText, { class: 'w-4 h-4' })
-        ),
-      ]);
+          () => h(Printer, { class: 'w-4 h-4' })
+        )
+      );
+
+      // Delete Button (Conditionally Shown)
+      if (!props.readonly && !order.isClosed) {
+        actions.push(
+          h(
+            AlertDialog,
+            {},
+            {
+              trigger: () =>
+                h(
+                  Button,
+                  {
+                    variant: 'ghost',
+                    size: 'icon',
+                    class: 'h-8 w-8 text-rose-600 hover:bg-rose-50 transition-colors',
+                    title: 'Delete',
+                    onClick: (e: Event) => e.stopPropagation(),
+                  },
+                  () => h(Trash2, { class: 'w-4 h-4' })
+                ),
+              content: () =>
+                h(AlertDialogContent, { onClick: (e: Event) => e.stopPropagation() }, [
+                  h(AlertDialogHeader, [
+                    h(AlertDialogTitle, t('common.confirmDelete')),
+                    h(AlertDialogDescription, t('common.deleteWarning')),
+                  ]),
+                  h(AlertDialogFooter, [
+                    h(AlertDialogCancel, t('common.cancel')),
+                    h(
+                      AlertDialogAction,
+                      {
+                        class: 'bg-rose-600 hover:bg-rose-700 text-white',
+                        onClick: () => handleDelete(order),
+                      },
+                      t('common.confirm')
+                    ),
+                  ]),
+                ]),
+            }
+          )
+        );
+      }
+
+      return h('div', { class: 'w-full flex items-center justify-center gap-1' }, actions);
     },
   },
-];
+]);
 
 const triggerPrint = () => {
   window.print();
@@ -383,7 +505,7 @@ onMounted(() => {
       </div>
 
       <!-- Decorative Background Icon -->
-      <ClipboardList
+      <Printer
         class="absolute -right-8 -bottom-8 w-48 h-48 text-slate-100/50 -rotate-12 pointer-events-none"
       />
     </div>
@@ -398,7 +520,7 @@ onMounted(() => {
       <template #empty>
         <div class="flex flex-col items-center justify-center py-20">
           <div class="bg-slate-50 p-6 rounded-full mb-4 border border-slate-100/50">
-            <FileText class="h-10 w-10 text-slate-200" />
+            <Eye class="h-10 w-10 text-slate-200" />
           </div>
           <h3 class="text-lg font-bold text-slate-700 tracking-tight">
             {{ t('qa.jobOrderMgmt.noOrders') }}

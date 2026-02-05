@@ -22,7 +22,7 @@ import { useAuthStore } from '@/stores/auth';
 import { CalendarDate, getLocalTimeZone, today } from '@internationalized/date';
 import { format } from 'date-fns';
 import { CalendarIcon, Trash2 as LucideTrash2 } from 'lucide-vue-next';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { toast } from 'vue-sonner';
 
@@ -30,6 +30,7 @@ const { t } = useI18n();
 
 const props = defineProps<{
   initialData?: Partial<JobOrder>;
+  readonly?: boolean;
 }>();
 
 const emit = defineEmits(['save', 'cancel', 'delete']);
@@ -67,7 +68,7 @@ const validateForm = () => {
     return false;
   }
   if (!form.value.orderQuantity || form.value.orderQuantity <= 0) {
-    toast.error('Order Quantity must be greater than 0');
+    toast.error(t('qa.jobOrderForm.orderQty') + ' must be greater than 0');
     return false;
   }
   if (!form.value.qaName?.trim()) {
@@ -91,7 +92,8 @@ const handleDelete = () => {
 };
 
 const parseIsoDate = (isoString: string) => {
-  const [year, month, day] = isoString.split('-').map(Number);
+  const cleanDate = isoString.split('T')[0];
+  const [year, month, day] = cleanDate.split('-').map(Number);
   return new CalendarDate(year, month, day);
 };
 
@@ -110,6 +112,17 @@ const handleQaDateSelect = (date: any) => {
     form.value.qaDate = date.toString();
   }
 };
+
+const formattedQaDate = computed(() => {
+  if (!form.value.qaDate) return '';
+  try {
+    const cleanDate = form.value.qaDate.split('T')[0];
+    const [year, month, day] = cleanDate.split('-').map(Number);
+    return format(new Date(year, month - 1, day), 'dd-MMM-yyyy');
+  } catch (e) {
+    return form.value.qaDate;
+  }
+});
 </script>
 
 <template>
@@ -117,41 +130,30 @@ const handleQaDateSelect = (date: any) => {
     <Card class="border shadow-sm bg-white h-full flex flex-col">
       <CardContent class="pt-6 space-y-6 flex-1 overflow-y-auto">
         <!-- Row 1: Numbers & Basics -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
           <div class="space-y-2">
-            <Label class="text-[10px] font-bold uppercase text-slate-500">{{
-              t('qa.jobOrderForm.jobOrderNo')
-            }}</Label>
-            <Input v-model="form.jobOrderNo" placeholder="E2601-23" class="font-black h-10" />
+            <Label class="text-[10px] font-bold uppercase text-slate-500">
+              {{ t('qa.jobOrderForm.jobOrderNo') }}
+              <span class="text-rose-500 ml-0.5">*</span>
+            </Label>
+            <Input
+              v-model="form.jobOrderNo"
+              placeholder="E2601-23"
+              class="font-black h-10"
+              :readonly="props.readonly"
+            />
           </div>
           <div class="space-y-2">
-            <Label class="text-[10px] font-bold uppercase text-slate-500">{{
-              t('qa.jobOrderForm.contractNo')
-            }}</Label>
-            <Input v-model="form.contractNo" placeholder="YS14360-4" class="font-black h-10" />
-          </div>
-          <div class="space-y-2">
-            <Label class="text-[10px] font-bold uppercase text-slate-500">{{
-              t('qa.jobOrderForm.verifyDate')
-            }}</Label>
-            <Popover>
-              <PopoverTrigger as-child>
-                <Button
-                  variant="outline"
-                  class="w-full justify-start text-left font-normal bg-white h-10"
-                >
-                  <CalendarIcon class="mr-2 h-4 w-4 opacity-50" />
-                  {{
-                    form.qaDate
-                      ? format(new Date(form.qaDate), 'dd-MMM-yyyy')
-                      : t('qa.jobOrderForm.placeholders.selectDate')
-                  }}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent class="w-auto p-0">
-                <Calendar v-model="qaDateObject" @update:model-value="handleQaDateSelect" />
-              </PopoverContent>
-            </Popover>
+            <Label class="text-[10px] font-bold uppercase text-slate-500">
+              {{ t('qa.jobOrderForm.contractNo') }}
+              <span class="text-rose-500 ml-0.5">*</span>
+            </Label>
+            <Input
+              v-model="form.contractNo"
+              placeholder="YS14360-4"
+              class="font-black h-10"
+              :readonly="props.readonly"
+            />
           </div>
         </div>
 
@@ -167,8 +169,9 @@ const handleQaDateSelect = (date: any) => {
               <div v-for="p in palletTypes" :key="p" class="flex items-center space-x-2">
                 <Checkbox
                   :checked="form.palletType === p"
-                  @update:checked="(checked) => checked && (form.palletType = p)"
+                  @update:checked="(checked) => !props.readonly && checked && (form.palletType = p)"
                   :id="'pallet-' + p"
+                  :disabled="props.readonly"
                 />
                 <Label :for="'pallet-' + p" class="text-xs font-medium cursor-pointer">{{
                   p
@@ -186,8 +189,9 @@ const handleQaDateSelect = (date: any) => {
               <div v-for="g in grades" :key="g" class="flex items-center space-x-2">
                 <Checkbox
                   :checked="form.grade === g"
-                  @update:checked="(checked) => checked && (form.grade = g)"
+                  @update:checked="(checked) => !props.readonly && checked && (form.grade = g)"
                   :id="'grade-' + g"
+                  :disabled="props.readonly"
                 />
                 <Label :for="'grade-' + g" class="text-xs font-medium cursor-pointer">{{
                   g
@@ -208,8 +212,11 @@ const handleQaDateSelect = (date: any) => {
               <div class="flex items-center space-x-2">
                 <Checkbox
                   :checked="form.quantityBale === 35"
-                  @update:checked="(checked) => checked && (form.quantityBale = 35)"
+                  @update:checked="
+                    (checked) => !props.readonly && checked && (form.quantityBale = 35)
+                  "
                   id="bale-35"
+                  :disabled="props.readonly"
                 />
                 <Label for="bale-35" class="text-sm font-medium cursor-pointer"
                   >35 {{ t('qa.jobOrderForm.bale') }}</Label
@@ -218,8 +225,11 @@ const handleQaDateSelect = (date: any) => {
               <div class="flex items-center space-x-2">
                 <Checkbox
                   :checked="form.quantityBale === 36"
-                  @update:checked="(checked) => checked && (form.quantityBale = 36)"
+                  @update:checked="
+                    (checked) => !props.readonly && checked && (form.quantityBale = 36)
+                  "
                   id="bale-36"
+                  :disabled="props.readonly"
                 />
                 <Label for="bale-36" class="text-sm font-medium cursor-pointer"
                   >36 {{ t('qa.jobOrderForm.bales') }}</Label
@@ -230,15 +240,17 @@ const handleQaDateSelect = (date: any) => {
 
           <!-- Order Quantity -->
           <div class="space-y-2">
-            <Label class="text-[10px] font-bold uppercase text-slate-500">{{
-              t('qa.jobOrderForm.orderQty')
-            }}</Label>
+            <Label class="text-[10px] font-bold uppercase text-slate-500">
+              {{ t('qa.jobOrderForm.orderQty') }}
+              <span class="text-rose-500 ml-0.5">*</span>
+            </Label>
             <div class="flex items-center gap-2">
               <Input
                 :model-value="form.orderQuantity.toString()"
-                @update:model-value="form.orderQuantity = Number($event)"
+                @update:model-value="!props.readonly && (form.orderQuantity = Number($event))"
                 type="number"
                 class="font-black h-10"
+                :readonly="props.readonly"
               />
               <span class="text-xs font-bold text-slate-500">Pallets</span>
             </div>
@@ -249,7 +261,12 @@ const handleQaDateSelect = (date: any) => {
             <Label class="text-[10px] font-bold uppercase text-slate-500">{{
               t('qa.jobOrderForm.note') || 'Note'
             }}</Label>
-            <Input v-model="form.note" class="h-10" placeholder="Optional" />
+            <Input
+              v-model="form.note"
+              class="h-10"
+              placeholder="Optional"
+              :readonly="props.readonly"
+            />
           </div>
         </div>
 
@@ -266,10 +283,11 @@ const handleQaDateSelect = (date: any) => {
                   :checked="form.palletMarking === true"
                   @update:checked="
                     (checked) => {
-                      if (checked) form.palletMarking = true;
+                      if (!props.readonly && checked) form.palletMarking = true;
                     }
                   "
                   id="marking-yes"
+                  :disabled="props.readonly"
                 />
                 <Label
                   for="marking-yes"
@@ -282,10 +300,11 @@ const handleQaDateSelect = (date: any) => {
                   :checked="form.palletMarking === false"
                   @update:checked="
                     (checked) => {
-                      if (checked) form.palletMarking = false;
+                      if (!props.readonly && checked) form.palletMarking = false;
                     }
                   "
                   id="marking-no"
+                  :disabled="props.readonly"
                 />
                 <Label for="marking-no" class="text-xs font-bold cursor-pointer text-rose-600">{{
                   t('qa.jobOrderForm.markingNo')
@@ -307,21 +326,34 @@ const handleQaDateSelect = (date: any) => {
             <Label class="text-[10px] font-bold uppercase text-slate-500">{{
               t('qa.jobOrderForm.verifyDate')
             }}</Label>
-            <div class="relative">
+            <Popover v-if="!props.readonly">
+              <PopoverTrigger as-child>
+                <Button
+                  variant="outline"
+                  class="w-full justify-start text-left font-normal bg-white h-10"
+                >
+                  <CalendarIcon class="mr-2 h-4 w-4 opacity-50" />
+                  {{ form.qaDate ? formattedQaDate : t('qa.jobOrderForm.placeholders.selectDate') }}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent class="w-auto p-0 border shadow-lg">
+                <Calendar v-model="qaDateObject" @update:model-value="handleQaDateSelect" />
+              </PopoverContent>
+            </Popover>
+            <div v-else class="relative">
               <CalendarIcon
                 class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400"
               />
-              <Input
-                :model-value="format(new Date(form.qaDate), 'dd-MMM-yyyy')"
-                readonly
-                class="pl-9 bg-slate-50 h-10"
-              />
+              <Input :model-value="formattedQaDate" readonly class="pl-9 bg-slate-50 h-10" />
             </div>
           </div>
         </div>
 
         <!-- Actions -->
-        <div class="flex justify-between items-center w-full pt-8 border-t mt-4">
+        <div
+          v-if="!props.readonly"
+          class="flex justify-between items-center w-full pt-8 border-t mt-4"
+        >
           <div class="flex items-center" v-if="props.initialData?.id">
             <AlertDialog>
               <AlertDialogTrigger as-child>
