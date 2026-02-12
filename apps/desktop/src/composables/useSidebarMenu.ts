@@ -38,6 +38,7 @@ export function useSidebarMenu() {
                     icon: Factory,
                     items: [
                         { name: 'Cuplump Pool', path: '/cuplump-pool' },
+                        { name: 'PLC Control', path: '/cuplump-pool/plc-control' },
                     ]
                 },
                 {

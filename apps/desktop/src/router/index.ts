@@ -287,6 +287,11 @@ const routes = [
                 path: '',
                 name: 'Cuplump Pool',
                 component: () => import('../views/admin/CuplumpPoolManagement.vue'),
+            },
+            {
+                path: 'plc-control',
+                name: 'PLC Control',
+                component: () => import('../views/admin/plc/PlcCommandCenter.vue'),
             }
         ]
     },
