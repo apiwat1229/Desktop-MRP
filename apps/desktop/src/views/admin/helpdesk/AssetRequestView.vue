@@ -34,6 +34,11 @@ const isAssetModalOpen = ref(false);
 const isDetailModalOpen = ref(false);
 const selectedTicket = ref<ITTicket | null>(null);
 
+// Pagination
+const currentPage = ref(1);
+const itemsPerPage = ref(5);
+const pageSizeOptions = [5, 10, 20, 50];
+
 const isITDepartment = computed(() => {
   const userDept = authStore.user?.department;
   return userDept === 'Information Technology' || userDept === 'เทคโนโลยีสารสนเทศ (IT)';
@@ -43,23 +48,11 @@ const assetRequests = computed(() => {
   return tickets.value.filter((t) => t.isAssetRequest);
 });
 
-const assetStats = computed(() => {
-  if (!assetRequests.value.length) {
-    return {
-      total: 0,
-      open: 0,
-      openCount: 0,
-      inProgressCount: 0,
-      resolved: 0,
-      avgResponse: '0.00',
-      bestResponse: '0.00',
-    };
-  }
-
-  // Filter asset requests for the selected date range
-  const filtered = assetRequests.value.filter((t) => {
-    // Exclude Cancelled tickets first
-    if (t.status === 'Cancelled') return false;
+// Filter asset requests for the selected date range and case-insensitive status checks
+const filteredAssetRequests = computed(() => {
+  return assetRequests.value.filter((t) => {
+    // Exclude Cancelled tickets first (case-insensitive)
+    if (t.status?.toLowerCase() === 'cancelled') return false;
 
     if (!dateRange?.value?.start || !dateRange?.value?.end) return true;
 
@@ -71,11 +64,33 @@ const assetStats = computed(() => {
 
     return ticketDate >= start && ticketDate < end;
   });
+});
 
-  const openTickets = filtered.filter((t) => t.status === 'Open' || t.status === 'In Progress');
-  const openCount = filtered.filter((t) => t.status === 'Open').length;
-  const inProgressCount = filtered.filter((t) => t.status === 'In Progress').length;
-  const resolvedTickets = filtered.filter((t) => t.status === 'Resolved' || t.status === 'Closed');
+const assetStats = computed(() => {
+  const currentFiltered = filteredAssetRequests.value;
+  if (!currentFiltered.length) {
+    return {
+      total: 0,
+      open: 0,
+      openCount: 0,
+      inProgressCount: 0,
+      resolved: 0,
+      avgResponse: '0.00',
+      bestResponse: '0.00',
+    };
+  }
+
+  const openTickets = currentFiltered.filter(
+    (t) => t.status?.toLowerCase() === 'open' || t.status?.toLowerCase() === 'in progress'
+  );
+  const openCount = currentFiltered.filter((t) => t.status?.toLowerCase() === 'open').length;
+  const inProgressCount = currentFiltered.filter(
+    (t) => t.status?.toLowerCase() === 'in progress'
+  ).length;
+  const resolvedTickets = currentFiltered.filter((t) => {
+    const s = t.status?.toLowerCase();
+    return s === 'resolved' || s === 'closed' || s === 'approved';
+  });
 
   let totalResolutionTime = 0;
   let minTimeMs = Infinity;
@@ -89,12 +104,13 @@ const assetStats = computed(() => {
       minTimeMs = diff;
     }
   });
+
   const avgTimeMs = resolvedTickets.length ? totalResolutionTime / resolvedTickets.length : 0;
   const avgTimeHours = (avgTimeMs / (1000 * 60 * 60)).toFixed(2);
   const bestTimeHours = minTimeMs !== Infinity ? (minTimeMs / (1000 * 60 * 60)).toFixed(2) : '0.00';
 
   return {
-    total: filtered.length,
+    total: currentFiltered.length,
     open: openTickets.length,
     openCount,
     inProgressCount,
@@ -103,6 +119,20 @@ const assetStats = computed(() => {
     bestResponse: bestTimeHours,
   };
 });
+
+const paginatedAssetRequests = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage.value;
+  const end = start + itemsPerPage.value;
+  return filteredAssetRequests.value.slice(start, end);
+});
+
+const totalPages = computed(() =>
+  Math.ceil(filteredAssetRequests.value.length / itemsPerPage.value)
+);
+const startItemIndex = computed(() => (currentPage.value - 1) * itemsPerPage.value + 1);
+const endItemIndex = computed(() =>
+  Math.min(currentPage.value * itemsPerPage.value, filteredAssetRequests.value.length)
+);
 
 // Methods
 const loadTickets = async () => {
@@ -128,6 +158,17 @@ const onTicketUpdated = (updatedTicket: ITTicket) => {
     tickets.value[index] = updatedTicket;
   }
   selectedTicket.value = updatedTicket;
+};
+
+const onTicketDeleted = (ticketId: string) => {
+  tickets.value = tickets.value.filter((t) => t.id !== ticketId);
+  selectedTicket.value = null;
+};
+
+const handlePageChange = (page: number) => {
+  if (page >= 1 && page <= totalPages.value) {
+    currentPage.value = page;
+  }
 };
 
 const formatTicketDate = (dateString: string | Date) => {
@@ -258,9 +299,9 @@ onMounted(() => {
           </Button>
         </CardHeader>
         <CardContent class="p-0">
-          <div class="divide-y divide-border/50">
+          <div v-if="paginatedAssetRequests.length" class="divide-y divide-border/50">
             <div
-              v-for="ticket in assetRequests"
+              v-for="ticket in paginatedAssetRequests"
               :key="ticket.id"
               class="p-4 hover:bg-muted/30 transition-colors group flex items-center gap-4"
             >
@@ -309,6 +350,63 @@ onMounted(() => {
               </div>
             </div>
           </div>
+          <div v-else class="flex flex-col items-center justify-center py-20 bg-muted/5">
+            <div class="bg-muted p-6 rounded-full mb-4 border border-border/50">
+              <Monitor class="h-10 w-10 text-muted-foreground/30" />
+            </div>
+            <h3 class="text-lg font-bold text-foreground tracking-tight">
+              {{ t('common.table.noResults') }}
+            </h3>
+            <p class="text-muted-foreground text-sm font-medium mt-1">
+              {{ t('production.history.empty') || 'Try changing the date or search query.' }}
+            </p>
+          </div>
+
+          <!-- Pagination Controls -->
+          <div class="flex items-center justify-between p-4 border-t bg-muted/5">
+            <div class="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>Rows per page:</span>
+              <Select
+                :model-value="itemsPerPage.toString()"
+                @update:model-value="(v: string) => (itemsPerPage = parseInt(v))"
+              >
+                <SelectTrigger class="h-8 w-[60px] bg-background">
+                  <SelectValue :placeholder="itemsPerPage.toString()" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="size in pageSizeOptions" :key="size" :value="size.toString()">
+                    {{ size }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div class="flex items-center gap-4 text-sm text-muted-foreground">
+              <div>
+                {{ startItemIndex }} - {{ endItemIndex }} of {{ filteredAssetRequests.length }}
+              </div>
+              <div class="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  class="h-8 px-3 bg-background"
+                  :disabled="currentPage === 1"
+                  @click="handlePageChange(currentPage - 1)"
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  class="h-8 px-3 bg-background"
+                  :disabled="currentPage === totalPages"
+                  @click="handlePageChange(currentPage + 1)"
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </template>
@@ -338,7 +436,8 @@ onMounted(() => {
     <TicketDetailModal
       v-model:open="isDetailModalOpen"
       :ticket="selectedTicket"
-      @ticket-updated="onTicketUpdated"
+      @ticketUpdated="onTicketUpdated"
+      @ticketDeleted="onTicketDeleted"
     />
   </div>
 </template>

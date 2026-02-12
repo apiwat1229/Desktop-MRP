@@ -36,10 +36,14 @@ const dateRange = inject<Ref<DateRange>>('helpDeskDateRange');
 
 // State
 const tickets = ref<ITTicket[]>([]);
+const selectedTicket = ref<ITTicket | null>(null);
 const loadingTickets = ref(false);
 const isTicketModalOpen = ref(false);
 const isDetailModalOpen = ref(false);
-const selectedTicket = ref<ITTicket | null>(null);
+
+const repairTickets = computed(() => {
+  return tickets.value.filter((t) => !t.isAssetRequest);
+});
 
 // Pagination
 const currentPage = ref(1);
@@ -51,24 +55,11 @@ const isITDepartment = computed(() => {
   return userDept === 'Information Technology' || userDept === 'เทคโนโลยีสารสนเทศ (IT)';
 });
 
-const ticketStats = computed(() => {
-  if (!tickets.value.length) {
-    return {
-      total: 0,
-      open: 0,
-      openCount: 0,
-      inProgressCount: 0,
-      openTrend: 0,
-      avgResponse: 0,
-      resolved: 0,
-      resolvedTrend: 0,
-    };
-  }
-
-  // Filter tickets for the selected date range
-  const filteredTickets = tickets.value.filter((t) => {
-    // Exclude Cancelled tickets first
-    if (t.status === 'Cancelled') return false;
+// Filter tickets for the selected date range and case-insensitive status checks
+const filteredTickets = computed(() => {
+  return repairTickets.value.filter((t) => {
+    // Exclude Cancelled tickets first (case-insensitive)
+    if (t.status?.toLowerCase() === 'cancelled') return false;
 
     if (!dateRange?.value?.start || !dateRange?.value?.end) return true;
 
@@ -80,18 +71,35 @@ const ticketStats = computed(() => {
 
     return ticketDate >= start && ticketDate < end;
   });
+});
 
-  const openTickets = filteredTickets.filter(
-    (t) => t.status === 'Open' || t.status === 'In Progress'
-  );
-  const openCount = filteredTickets.filter((t) => t.status === 'Open').length;
-  const inProgressCount = filteredTickets.filter((t) => t.status === 'In Progress').length;
+const ticketStats = computed(() => {
+  const currentFiltered = filteredTickets.value;
+  if (!currentFiltered.length) {
+    return {
+      total: 0,
+      open: 0,
+      openCount: 0,
+      inProgressCount: 0,
+      openTrend: 0,
+      avgResponse: '0.00',
+      resolved: 0,
+      resolvedTrend: 0,
+      bestResponse: '0.00',
+    };
+  }
 
-  const resolvedTickets = filteredTickets.filter(
-    (t) => t.status === 'Resolved' || t.status === 'Closed'
-  );
+  const openCount = currentFiltered.filter((t) => t.status?.toLowerCase() === 'open').length;
+  const inProgressCount = currentFiltered.filter(
+    (t) => t.status?.toLowerCase() === 'in progress'
+  ).length;
 
-  const createdInPeriod = filteredTickets.length;
+  const resolvedTickets = currentFiltered.filter((t) => {
+    const s = t.status?.toLowerCase();
+    return s === 'resolved' || s === 'closed' || s === 'approved';
+  });
+
+  const createdInPeriod = currentFiltered.length;
   const resolvedInPeriod = resolvedTickets.length;
 
   let totalResolutionTime = 0;
@@ -106,13 +114,14 @@ const ticketStats = computed(() => {
       minTimeMs = diff;
     }
   });
+
   const avgTimeMs = resolvedTickets.length ? totalResolutionTime / resolvedTickets.length : 0;
   const avgTimeHours = (avgTimeMs / (1000 * 60 * 60)).toFixed(2);
   const bestTimeHours = minTimeMs !== Infinity ? (minTimeMs / (1000 * 60 * 60)).toFixed(2) : '0.00';
 
   return {
-    total: filteredTickets.length,
-    open: openTickets.length,
+    total: currentFiltered.length,
+    open: openCount + inProgressCount,
     openCount,
     inProgressCount,
     openTrend: createdInPeriod,
@@ -126,13 +135,13 @@ const ticketStats = computed(() => {
 const paginatedTickets = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value;
   const end = start + itemsPerPage.value;
-  return tickets.value.slice(start, end);
+  return filteredTickets.value.slice(start, end);
 });
 
-const totalPages = computed(() => Math.ceil(tickets.value.length / itemsPerPage.value));
+const totalPages = computed(() => Math.ceil(filteredTickets.value.length / itemsPerPage.value));
 const startItemIndex = computed(() => (currentPage.value - 1) * itemsPerPage.value + 1);
 const endItemIndex = computed(() =>
-  Math.min(currentPage.value * itemsPerPage.value, tickets.value.length)
+  Math.min(currentPage.value * itemsPerPage.value, filteredTickets.value.length)
 );
 
 // Methods
@@ -159,6 +168,11 @@ const onTicketUpdated = (updatedTicket: ITTicket) => {
     tickets.value[index] = updatedTicket;
   }
   selectedTicket.value = updatedTicket;
+};
+
+const onTicketDeleted = (ticketId: string) => {
+  tickets.value = tickets.value.filter((t) => t.id !== ticketId);
+  selectedTicket.value = null;
 };
 
 const handleTicketSuccess = () => {
@@ -315,7 +329,7 @@ onMounted(() => {
           </Button>
         </CardHeader>
         <CardContent class="p-0">
-          <div class="divide-y divide-border/50">
+          <div v-if="paginatedTickets.length" class="divide-y divide-border/50">
             <div
               v-for="ticket in paginatedTickets"
               :key="ticket.id"
@@ -373,6 +387,17 @@ onMounted(() => {
               </div>
             </div>
           </div>
+          <div v-else class="flex flex-col items-center justify-center py-20 bg-muted/5">
+            <div class="bg-muted p-6 rounded-full mb-4 border border-border/50">
+              <Ticket class="h-10 w-10 text-muted-foreground/30" />
+            </div>
+            <h3 class="text-lg font-bold text-foreground tracking-tight">
+              {{ t('common.table.noResults') }}
+            </h3>
+            <p class="text-muted-foreground text-sm font-medium mt-1">
+              {{ t('production.history.empty') || 'Try changing the date or search query.' }}
+            </p>
+          </div>
 
           <!-- Pagination Controls -->
           <div class="flex items-center justify-between p-4 border-t bg-muted/5">
@@ -394,7 +419,7 @@ onMounted(() => {
             </div>
 
             <div class="flex items-center gap-4 text-sm text-muted-foreground">
-              <div>{{ startItemIndex }} - {{ endItemIndex }} of {{ tickets.length }}</div>
+              <div>{{ startItemIndex }} - {{ endItemIndex }} of {{ filteredTickets.length }}</div>
               <div class="flex items-center gap-1">
                 <Button
                   variant="outline"
@@ -449,7 +474,8 @@ onMounted(() => {
     <TicketDetailModal
       v-model:open="isDetailModalOpen"
       :ticket="selectedTicket"
-      @ticket-updated="onTicketUpdated"
+      @ticketUpdated="onTicketUpdated"
+      @ticketDeleted="onTicketDeleted"
     />
   </div>
 </template>

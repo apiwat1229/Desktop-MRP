@@ -40,6 +40,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:open', value: boolean): void;
   (e: 'ticketUpdated', ticket: ITTicket): void;
+  (e: 'ticketDeleted', ticketId: string): void;
   (e: 'close'): void;
 }>();
 
@@ -180,6 +181,13 @@ const isOwner = computed(() => {
   return localTicket.value.requesterId === authStore.user.id;
 });
 
+const isAdmin = computed(() => {
+  const role = authStore.user?.role?.toLowerCase();
+  const dept = authStore.user?.department;
+  const isIT = dept === 'Information Technology' || dept === 'เทคโนโลยีสารสนเทศ (IT)';
+  return role === 'admin' || role === 'administrator' || isIT;
+});
+
 const isApprover = computed(() => {
   if (
     !localTicket.value ||
@@ -250,7 +258,7 @@ const confirmDelete = async () => {
     loading.value = true;
     await itTicketsApi.delete(localTicket.value.id);
     toast.success('Ticket deleted successfully');
-    emit('ticketUpdated', localTicket.value); // Trigger refresh
+    emit('ticketDeleted', localTicket.value.id);
     emit('close');
     isOpen.value = false;
   } catch (error) {
@@ -604,6 +612,27 @@ const getImageUrl = (path: string | null | undefined) => {
                 </div>
               </div>
             </div>
+
+            <!-- Bottom Action Area (Delete) -->
+            <div
+              v-if="isAdmin || isOwner"
+              class="mt-8 pt-6 border-t flex items-center justify-between"
+            >
+              <Button
+                variant="outline"
+                class="text-destructive hover:bg-destructive hover:text-destructive-foreground border-destructive/20 hover:border-destructive shadow-sm"
+                @click="handleDelete"
+                :disabled="loading"
+              >
+                <Trash2 class="w-4 h-4 mr-2" />
+                Delete Ticket {{ isAdmin && !isOwner ? '(Admin)' : '' }}
+              </Button>
+              <div
+                class="text-[10px] text-muted-foreground uppercase tracking-widest font-medium opacity-50"
+              >
+                ID: {{ localTicket?.id }}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -624,15 +653,6 @@ const getImageUrl = (path: string | null | undefined) => {
               >
                 <Button @click="saveChanges" :disabled="loading" class="w-full shadow-sm">
                   <Save class="w-4 h-4 mr-2" /> Save Changes
-                </Button>
-                <Button
-                  v-if="isOwner"
-                  @click="handleDelete"
-                  :disabled="loading"
-                  variant="outline"
-                  class="w-full shadow-sm text-red-600 hover:text-red-700 hover:bg-red-50 border-red-100"
-                >
-                  <Trash2 class="w-4 h-4 mr-2" /> Delete Ticket
                 </Button>
                 <div class="my-4 border-b bg-border/60"></div>
               </div>

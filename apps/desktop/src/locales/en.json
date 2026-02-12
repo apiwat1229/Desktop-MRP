@@ -1017,6 +1017,7 @@
       "subtitle": "Submit tickets, browse knowledge base, or manage assets.",
       "requestEquipment": "Request Equipment",
       "newTicket": "Request Repair",
+      "requestRepair": "Request Repair",
       "stats": {
         "openTickets": "Open Tickets",
         "avgResponse": "Avg. Response Time",
@@ -1303,7 +1304,8 @@
           "selectApprover": "Select who should approve this request"
         },
         "infoTitle": "Processing Time",
-        "infoDesc": "Standard asset requests are typically processed within 2-3 business days. You will receive a notification once your request has been approved."
+        "infoDesc": "Standard asset requests are typically processed within 2-3 business days. You will receive a notification once your request has been approved.",
+        "saveSuccess": "Ticket submitted successfully"
       }
     },
     "projectTimeline": {
