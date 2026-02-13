@@ -22,7 +22,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { toast } from 'vue-sonner';
 
-const { t } = useI18n();
+const {} = useI18n();
 const isLoading = ref(false);
 const availablePallets = ref<AvailablePallet[]>([]);
 const selectedPalletIds = ref<Set<string>>(new Set());

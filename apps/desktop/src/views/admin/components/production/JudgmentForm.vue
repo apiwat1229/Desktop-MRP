@@ -182,23 +182,6 @@ const isFormValid = computed(() => {
 
   return true;
 });
-
-const passedPallets = computed(() => {
-  const passed = [];
-  for (const row of form.rows) {
-    if (row.weight1Status === 'PASS')
-      passed.push({ lotNo: row.lotNo, pallet: 1, weight: row.weight1 });
-    if (row.weight2Status === 'PASS')
-      passed.push({ lotNo: row.lotNo, pallet: 2, weight: row.weight2 });
-    if (row.weight3Status === 'PASS')
-      passed.push({ lotNo: row.lotNo, pallet: 3, weight: row.weight3 });
-    if (row.weight4Status === 'PASS')
-      passed.push({ lotNo: row.lotNo, pallet: 4, weight: row.weight4 });
-    if (row.weight5Status === 'PASS')
-      passed.push({ lotNo: row.lotNo, pallet: 5, weight: row.weight5 });
-  }
-  return passed;
-});
 </script>
 
 <template>
