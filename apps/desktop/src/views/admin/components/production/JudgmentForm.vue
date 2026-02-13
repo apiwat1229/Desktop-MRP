@@ -112,6 +112,30 @@ const totalBales = computed(() => {
   }, 0);
 });
 
+const failedPallets = computed(() => {
+  return form.rows.reduce((sum, row) => {
+    let count = 0;
+    if (row.weight1Status === 'FAIL') count++;
+    if (row.weight2Status === 'FAIL') count++;
+    if (row.weight3Status === 'FAIL') count++;
+    if (row.weight4Status === 'FAIL') count++;
+    if (row.weight5Status === 'FAIL') count++;
+    return sum + count;
+  }, 0);
+});
+
+const failedBales = computed(() => {
+  return form.rows.reduce((sum, row) => {
+    let count = 0;
+    if (row.weight1Status === 'FAIL') count += parseFloat(row.weight1?.toString() || '0') || 0;
+    if (row.weight2Status === 'FAIL') count += parseFloat(row.weight2?.toString() || '0') || 0;
+    if (row.weight3Status === 'FAIL') count += parseFloat(row.weight3?.toString() || '0') || 0;
+    if (row.weight4Status === 'FAIL') count += parseFloat(row.weight4?.toString() || '0') || 0;
+    if (row.weight5Status === 'FAIL') count += parseFloat(row.weight5?.toString() || '0') || 0;
+    return sum + count;
+  }, 0);
+});
+
 const toggleJudgment = (row: any, field: string, status: 'PASS' | 'FAIL') => {
   const currentStatus = (row as any)[field];
   const newStatus = currentStatus === status ? undefined : status;
@@ -165,6 +189,22 @@ onMounted(() => {
   }
 });
 
+const isRowPassed = (row: any) => {
+  if (row.sampleStatus !== 'PASS') return false;
+  if (parseFloat(row.weight1?.toString() || '0') > 0 && row.weight1Status !== 'PASS') return false;
+  if (parseFloat(row.weight2?.toString() || '0') > 0 && row.weight2Status !== 'PASS') return false;
+  if (parseFloat(row.weight3?.toString() || '0') > 0 && row.weight3Status !== 'PASS') return false;
+  if (parseFloat(row.weight4?.toString() || '0') > 0 && row.weight4Status !== 'PASS') return false;
+  if (parseFloat(row.weight5?.toString() || '0') > 0 && row.weight5Status !== 'PASS') return false;
+  return true;
+};
+
+const showAllRows = ref(false);
+const visibleRows = computed(() => {
+  if (showAllRows.value) return form.rows;
+  return form.rows.filter((row) => !isRowPassed(row));
+});
+
 const isFormValid = computed(() => {
   // Check if mandatory header is filled
   if (!form.judgedBy) return false;
@@ -194,7 +234,7 @@ const isFormValid = computed(() => {
         class="absolute -right-8 -bottom-8 w-48 h-48 text-slate-100/50 -rotate-12 pointer-events-none"
       />
 
-      <div class="relative z-10">
+      <div class="relative z-10 min-w-[200px]">
         <h2 class="text-xl font-black text-slate-900 tracking-tight flex items-center gap-3">
           <div class="p-2 bg-primary/10 rounded-lg">
             <FlaskConical class="w-5 h-5 text-primary" />
@@ -204,6 +244,88 @@ const isFormValid = computed(() => {
         <p class="text-xs text-muted-foreground font-bold uppercase tracking-wider mt-1 opacity-70">
           DAILY PRODUCTION & QUALITY REPORT
         </p>
+      </div>
+
+      <!-- Compact Stats in Header -->
+      <div
+        class="flex-1 hidden md:flex items-center justify-center gap-10 relative z-10 px-8 border-x border-slate-100"
+      >
+        <div class="flex flex-col items-center">
+          <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1"
+            >PALLETS</span
+          >
+          <div class="flex items-end gap-3">
+            <template v-if="failedPallets > 0">
+              <div class="flex flex-col items-center">
+                <span class="text-[8px] font-bold text-red-500 uppercase leading-none mb-1"
+                  >FAIL</span
+                >
+                <span class="text-xl font-black text-red-600 tabular-nums leading-none">{{
+                  failedPallets
+                }}</span>
+              </div>
+              <div class="w-px h-6 bg-slate-100 mt-1"></div>
+            </template>
+
+            <div class="flex flex-col items-center" :class="{ 'opacity-40': failedPallets > 0 }">
+              <span class="text-[8px] font-bold text-slate-400 uppercase leading-none mb-1"
+                >TOTAL</span
+              >
+              <span
+                class="tabular-nums leading-none"
+                :class="
+                  failedPallets > 0
+                    ? 'text-lg font-bold text-slate-600'
+                    : 'text-xl font-black text-slate-900'
+                "
+                >{{ totalPallets }}</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col items-center">
+          <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1"
+            >BALES</span
+          >
+          <div class="flex items-end gap-3">
+            <template v-if="failedBales > 0">
+              <div class="flex flex-col items-center">
+                <span class="text-[8px] font-bold text-red-500 uppercase leading-none mb-1"
+                  >FAIL</span
+                >
+                <span class="text-xl font-black text-red-600 tabular-nums leading-none">{{
+                  failedBales.toLocaleString()
+                }}</span>
+              </div>
+              <div class="w-px h-6 bg-slate-100 mt-1"></div>
+            </template>
+
+            <div class="flex flex-col items-center" :class="{ 'opacity-40': failedBales > 0 }">
+              <span class="text-[8px] font-bold text-slate-400 uppercase leading-none mb-1"
+                >TOTAL</span
+              >
+              <span
+                class="tabular-nums leading-none"
+                :class="
+                  failedBales > 0
+                    ? 'text-lg font-bold text-slate-600'
+                    : 'text-xl font-black text-slate-900'
+                "
+                >{{ totalBales.toLocaleString() }}</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col items-center">
+          <span class="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-1"
+            >SAMPLES</span
+          >
+          <span class="text-2xl font-black text-blue-600 tabular-nums leading-none">{{
+            totalSample
+          }}</span>
+        </div>
       </div>
 
       <div class="flex items-center gap-3 relative z-10">
@@ -226,7 +348,7 @@ const isFormValid = computed(() => {
         <fieldset class="space-y-6 block">
           <!-- Header Info (Readonly) -->
           <div
-            class="grid grid-cols-1 md:grid-cols-4 gap-6 bg-white p-6 rounded-xl border shadow-sm"
+            class="grid grid-cols-1 md:grid-cols-5 gap-6 bg-white p-6 rounded-xl border shadow-sm"
           >
             <div class="space-y-2">
               <Label>{{ t('production.productionDate') }}</Label>
@@ -276,6 +398,103 @@ const isFormValid = computed(() => {
                 </div>
               </div>
             </div>
+            <div class="space-y-2">
+              <Label>{{ t('production.footer.baleBagLotNo') }}</Label>
+              <div
+                class="h-10 flex items-center px-3 border rounded-md bg-slate-50 font-bold text-slate-700 italic"
+              >
+                {{ form.baleBagLotNo || '-' }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Table Header Controls -->
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-2">
+            <div class="flex items-center gap-4">
+              <h3
+                class="text-sm font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2"
+              >
+                Production Details
+                <span
+                  v-if="!showAllRows && form.rows.length > visibleRows.length"
+                  class="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-black animate-pulse"
+                >
+                  Hiding {{ form.rows.length - visibleRows.length }} Passed Rows
+                </span>
+              </h3>
+            </div>
+
+            <div class="flex-1 flex flex-wrap items-center justify-center gap-4">
+              <!-- Signature Fields -->
+              <div
+                class="flex flex-wrap items-center gap-3 bg-slate-50 p-1.5 px-3 rounded-lg border border-slate-200"
+              >
+                <div class="flex items-center gap-2">
+                  <span
+                    class="text-[10px] font-bold text-primary uppercase tracking-widest whitespace-nowrap"
+                    >Lab Judgment:</span
+                  >
+                  <Input
+                    v-model="form.judgedBy"
+                    class="bg-white border-primary/20 h-8 w-40 text-sm font-bold text-primary py-0 px-2"
+                    placeholder="Name"
+                  />
+                </div>
+                <div class="flex items-center gap-2">
+                  <span
+                    class="text-[10px] font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap"
+                    >Checked:</span
+                  >
+                  <Input
+                    v-model="form.checkedBy"
+                    class="bg-white border-slate-200 h-8 w-40 text-sm font-bold py-0 px-2"
+                    placeholder="Name"
+                  />
+                </div>
+                <div class="flex items-center gap-2">
+                  <span
+                    class="text-[10px] font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap"
+                    >Issued:</span
+                  >
+                  <Input
+                    v-model="form.issuedBy"
+                    class="bg-white border-slate-200 h-8 w-40 text-sm font-bold py-0 px-2"
+                    placeholder="Name"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Display Mode (Far Right) -->
+            <div
+              class="flex items-center gap-3 bg-white p-1 px-3 rounded-lg border border-slate-100 shadow-sm"
+            >
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+                >Display Mode:</span
+              >
+              <button
+                @click="showAllRows = false"
+                class="text-[10px] px-3 py-1.5 rounded-md font-black transition-all"
+                :class="
+                  !showAllRows
+                    ? 'bg-primary text-white shadow-md'
+                    : 'text-slate-500 hover:bg-slate-50'
+                "
+              >
+                EXCEPTIONS
+              </button>
+              <button
+                @click="showAllRows = true"
+                class="text-[10px] px-3 py-1.5 rounded-md font-black transition-all"
+                :class="
+                  showAllRows
+                    ? 'bg-slate-800 text-white shadow-md'
+                    : 'text-slate-500 hover:bg-slate-50'
+                "
+              >
+                SHOW ALL
+              </button>
+            </div>
           </div>
 
           <!-- Table (Readonly) -->
@@ -299,7 +518,7 @@ const isFormValid = computed(() => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                <TableRow v-for="(row, index) in form.rows" :key="index">
+                <TableRow v-for="(row, index) in visibleRows" :key="index">
                   <TableCell class="text-center font-bold text-slate-700">{{
                     row.startTime
                   }}</TableCell>
@@ -317,9 +536,10 @@ const isFormValid = computed(() => {
                           variant="outline"
                           size="icon"
                           class="h-6 w-6 rounded-md p-0"
+                          :disabled="row.weight1Status === 'PASS'"
                           :class="
                             row.weight1Status === 'PASS'
-                              ? 'bg-green-600 text-white border-green-700 hover:bg-green-700'
+                              ? 'bg-green-600 text-white border-green-700 disabled:opacity-100'
                               : 'bg-white text-slate-400 border-slate-200 hover:text-green-600'
                           "
                           @click="toggleJudgment(row, 'weight1Status', 'PASS')"
@@ -330,6 +550,7 @@ const isFormValid = computed(() => {
                           variant="outline"
                           size="icon"
                           class="h-6 w-6 rounded-md p-0"
+                          :disabled="row.weight1Status === 'PASS'"
                           :class="
                             row.weight1Status === 'FAIL'
                               ? 'bg-red-600 text-white border-red-700 hover:bg-red-700'
@@ -350,9 +571,10 @@ const isFormValid = computed(() => {
                           variant="outline"
                           size="icon"
                           class="h-6 w-6 rounded-md p-0"
+                          :disabled="row.weight2Status === 'PASS'"
                           :class="
                             row.weight2Status === 'PASS'
-                              ? 'bg-green-600 text-white border-green-700 hover:bg-green-700'
+                              ? 'bg-green-600 text-white border-green-700 disabled:opacity-100'
                               : 'bg-white text-slate-400 border-slate-200 hover:text-green-600'
                           "
                           @click="toggleJudgment(row, 'weight2Status', 'PASS')"
@@ -363,6 +585,7 @@ const isFormValid = computed(() => {
                           variant="outline"
                           size="icon"
                           class="h-6 w-6 rounded-md p-0"
+                          :disabled="row.weight2Status === 'PASS'"
                           :class="
                             row.weight2Status === 'FAIL'
                               ? 'bg-red-600 text-white border-red-700 hover:bg-red-700'
@@ -383,9 +606,10 @@ const isFormValid = computed(() => {
                           variant="outline"
                           size="icon"
                           class="h-6 w-6 rounded-md p-0"
+                          :disabled="row.weight3Status === 'PASS'"
                           :class="
                             row.weight3Status === 'PASS'
-                              ? 'bg-green-600 text-white border-green-700 hover:bg-green-700'
+                              ? 'bg-green-600 text-white border-green-700 disabled:opacity-100'
                               : 'bg-white text-slate-400 border-slate-200 hover:text-green-600'
                           "
                           @click="toggleJudgment(row, 'weight3Status', 'PASS')"
@@ -396,6 +620,7 @@ const isFormValid = computed(() => {
                           variant="outline"
                           size="icon"
                           class="h-6 w-6 rounded-md p-0"
+                          :disabled="row.weight3Status === 'PASS'"
                           :class="
                             row.weight3Status === 'FAIL'
                               ? 'bg-red-600 text-white border-red-700 hover:bg-red-700'
@@ -416,9 +641,10 @@ const isFormValid = computed(() => {
                           variant="outline"
                           size="icon"
                           class="h-6 w-6 rounded-md p-0"
+                          :disabled="row.weight4Status === 'PASS'"
                           :class="
                             row.weight4Status === 'PASS'
-                              ? 'bg-green-600 text-white border-green-700 hover:bg-green-700'
+                              ? 'bg-green-600 text-white border-green-700 disabled:opacity-100'
                               : 'bg-white text-slate-400 border-slate-200 hover:text-green-600'
                           "
                           @click="toggleJudgment(row, 'weight4Status', 'PASS')"
@@ -429,6 +655,7 @@ const isFormValid = computed(() => {
                           variant="outline"
                           size="icon"
                           class="h-6 w-6 rounded-md p-0"
+                          :disabled="row.weight4Status === 'PASS'"
                           :class="
                             row.weight4Status === 'FAIL'
                               ? 'bg-red-600 text-white border-red-700 hover:bg-red-700'
@@ -449,9 +676,10 @@ const isFormValid = computed(() => {
                           variant="outline"
                           size="icon"
                           class="h-6 w-6 rounded-md p-0"
+                          :disabled="row.weight5Status === 'PASS'"
                           :class="
                             row.weight5Status === 'PASS'
-                              ? 'bg-green-600 text-white border-green-700 hover:bg-green-700'
+                              ? 'bg-green-600 text-white border-green-700 disabled:opacity-100'
                               : 'bg-white text-slate-400 border-slate-200 hover:text-green-600'
                           "
                           @click="toggleJudgment(row, 'weight5Status', 'PASS')"
@@ -462,6 +690,7 @@ const isFormValid = computed(() => {
                           variant="outline"
                           size="icon"
                           class="h-6 w-6 rounded-md p-0"
+                          :disabled="row.weight5Status === 'PASS'"
                           :class="
                             row.weight5Status === 'FAIL'
                               ? 'bg-red-600 text-white border-red-700 hover:bg-red-700'
@@ -482,9 +711,10 @@ const isFormValid = computed(() => {
                           variant="outline"
                           size="icon"
                           class="h-6 w-6 rounded-md p-0"
+                          :disabled="row.sampleStatus === 'PASS'"
                           :class="
                             row.sampleStatus === 'PASS'
-                              ? 'bg-green-600 text-white border-green-700 hover:bg-green-700'
+                              ? 'bg-green-600 text-white border-green-700 disabled:opacity-100'
                               : 'bg-white text-slate-400 border-slate-200 hover:text-green-600'
                           "
                           @click="toggleJudgment(row, 'sampleStatus', 'PASS')"
@@ -495,6 +725,7 @@ const isFormValid = computed(() => {
                           variant="outline"
                           size="icon"
                           class="h-6 w-6 rounded-md p-0"
+                          :disabled="row.sampleStatus === 'PASS'"
                           :class="
                             row.sampleStatus === 'FAIL'
                               ? 'bg-red-600 text-white border-red-700 hover:bg-red-700'
@@ -512,85 +743,6 @@ const isFormValid = computed(() => {
             </Table>
           </div>
         </fieldset>
-
-        <!-- Stats & Judgment Section -->
-        <div class="bg-white p-6 rounded-xl border shadow-sm space-y-6">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div class="space-y-4">
-              <div class="space-y-2">
-                <Label>{{ t('production.footer.baleBagLotNo') }}</Label>
-                <div
-                  class="h-10 flex items-center px-3 border rounded-md bg-slate-50 font-bold text-slate-700 italic"
-                >
-                  {{ form.baleBagLotNo || '-' }}
-                </div>
-              </div>
-              <div class="grid grid-cols-3 gap-4">
-                <div
-                  class="flex flex-col items-center justify-center p-3 border rounded-xl bg-blue-50/50 border-blue-100"
-                >
-                  <span class="text-[10px] font-black text-blue-400 uppercase tracking-tighter mb-1"
-                    >SAMPLES</span
-                  >
-                  <span class="text-xl font-black text-blue-600 tabular-nums">{{
-                    totalSample
-                  }}</span>
-                </div>
-                <div
-                  class="flex flex-col items-center justify-center p-3 border rounded-xl bg-green-50/50 border-green-100"
-                >
-                  <span
-                    class="text-[10px] font-black text-green-400 uppercase tracking-tighter mb-1"
-                    >PALLETS</span
-                  >
-                  <span class="text-xl font-black text-green-600 tabular-nums">{{
-                    totalPallets
-                  }}</span>
-                </div>
-                <div
-                  class="flex flex-col items-center justify-center p-3 border rounded-xl bg-orange-50/50 border-orange-100"
-                >
-                  <span
-                    class="text-[10px] font-black text-orange-400 uppercase tracking-tighter mb-1"
-                    >BALES</span
-                  >
-                  <span class="text-xl font-black text-orange-600 tabular-nums">{{
-                    totalBales
-                  }}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Editable Judgment Fields -->
-            <div class="grid grid-cols-2 gap-4 bg-slate-50/50 p-4 rounded-xl border border-dashed">
-              <div class="space-y-2 col-span-2">
-                <Label class="text-primary font-black uppercase text-[10px] tracking-widest"
-                  >Laboratory Judgment</Label
-                >
-                <Input
-                  v-model="form.judgedBy"
-                  class="bg-white border-primary/20 focus:border-primary h-12 text-lg font-black text-primary"
-                  placeholder="Enter Name"
-                />
-              </div>
-              <div class="space-y-2">
-                <Label class="text-slate-500 font-bold uppercase text-[10px] tracking-widest">{{
-                  t('production.footer.checkedBy')
-                }}</Label>
-                <Input v-model="form.checkedBy" class="bg-white" />
-              </div>
-              <div class="space-y-2">
-                <Label class="text-slate-500 font-bold uppercase text-[10px] tracking-widest">{{
-                  t('production.footer.issuedBy')
-                }}</Label>
-                <Input v-model="form.issuedBy" class="bg-white" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Bottom Spacer -->
-        <div class="h-20"></div>
       </CardContent>
     </Card>
 

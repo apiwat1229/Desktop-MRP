@@ -76,22 +76,73 @@ const filteredReports = computed(() => {
   return filtered;
 });
 
-const getPalletCount = (report: ProductionReport) => {
+const getPalletStats = (report: ProductionReport) => {
   return (
-    report.rows?.reduce((sum, row) => {
-      let rowPallets = 0;
-      if (Number(row.weight1) > 0) rowPallets++;
-      if (Number(row.weight2) > 0) rowPallets++;
-      if (Number(row.weight3) > 0) rowPallets++;
-      if (Number(row.weight4) > 0) rowPallets++;
-      if (Number(row.weight5) > 0) rowPallets++;
-      return sum + rowPallets;
-    }, 0) || 0
+    report.rows?.reduce(
+      (acc, row) => {
+        if (Number(row.weight1) > 0) {
+          acc.total++;
+          if (row.weight1Status === 'PASS') acc.pass++;
+          else if (row.weight1Status === 'FAIL') acc.fail++;
+        }
+        if (Number(row.weight2) > 0) {
+          acc.total++;
+          if (row.weight2Status === 'PASS') acc.pass++;
+          else if (row.weight2Status === 'FAIL') acc.fail++;
+        }
+        if (Number(row.weight3) > 0) {
+          acc.total++;
+          if (row.weight3Status === 'PASS') acc.pass++;
+          else if (row.weight3Status === 'FAIL') acc.fail++;
+        }
+        if (Number(row.weight4) > 0) {
+          acc.total++;
+          if (row.weight4Status === 'PASS') acc.pass++;
+          else if (row.weight4Status === 'FAIL') acc.fail++;
+        }
+        if (Number(row.weight5) > 0) {
+          acc.total++;
+          if (row.weight5Status === 'PASS') acc.pass++;
+          else if (row.weight5Status === 'FAIL') acc.fail++;
+        }
+        return acc;
+      },
+      { total: 0, pass: 0, fail: 0 }
+    ) || { total: 0, pass: 0, fail: 0 }
   );
 };
 
-const getBaleCount = (report: ProductionReport) => {
-  return getPalletCount(report) * 35;
+const getBaleStats = (report: ProductionReport) => {
+  return (
+    report.rows?.reduce(
+      (acc, row) => {
+        const w1 = Number(row.weight1) || 0;
+        const w2 = Number(row.weight2) || 0;
+        const w3 = Number(row.weight3) || 0;
+        const w4 = Number(row.weight4) || 0;
+        const w5 = Number(row.weight5) || 0;
+
+        acc.total += w1 + w2 + w3 + w4 + w5;
+        if (row.weight1Status === 'PASS') acc.pass += w1;
+        else if (row.weight1Status === 'FAIL') acc.fail += w1;
+
+        if (row.weight2Status === 'PASS') acc.pass += w2;
+        else if (row.weight2Status === 'FAIL') acc.fail += w2;
+
+        if (row.weight3Status === 'PASS') acc.pass += w3;
+        else if (row.weight3Status === 'FAIL') acc.fail += w3;
+
+        if (row.weight4Status === 'PASS') acc.pass += w4;
+        else if (row.weight4Status === 'FAIL') acc.fail += w4;
+
+        if (row.weight5Status === 'PASS') acc.pass += w5;
+        else if (row.weight5Status === 'FAIL') acc.fail += w5;
+
+        return acc;
+      },
+      { total: 0, pass: 0, fail: 0 }
+    ) || { total: 0, pass: 0, fail: 0 }
+  );
 };
 
 const fetchReports = async () => {
@@ -139,23 +190,55 @@ const columns: ColumnDef<ProductionReport>[] = [
   },
   {
     id: 'pallets',
-    header: () => h('div', { class: 'text-center' }, 'Pallets'),
-    cell: ({ row }) =>
-      h(
-        'div',
-        { class: 'text-center font-bold text-green-600' },
-        getPalletCount(row.original).toLocaleString()
-      ),
+    header: () =>
+      h('div', { class: 'text-center flex flex-col items-center' }, [
+        h('span', 'Pallets'),
+        h(
+          'span',
+          { class: 'text-[9px] text-slate-400 font-medium uppercase' },
+          'Pass / Fail (Total)'
+        ),
+      ]),
+    cell: ({ row }) => {
+      const stats = getPalletStats(row.original);
+      if (stats.fail === 0) {
+        return h('div', { class: 'text-center font-bold text-slate-600' }, stats.total);
+      }
+      return h('div', { class: 'flex items-center justify-center gap-1.5' }, [
+        h('span', { class: 'text-red-500 font-bold' }, stats.fail),
+        h('span', { class: 'text-slate-400 text-[10px] ml-1' }, `(${stats.total})`),
+      ]);
+    },
   },
   {
     id: 'bales',
-    header: () => h('div', { class: 'text-center' }, 'Bales'),
-    cell: ({ row }) =>
-      h(
-        'div',
-        { class: 'text-center font-bold text-orange-600' },
-        getBaleCount(row.original).toLocaleString()
-      ),
+    header: () =>
+      h('div', { class: 'text-center flex flex-col items-center' }, [
+        h('span', 'Bales'),
+        h(
+          'span',
+          { class: 'text-[9px] text-slate-400 font-medium uppercase' },
+          'Pass / Fail (Total)'
+        ),
+      ]),
+    cell: ({ row }) => {
+      const stats = getBaleStats(row.original);
+      if (stats.fail === 0) {
+        return h(
+          'div',
+          { class: 'text-center font-bold text-slate-600' },
+          stats.total.toLocaleString()
+        );
+      }
+      return h('div', { class: 'flex items-center justify-center gap-1.5' }, [
+        h('span', { class: 'text-red-500 font-bold' }, stats.fail.toLocaleString()),
+        h(
+          'span',
+          { class: 'text-slate-400 text-[10px] ml-1' },
+          `(${stats.total.toLocaleString()})`
+        ),
+      ]);
+    },
   },
   {
     accessorKey: 'status',

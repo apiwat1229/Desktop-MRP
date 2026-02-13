@@ -138,6 +138,19 @@ export default defineConfig(({ mode }) => {
       host: true,
       port: 5173,
       allowedHosts: ['app.ytrc.co.th', 'localhost', '122.154.46.21'],
+      proxy: {
+        '/api': {
+          target: 'https://app.ytrc.co.th',
+          changeOrigin: true,
+          secure: false,
+        },
+        '/socket.io': {
+          target: 'https://app.ytrc.co.th',
+          changeOrigin: true,
+          secure: false,
+          ws: true,
+        },
+      },
     },
     define: {
       __APP_VERSION__: JSON.stringify(process.env.npm_package_version),

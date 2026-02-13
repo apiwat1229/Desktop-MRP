@@ -7,7 +7,7 @@ import { ref, watch } from 'vue';
 
 const props = defineProps<{
   markerData: MarkerState;
-  dbData: number[];
+  dbData: number[] | null;
   plcConnected: boolean;
   hasData: boolean;
   isProcessing?: boolean;
@@ -33,7 +33,7 @@ const localValues = ref<string[]>([]);
 watch(
   [() => props.dbData, () => props.hasData],
   ([newData, newHasData]) => {
-    if (!newHasData) {
+    if (!newHasData || !newData) {
       localValues.value = Array(8).fill('');
     } else {
       localValues.value = newData.map((v) => String(v));
