@@ -79,7 +79,7 @@ export class PlcGateway implements OnGatewayConnection, OnGatewayDisconnect {
         try {
             const data = await this.plcService.readDb26();
             return { event: 'db-data', data };
-        } catch (e) {
+        } catch (e: any) {
             return { event: 'plc-error', data: { message: e.message } };
         }
     }
@@ -89,7 +89,7 @@ export class PlcGateway implements OnGatewayConnection, OnGatewayDisconnect {
         try {
             await this.plcService.writeDb26(values);
             return { event: 'write-success', data: { message: 'Write to DB26 and Pulse successful' } };
-        } catch (e) {
+        } catch (e: any) {
             return { event: 'plc-error', data: { message: e.message } };
         }
     }
@@ -99,7 +99,7 @@ export class PlcGateway implements OnGatewayConnection, OnGatewayDisconnect {
         try {
             await this.plcService.writeLineUse26(data.bit, data.value);
             return { success: true };
-        } catch (e) {
+        } catch (e: any) {
             return { event: 'plc-error', data: { message: e.message } };
         }
     }
@@ -109,7 +109,7 @@ export class PlcGateway implements OnGatewayConnection, OnGatewayDisconnect {
         try {
             const data = await this.plcService.readDb54();
             return { event: 'db54-data', data };
-        } catch (e) {
+        } catch (e: any) {
             return { event: 'plc-error', data: { message: e.message } };
         }
     }
@@ -119,7 +119,7 @@ export class PlcGateway implements OnGatewayConnection, OnGatewayDisconnect {
         try {
             await this.plcService.writeDb54(data);
             return { event: 'db54-write-success', data: { message: 'Write to DB54 and Pulse successful' } };
-        } catch (e) {
+        } catch (e: any) {
             return { event: 'plc-error', data: { message: e.message } };
         }
     }

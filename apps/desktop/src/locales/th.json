@@ -131,7 +131,9 @@
       "editPlan": "แก้ไขแผน",
       "editJobOrder": "แก้ไขใบสั่งผลิต",
       "cpkAnalysis": "วิเคราะห์ CPK",
-      "jobOrderDetails": "รายละเอียดใบสั่งผลิต"
+      "jobOrderDetails": "รายละเอียดใบสั่งผลิต",
+      "shippingPlan": "แผนการจัดส่ง (Shipping Plan)",
+      "judgment": "ผลการตัดสิน (Judgment)"
     },
     "cpk": {
       "title": "Process Capability",

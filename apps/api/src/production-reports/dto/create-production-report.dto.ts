@@ -119,4 +119,28 @@ export class ProductionReportRowDto {
     @IsOptional()
     @IsNumber()
     sampleCount?: number;
+
+    @IsOptional()
+    @IsString()
+    weight1Status?: string;
+
+    @IsOptional()
+    @IsString()
+    weight2Status?: string;
+
+    @IsOptional()
+    @IsString()
+    weight3Status?: string;
+
+    @IsOptional()
+    @IsString()
+    weight4Status?: string;
+
+    @IsOptional()
+    @IsString()
+    weight5Status?: string;
+
+    @IsOptional()
+    @IsString()
+    sampleStatus?: string;
 }

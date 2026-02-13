@@ -10,6 +10,14 @@ export interface Db54Data {
     }[];
 }
 
+export interface MarkerState {
+    sentData: boolean;
+    line1Use: boolean;
+    line2Use: boolean;
+    line3Use: boolean;
+    line4Use: boolean;
+}
+
 @Injectable()
 export class PlcService implements OnModuleInit, OnModuleDestroy {
     private readonly logger = new Logger(PlcService.name);
@@ -153,6 +161,77 @@ export class PlcService implements OnModuleInit, OnModuleDestroy {
                 });
             });
         });
+    }
+
+    async readMarkers26() {
+        if (!this.isConnected) return null;
+
+        return new Promise<MarkerState>((resolve, reject) => {
+            // Area M: byte 10 (Line Use) and byte 11 (Sent Data)
+            this.conn.readArea(0x83, 0, 10, 2, (err: Error | string | undefined, data: Buffer) => {
+                if (err) {
+                    this.logger.error(`Error reading Markers26: ${err}`);
+                    resolve(null);
+                } else {
+                    const byte10 = data[0];
+                    const byte11 = data[1];
+                    resolve({
+                        line1Use: !!(byte10 & (1 << 0)),
+                        line2Use: !!(byte10 & (1 << 1)),
+                        line3Use: !!(byte10 & (1 << 2)),
+                        line4Use: !!(byte10 & (1 << 3)),
+                        sentData: !!(byte11 & (1 << 0)),
+                    });
+                }
+            });
+        });
+    }
+
+    async readDb26() {
+        if (!this.isConnected) return null;
+
+        return new Promise<number[]>((resolve, reject) => {
+            // Area: DB=0x84, DBNumber: 26, Start: 0, Size: 16 (8 words)
+            this.conn.readArea(0x84, 26, 0, 16, (err: Error | string | undefined, data: Buffer) => {
+                if (err) {
+                    this.logger.error(`Error reading DB26: ${err}`);
+                    resolve(null);
+                } else {
+                    const result: number[] = [];
+                    for (let i = 0; i < 8; i++) {
+                        result.push(data.readInt16BE(i * 2));
+                    }
+                    resolve(result);
+                }
+            });
+        });
+    }
+
+    async writeDb26(values: number[]) {
+        if (!this.isConnected) throw new Error('PLC not connected');
+
+        const buf = Buffer.alloc(16);
+        values.forEach((val, i) => {
+            if (i < 8) {
+                buf.writeInt16BE(val, i * 2);
+            }
+        });
+
+        return new Promise<void>((resolve, reject) => {
+            this.conn.writeArea(0x84, 26, 0, 16, buf, (err: Error | string | undefined) => {
+                if (err) {
+                    this.logger.error(`Error writing DB26: ${err}`);
+                    reject(err);
+                } else {
+                    this.logger.log('Wrote DB26 successfully. Pulsing M150.0...');
+                    this.pulseM150_0().then(() => resolve()).catch(reject);
+                }
+            });
+        });
+    }
+
+    async writeLineUse26(bit: number, value: boolean) {
+        return this.writeLineUse(bit, value);
     }
 
     async readLineUse() {

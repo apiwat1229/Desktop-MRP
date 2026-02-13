@@ -6,11 +6,17 @@ export interface ProductionReportRow {
     palletType: string;
     lotNo: string;
     weight1?: number;
+    weight1Status?: 'PASS' | 'FAIL';
     weight2?: number;
+    weight2Status?: 'PASS' | 'FAIL';
     weight3?: number;
+    weight3Status?: 'PASS' | 'FAIL';
     weight4?: number;
+    weight4Status?: 'PASS' | 'FAIL';
     weight5?: number;
+    weight5Status?: 'PASS' | 'FAIL';
     sampleCount?: number;
+    sampleStatus?: 'PASS' | 'FAIL';
 }
 
 export interface ProductionReport {

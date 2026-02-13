@@ -127,7 +127,9 @@
       "rawMaterialPlanList": "Raw Material Plan",
       "rawMaterialPlanCreate": "Create Raw Material Plan",
       "cpkAnalysis": "CPK Analysis",
-      "jobOrderDetails": "Job Order Details"
+      "jobOrderDetails": "Job Order Details",
+      "shippingPlan": "Shipping Plan",
+      "judgment": "Laboratory Judgment"
     },
     "cpk": {
       "title": "Process Capability",

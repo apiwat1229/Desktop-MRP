@@ -64,6 +64,8 @@ export function useSidebarMenu() {
                         },
                         { name: t('qa.tabs.cpkAnalysis'), path: '/admin/qa/cpk-analysis' },
                         { name: t('qa.tabs.jobOrder'), path: '/admin/qa/job-order-list' },
+                        { name: 'Shipping Plan', path: '/admin/qa/shipping-plan' },
+                        { name: t('qa.tabs.judgment'), path: '/admin/qa/judgment' },
                     ],
                 },
                 {

@@ -1091,7 +1091,49 @@ model ProductionReportRow {
 
   sampleCount Int? @map("sample_count")
 
+  // Judgment Results
+  weight1Status String? @map("weight_1_status")
+  weight2Status String? @map("weight_2_status")
+  weight3Status String? @map("weight_3_status")
+  weight4Status String? @map("weight_4_status")
+  weight5Status String? @map("weight_5_status")
+  sampleStatus  String? @map("sample_status")
+
+  shippingItems ShippingPlanItem[]
+
   @@map("production_report_rows")
+}
+
+model ShippingPlan {
+  id       String   @id @default(uuid())
+  planNo   String   @unique @map("plan_no")
+  customer String?
+  planDate DateTime @map("plan_date")
+  status   String   @default("DRAFT") // DRAFT, CONFIRMED, SHIPPED
+  remark   String?
+
+  items ShippingPlanItem[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("shipping_plans")
+}
+
+model ShippingPlanItem {
+  id             String @id @default(uuid())
+  shippingPlanId String @map("shipping_plan_id")
+  shippingPlan   ShippingPlan @relation(fields: [shippingPlanId], references: [id], onDelete: Cascade)
+
+  // Link to specific pallet in ProductionReportRow
+  rowId    String @map("row_id")
+  row      ProductionReportRow @relation(fields: [rowId], references: [id], onDelete: Cascade)
+  palletNo Int    @map("pallet_no") // 1, 2, 3, 4, 5
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([shippingPlanId, rowId, palletNo])
+  @@map("shipping_plan_items")
 }
 
 model CpkAnalysis {

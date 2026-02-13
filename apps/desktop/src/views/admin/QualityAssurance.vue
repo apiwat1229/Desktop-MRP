@@ -18,8 +18,10 @@ import ClPoPriTab from './tabs/ClPoPriTab.vue';
 import ClSummaryTab from './tabs/ClSummaryTab.vue';
 import CpkAnalysisTab from './tabs/CpkAnalysisTab.vue';
 import JobOrderTab from './tabs/JobOrderTab.vue';
+import JudgmentTab from './tabs/JudgmentTab.vue';
 import RawMaterialPlanForm from './tabs/RawMaterialPlanForm.vue';
 import RawMaterialPlanList from './tabs/RawMaterialPlanList.vue';
+import ShippingPlanTab from './tabs/ShippingPlanTab.vue';
 import UssPoPriTab from './tabs/UssPoPriTab.vue';
 
 const { t } = useI18n();
@@ -408,6 +410,16 @@ onMounted(() => {
       </div>
       <div v-else-if="currentTab === 'cpk-analysis'" key="tab-cpk-analysis">
         <CpkAnalysisTab />
+      </div>
+      <div v-else-if="currentTab === 'judgment'" key="tab-judgment">
+        <JudgmentTab
+          :search-query="searchQuery"
+          :start-date="selectedDateRangeString.start"
+          :end-date="selectedDateRangeString.end"
+        />
+      </div>
+      <div v-else-if="currentTab === 'shipping-plan'" key="tab-shipping-plan">
+        <ShippingPlanTab />
       </div>
       <div v-else-if="currentTab === 'raw-material-plan-create'" key="tab-raw-material-plan-create">
         <RawMaterialPlanForm
