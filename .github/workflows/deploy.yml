@@ -16,7 +16,7 @@ jobs:
           cd /home/admin/Desktop/Desktop-NestJS
 
           # Pull latest code
-          git checkout package-lock.json
+          git checkout package-lock.json apps/desktop/package.json
           git pull origin main
 
           # Install dependencies
@@ -32,7 +32,6 @@ jobs:
 
           # Build Frontend
           echo "Building Frontend..."
-          npm install @unovis/ts @unovis/vue --workspace=apps/desktop
           npm run build:web --workspace=apps/desktop
 
           # Update Static Files
