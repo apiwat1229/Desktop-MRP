@@ -31,6 +31,7 @@ import { CpkAnalysesModule } from './cpk-analyses/cpk-analyses.module';
 import { JobOrdersModule } from './job-orders/job-orders.module';
 import { ProductionReportsModule } from './production-reports/production-reports.module';
 import { RawMaterialPlansModule } from './raw-material-plans/raw-material-plans.module';
+import { ShippingPlansModule } from './shipping-plans/shipping-plans.module';
 
 @Module({
     imports: [
