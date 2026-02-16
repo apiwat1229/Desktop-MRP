@@ -128,7 +128,9 @@
       "rawMaterialPlanCreate": "Create Raw Material Plan",
       "cpkAnalysis": "CPK Analysis",
       "jobOrderDetails": "Job Order Details",
-      "shippingPlan": "Shipping Plan",
+      "shippingPlan": "FG LOADING PLAN",
+      "shippingPlanCreate": "New Loading Plan",
+      "shippingPlanList": "Loading Plan List",
       "judgment": "Laboratory Judgment"
     },
     "cpk": {
@@ -375,6 +377,10 @@
     },
     "qa": {
       "name": "Quality Assurance",
+      "judgment": "Quality Judgment",
+      "shippingPlan": "FG Loading Plan",
+      "shippingPlanList": "Loading Plan List",
+      "shippingPlanCreate": "New Loading Plan",
       "description": "Lab testing and quality control processes.",
       "menu": {
         "clPoPri": "Cuplump PO / P30 / PRI",

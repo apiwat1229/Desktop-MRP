@@ -132,7 +132,9 @@
       "editJobOrder": "แก้ไขใบสั่งผลิต",
       "cpkAnalysis": "วิเคราะห์ CPK",
       "jobOrderDetails": "รายละเอียดใบสั่งผลิต",
-      "shippingPlan": "แผนการจัดส่ง (Shipping Plan)",
+      "shippingPlan": "FG LOADING PLAN",
+      "shippingPlanCreate": "สร้างแผนโหลดสินค้า",
+      "shippingPlanList": "รายการแผนโหลดสินค้า",
       "judgment": "ผลการตัดสิน (Judgment)"
     },
     "cpk": {
@@ -1757,8 +1759,10 @@
       "production": "การผลิต",
       "rawMaterial": "รับวัตถุดิบ",
       "finance": "การเงิน",
-      "purchasing": "จัดซื้อ",
-      "shipping": "การจัดส่ง",
+      "judgment": "การตัดสินใจคุณภาพ",
+      "shippingPlan": "แผนการจัดส่ง FG",
+      "shippingPlanList": "รายการแผนการจัดส่ง",
+      "shippingPlanCreate": "สร้างแผนการจัดส่งใหม่",
       "maintenance": "ซ่อมบำรุง",
       "safety": "ความปลอดภัย",
       "management": "ฝ่ายบริหาร",

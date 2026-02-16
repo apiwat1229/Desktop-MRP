@@ -21,6 +21,7 @@ import JobOrderTab from './tabs/JobOrderTab.vue';
 import JudgmentTab from './tabs/JudgmentTab.vue';
 import RawMaterialPlanForm from './tabs/RawMaterialPlanForm.vue';
 import RawMaterialPlanList from './tabs/RawMaterialPlanList.vue';
+import ShippingPlanList from './tabs/ShippingPlanList.vue';
 import ShippingPlanTab from './tabs/ShippingPlanTab.vue';
 import UssPoPriTab from './tabs/UssPoPriTab.vue';
 
@@ -418,8 +419,24 @@ onMounted(() => {
           :end-date="selectedDateRangeString.end"
         />
       </div>
+      <div v-else-if="currentTab === 'shipping-plan-create'" key="tab-shipping-plan-create">
+        <ShippingPlanTab
+          @create="router.push({ name: 'QualityAssurance', params: { tab: 'shipping-plan-list' } })"
+        />
+      </div>
+      <div v-else-if="currentTab === 'shipping-plan-list'" key="tab-shipping-plan-list">
+        <ShippingPlanList
+          @create="
+            router.push({ name: 'QualityAssurance', params: { tab: 'shipping-plan-create' } })
+          "
+        />
+      </div>
       <div v-else-if="currentTab === 'shipping-plan'" key="tab-shipping-plan">
-        <ShippingPlanTab />
+        <ShippingPlanList
+          @create="
+            router.push({ name: 'QualityAssurance', params: { tab: 'shipping-plan-create' } })
+          "
+        />
       </div>
       <div v-else-if="currentTab === 'raw-material-plan-create'" key="tab-raw-material-plan-create">
         <RawMaterialPlanForm
