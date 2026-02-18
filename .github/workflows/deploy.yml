@@ -17,7 +17,8 @@ jobs:
 
           # Pull latest code
           git checkout package-lock.json apps/desktop/package.json
-          git pull origin main
+          git fetch origin main
+          git reset --hard origin/main
 
           # Install dependencies
           npm install
