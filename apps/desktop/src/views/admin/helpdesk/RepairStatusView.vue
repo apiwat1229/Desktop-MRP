@@ -91,6 +91,13 @@ const filteredTickets = computed(() => {
   });
 });
 
+const formatMsToTime = (ms: number) => {
+  if (ms <= 0) return '00:00';
+  const hours = Math.floor(ms / (1000 * 60 * 60));
+  const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+};
+
 const ticketStats = computed(() => {
   const currentFiltered = filteredTickets.value;
   if (!currentFiltered.length) {
@@ -132,8 +139,7 @@ const ticketStats = computed(() => {
   });
 
   const avgTimeMs = resolvedTickets.length ? totalResolutionTime / resolvedTickets.length : 0;
-  const avgTimeHours = (avgTimeMs / (1000 * 60 * 60)).toFixed(2);
-  const bestTimeHours = minTimeMs !== Infinity ? (minTimeMs / (1000 * 60 * 60)).toFixed(2) : '0.00';
+  const bestTimeMs = minTimeMs !== Infinity ? minTimeMs : 0;
 
   return {
     total: currentFiltered.length,
@@ -141,8 +147,8 @@ const ticketStats = computed(() => {
     openCount,
     inProgressCount,
     resolved: resolvedTickets.length,
-    avgResponse: avgTimeHours,
-    bestResponse: bestTimeHours,
+    avgResponse: formatMsToTime(avgTimeMs),
+    bestResponse: formatMsToTime(bestTimeMs),
   };
 });
 
@@ -412,9 +418,6 @@ onMounted(() => {
                   <h4 class="text-2xl font-black text-slate-900 tabular-nums leading-none">
                     {{ ticketStats.avgResponse }}
                   </h4>
-                  <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">
-                    hr.
-                  </p>
                 </div>
               </div>
             </CardContent>
@@ -440,7 +443,6 @@ onMounted(() => {
                   <h4 class="text-2xl font-black tabular-nums leading-none">
                     {{ ticketStats.bestResponse }}
                   </h4>
-                  <p class="text-[10px] font-black text-blue-400 uppercase tracking-tighter">hr.</p>
                 </div>
               </div>
             </CardContent>
