@@ -124,6 +124,16 @@ onUnmounted(() => {
         </p>
       </div>
       <div class="flex items-center gap-2">
+        <div class="text-right mr-4 hidden sm:block">
+          <p
+            class="text-[10px] font-black uppercase tracking-widest text-slate-400 leading-none mb-1"
+          >
+            {{ format(new Date(), 'EEEE dd MMM') }}
+          </p>
+          <p class="text-xl font-black text-slate-700 leading-none">
+            {{ format(new Date(), 'hh:mm a') }}
+          </p>
+        </div>
         <Badge variant="outline" class="gap-1 px-3 py-1">
           <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
           {{ t('admin.dashboard.systemHealth.system') }} {{ systemHealth }}

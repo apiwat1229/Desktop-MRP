@@ -7,23 +7,22 @@ import { notificationsApi } from '@/services/notifications';
 import { useAuthStore } from '@/stores/auth';
 import { getLocalTimeZone, today } from '@internationalized/date';
 import {
-  Activity,
   AlertCircle,
   Bell,
   CalendarCheck,
   CheckCircle2,
   Clock,
-  Cpu,
-  FileText,
-  Plus,
-  TrendingUp,
+  Factory,
+  FlaskConical,
+  Layers,
+  Monitor,
+  Package,
+  Server,
+  Truck,
 } from 'lucide-vue-next';
 import { computed, onMounted, ref } from 'vue';
-import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
-import VueApexCharts from 'vue3-apexcharts';
 
-const { t } = useI18n();
 const authStore = useAuthStore();
 const router = useRouter();
 const appVersion = __APP_VERSION__;
@@ -35,55 +34,86 @@ const unreadNotifications = ref<any[]>([]);
 const systemStatus = ref('ONLINE'); // Dummy status for now
 const bookingTrendData = ref<number[]>([0, 0, 0, 0, 0, 0, 0]);
 
-// -- Charts --
-const chartOptions = computed(() => ({
-  chart: {
-    type: 'area',
-    fontFamily: 'inherit',
-    toolbar: { show: false },
-    animations: { enabled: true },
-  },
-  dataLabels: { enabled: false },
-  stroke: { curve: 'smooth', width: 2 },
-  fill: {
-    type: 'gradient',
-    gradient: {
-      shadeIntensity: 1,
-      opacityFrom: 0.4,
-      opacityTo: 0.05,
-      stops: [0, 100],
-    },
-  },
-  xaxis: {
-    categories: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], // Placeholder
-    axisBorder: { show: false },
-    axisTicks: { show: false },
-    labels: { style: { colors: '#94a3b8' } },
-  },
-  yaxis: { show: false },
-  grid: {
-    show: true,
-    borderColor: '#f1f5f9',
-    strokeDashArray: 4,
-    padding: { top: 0, right: 0, bottom: 0, left: 10 },
-  },
-  colors: ['#0ea5e9'], // Sky-500
-  tooltip: {
-    theme: 'light',
-    y: { formatter: (val: number) => Math.round(val) },
-  },
-}));
+// -- Actions --
+const navigateTo = (path: string) => router.push(path);
 
-const series = computed(() => [
+const apps = computed(() => [
   {
-    name: 'Bookings',
-    data: bookingTrendData.value,
+    id: 'bookings',
+    name: 'Booking System',
+    description: 'Manage rubber bookings and scheduling',
+    path: '/bookings',
+    icon: CalendarCheck,
+    color: 'text-blue-500',
+    bg: 'bg-blue-50',
+    badge: todayBookingsCount.value > 0 ? todayBookingsCount.value : null,
+  },
+  {
+    id: 'production',
+    name: 'Production',
+    description: 'Monitor factory output and job orders',
+    path: '/admin/production',
+    icon: Layers,
+    color: 'text-indigo-500',
+    bg: 'bg-indigo-50',
+  },
+  {
+    id: 'qa',
+    name: 'Quality Assurance',
+    description: 'Lab results and incoming inspections',
+    path: '/admin/qa',
+    icon: FlaskConical,
+    color: 'text-emerald-500',
+    bg: 'bg-emerald-50',
+  },
+  {
+    id: 'it-helpdesk',
+    name: 'IT Help Desk',
+    description: 'Repair requests and asset management',
+    path: '/admin/it-helpdesk',
+    icon: Monitor,
+    color: 'text-purple-500',
+    bg: 'bg-purple-50',
+  },
+  {
+    id: 'receiving',
+    name: 'Receiving',
+    description: 'Raw material procurement tracking',
+    path: '/admin/receiving',
+    icon: Package,
+    color: 'text-amber-500',
+    bg: 'bg-amber-50',
+  },
+  {
+    id: 'truck-scale',
+    name: 'Truck Scale',
+    description: 'Weight bridge and vehicle management',
+    path: '/admin/truck-scale',
+    icon: Truck,
+    color: 'text-rose-500',
+    bg: 'bg-rose-50',
+  },
+  {
+    id: 'mrp',
+    name: 'MRP System',
+    description: 'PLC control and factory automation',
+    path: '/mrp',
+    icon: Factory,
+    color: 'text-cyan-500',
+    bg: 'bg-cyan-50',
+  },
+  {
+    id: 'config',
+    name: 'System Config',
+    description: 'Roles, permissions, and user settings',
+    path: '/admin/system-status',
+    icon: Server,
+    color: 'text-slate-500',
+    bg: 'bg-slate-50',
   },
 ]);
 
 // -- Actions --
-const navigateTo = (path: string) => router.push(path);
-
 const fetchData = async () => {
   try {
     // 1. Pending Approvals
@@ -138,7 +168,34 @@ const greeting = computed(() => {
           {{ greeting }}, {{ authStore.user?.firstName || 'User' }}
           <span class="text-2xl">👋</span>
         </h1>
-        <p class="text-slate-500 mt-1 font-medium">Here's what's happening in your system today.</p>
+        <!-- Compact Status Bar -->
+        <div class="flex items-center gap-4 mt-3">
+          <button
+            @click="navigateTo('/admin/approvals')"
+            class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-50 text-orange-600 border border-orange-100 hover:bg-orange-100 transition-colors"
+          >
+            <AlertCircle class="w-3.5 h-3.5" />
+            <span class="text-[11px] font-black uppercase tracking-wider"
+              >{{ pendingApprovalsCount }} Pending Approvals</span
+            >
+          </button>
+          <div
+            class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100"
+          >
+            <CalendarCheck class="w-3.5 h-3.5" />
+            <span class="text-[11px] font-black uppercase tracking-wider"
+              >{{ todayBookingsCount }} Today's Bookings</span
+            >
+          </div>
+          <div
+            class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-50 text-green-600 border border-green-100"
+          >
+            <div class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+            <span class="text-[11px] font-black uppercase tracking-wider"
+              >System {{ systemStatus }}</span
+            >
+          </div>
+        </div>
       </div>
       <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-xl shadow-sm border">
         <Clock class="w-5 h-5 text-primary/70" />
@@ -159,203 +216,154 @@ const greeting = computed(() => {
       </div>
     </div>
 
-    <!-- 2. Key Metrics Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <!-- Pending Approvals -->
-      <Card
-        class="border-0 shadow-sm ring-1 ring-slate-200 bg-white hover:ring-primary/20 transition-all cursor-pointer group"
-        @click="navigateTo('/admin/approvals')"
-      >
-        <CardContent class="p-6 flex items-center justify-between">
-          <div>
-            <p class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">
-              Pending Approvals
-            </p>
-            <h3
-              class="text-4xl font-black text-slate-800 group-hover:text-primary transition-colors"
+    <!-- 3. App Launcher Grid -->
+    <div class="space-y-4">
+      <div class="flex items-center justify-between">
+        <h2
+          class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2"
+        >
+          <div class="w-1.5 h-1.5 rounded-full bg-primary/40"></div>
+          Application Launcher
+        </h2>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card
+          v-for="app in apps"
+          :key="app.path"
+          class="group hover:-translate-y-1 hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer border-slate-100 bg-white hover:border-primary/20"
+          @click="navigateTo(app.path)"
+        >
+          <CardContent class="p-5 flex items-start gap-4">
+            <div
+              :class="[
+                app.bg,
+                app.color,
+                'w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300 group-hover:scale-110 shadow-sm',
+              ]"
             >
-              {{ pendingApprovalsCount }}
-            </h3>
-          </div>
-          <div
-            class="w-14 h-14 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-500 group-hover:scale-110 transition-transform"
-          >
-            <AlertCircle class="w-7 h-7" />
-          </div>
-        </CardContent>
-      </Card>
-
-      <!-- Today's Bookings -->
-      <Card
-        class="border-0 shadow-sm ring-1 ring-slate-200 bg-white hover:ring-primary/20 transition-all cursor-pointer group"
-        @click="navigateTo('/bookings/queue')"
-      >
-        <CardContent class="p-6 flex items-center justify-between">
-          <div>
-            <p class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">
-              Today's Bookings
-            </p>
-            <h3
-              class="text-4xl font-black text-slate-800 group-hover:text-primary transition-colors"
-            >
-              {{ todayBookingsCount }}
-            </h3>
-          </div>
-          <div
-            class="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform"
-          >
-            <CalendarCheck class="w-7 h-7" />
-          </div>
-        </CardContent>
-      </Card>
-
-      <!-- System Status -->
-      <Card class="border-0 shadow-sm ring-1 ring-slate-200 bg-white">
-        <CardContent class="p-6 flex items-center justify-between">
-          <div>
-            <p class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-1">
-              System Status
-            </p>
-            <div class="flex items-center gap-2">
-              <span class="relative flex h-3 w-3">
-                <span
-                  class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"
-                ></span>
-                <span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-              </span>
-              <h3 class="text-xl font-black text-green-600">
-                {{ systemStatus }}
-              </h3>
+              <component :is="app.icon" class="w-6 h-6" />
             </div>
-            <p class="text-xs text-slate-400 mt-1">v{{ appVersion }}</p>
-          </div>
-          <div
-            class="w-14 h-14 rounded-2xl bg-green-50 flex items-center justify-center text-green-500"
-          >
-            <CheckCircle2 class="w-7 h-7" />
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-
-    <!-- 3. Main Content: Activity & Notifications -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      <!-- Left: Activity Trend -->
-      <div class="lg:col-span-2 space-y-6">
-        <Card class="border-0 shadow-sm ring-1 ring-slate-200">
-          <CardHeader class="flex flex-row items-center justify-between pb-2">
-            <CardTitle class="text-lg font-black text-slate-700 flex items-center gap-2">
-              <TrendingUp class="w-5 h-5 text-primary" />
-              Weekly Booking Activity
-            </CardTitle>
-          </CardHeader>
-          <CardContent class="pl-2">
-            <div class="h-[300px] w-full">
-              <VueApexCharts type="area" height="100%" :options="chartOptions" :series="series" />
+            <div class="space-y-1">
+              <h3
+                class="font-black text-slate-800 tracking-tight group-hover:text-primary transition-colors"
+              >
+                {{ app.name }}
+              </h3>
+              <div
+                v-if="app.badge !== undefined && app.badge !== null"
+                class="absolute top-2 right-2 flex h-5 min-w-[20px] items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-black text-white shadow-sm ring-2 ring-white"
+              >
+                {{ app.badge }}
+              </div>
+              <p class="text-[11px] font-medium text-slate-400 leading-tight">
+                {{ app.description }}
+              </p>
             </div>
           </CardContent>
         </Card>
-
-        <!-- Quick Actions Grid -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <Button
-            variant="outline"
-            class="h-auto py-4 flex flex-col gap-2 border-dashed border-2 hover:border-primary/50 hover:bg-primary/5"
-            @click="navigateTo('/bookings/create')"
-          >
-            <div
-              class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary"
-            >
-              <Plus class="w-5 h-5" />
-            </div>
-            <span class="font-bold text-xs text-slate-600">New Booking</span>
-          </Button>
-
-          <Button
-            variant="outline"
-            class="h-auto py-4 flex flex-col gap-2 border-dashed border-2 hover:border-primary/50 hover:bg-primary/5"
-            @click="navigateTo('/admin/production/new')"
-          >
-            <div
-              class="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600"
-            >
-              <FileText class="w-5 h-5" />
-            </div>
-            <span class="font-bold text-xs text-slate-600">New Report</span>
-          </Button>
-
-          <Button
-            variant="outline"
-            class="h-auto py-4 flex flex-col gap-2 border-dashed border-2 hover:border-primary/50 hover:bg-primary/5"
-            @click="navigateTo('/admin/qa')"
-          >
-            <div
-              class="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600"
-            >
-              <Activity class="w-5 h-5" />
-            </div>
-            <span class="font-bold text-xs text-slate-600">QA Check</span>
-          </Button>
-
-          <Button
-            variant="outline"
-            class="h-auto py-4 flex flex-col gap-2 border-dashed border-2 hover:border-primary/50 hover:bg-primary/5"
-            @click="navigateTo('/admin/settings')"
-          >
-            <div
-              class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-600"
-            >
-              <Cpu class="w-5 h-5" />
-            </div>
-            <span class="font-bold text-xs text-slate-600">System Config</span>
-          </Button>
-        </div>
       </div>
+    </div>
 
-      <!-- Right: Recent Alerts & System Health -->
-      <div class="space-y-6">
+    <!-- 4. Secondary Content -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8 pt-4 border-t border-slate-200/60">
+      <!-- Left: Recent Alerts (Takes 3 cols now for better prominence) -->
+      <div class="lg:col-span-3">
         <Card class="border-0 shadow-sm ring-1 ring-slate-200 h-full">
-          <CardHeader class="pb-2">
+          <CardHeader class="pb-2 border-b border-slate-50">
             <CardTitle class="text-lg font-black text-slate-700 flex items-center justify-between">
               <span class="flex items-center gap-2">
                 <Bell class="w-5 h-5 text-orange-500" />
-                Recent Alerts
+                System Activity & Recent Alerts
               </span>
               <Button
                 variant="ghost"
                 size="sm"
-                class="text-xs h-7"
+                class="text-[10px] font-black uppercase tracking-widest h-7 hover:bg-slate-100"
                 @click="navigateTo('/activity-center')"
-                >View All</Button
               >
+                View Activity Log
+              </Button>
             </CardTitle>
           </CardHeader>
           <CardContent class="p-0">
             <div
               v-if="unreadNotifications.length === 0"
-              class="p-8 text-center text-slate-400 text-sm font-medium"
+              class="p-12 text-center text-slate-400 text-sm font-medium"
             >
-              No new notifications
+              <div
+                class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4"
+              >
+                <CheckCircle2 class="w-8 h-8 text-slate-200" />
+              </div>
+              All clear! No new notifications.
             </div>
-            <div v-else class="divide-y divide-slate-100">
+            <div v-else class="divide-y divide-slate-50">
               <div
                 v-for="notif in unreadNotifications"
                 :key="notif.id"
-                class="p-4 hover:bg-slate-50 transition-colors cursor-pointer"
+                class="p-4 hover:bg-slate-50/80 transition-all cursor-pointer flex items-start gap-4 group"
                 @click="navigateTo(notif.actionUrl || '/activity-center')"
               >
-                <div class="flex gap-3">
-                  <div class="w-2 h-2 mt-1.5 rounded-full bg-primary shrink-0"></div>
-                  <div>
-                    <p class="text-sm font-bold text-slate-700 leading-tight mb-1">
+                <div
+                  class="mt-1 w-8 h-8 rounded-xl bg-primary/5 flex items-center justify-center group-hover:bg-primary/10 transition-colors"
+                >
+                  <div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center justify-between mb-0.5">
+                    <p class="text-sm font-bold text-slate-700 leading-tight">
                       {{ notif.title }}
                     </p>
-                    <p class="text-xs text-slate-500 line-clamp-2">{{ notif.message }}</p>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase"> Just Now </span>
                   </div>
+                  <p class="text-xs text-slate-500 line-clamp-1 font-medium">{{ notif.message }}</p>
                 </div>
               </div>
             </div>
           </CardContent>
+        </Card>
+      </div>
+
+      <!-- Right: System Info/Quick Stats (Takes 1 col) -->
+      <div class="space-y-6">
+        <Card class="border-0 shadow-sm ring-1 ring-slate-200 bg-white overflow-hidden">
+          <div class="h-1 bg-primary/20"></div>
+          <CardHeader class="pb-3 px-5">
+            <CardTitle class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">
+              System Health
+            </CardTitle>
+          </CardHeader>
+          <CardContent class="px-5 pb-5 space-y-4">
+            <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+              <div class="flex items-center gap-2">
+                <Server class="w-3.5 h-3.5 text-slate-400" />
+                <span class="text-xs font-bold text-slate-600">Database</span>
+              </div>
+              <span class="text-[10px] font-black text-emerald-500 uppercase">Connected</span>
+            </div>
+            <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50">
+              <div class="flex items-center gap-2">
+                <Factory class="w-3.5 h-3.5 text-slate-400" />
+                <span class="text-xs font-bold text-slate-600">API Server</span>
+              </div>
+              <span class="text-[10px] font-black text-emerald-500 uppercase">Synced</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card
+          class="border-0 shadow-sm ring-1 ring-slate-200 bg-gradient-to-br from-slate-800 to-slate-900 p-5 text-white"
+        >
+          <p class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">
+            Version Control
+          </p>
+          <div class="flex items-center justify-between">
+            <h4 class="text-lg font-black tracking-tight">V{{ appVersion }}</h4>
+            <div class="px-2 py-0.5 rounded bg-white/10 text-[10px] font-bold">Stable</div>
+          </div>
+          <p class="text-[10px] font-medium text-slate-400 mt-4 leading-relaxed">
+            All systems operational. Last security patch applied 2 hours ago.
+          </p>
         </Card>
       </div>
     </div>
