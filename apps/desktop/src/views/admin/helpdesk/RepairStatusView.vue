@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import NewTicketForm from '@/components/helpdesk/NewTicketForm.vue';
 import TicketDetailModal from '@/components/helpdesk/TicketDetailModal.vue';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -18,18 +17,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { itTicketsApi, type ITTicket } from '@/services/it-tickets';
-import { useAuthStore } from '@/stores/auth';
 import { getLocalTimeZone } from '@internationalized/date';
 import { format, formatDistanceToNowStrict, intervalToDuration } from 'date-fns';
-import { Clock, Plus, Ticket, TicketPercent } from 'lucide-vue-next';
+import { CheckCircle2, Clock, Plus, Ticket, TicketPercent } from 'lucide-vue-next';
 import type { DateRange } from 'reka-ui';
 import { computed, inject, onMounted, ref, type Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { toast } from 'vue-sonner';
 
 const { t } = useI18n();
-const authStore = useAuthStore();
 
 // Injected State
 const dateRange = inject<Ref<DateRange>>('helpDeskDateRange');
@@ -50,11 +55,6 @@ const currentPage = ref(1);
 const itemsPerPage = ref(5);
 const pageSizeOptions = [5, 10, 20, 50];
 
-const isITDepartment = computed(() => {
-  const userDept = authStore.user?.department;
-  return userDept === 'Information Technology' || userDept === 'เทคโนโลยีสารสนเทศ (IT)';
-});
-
 // Filter tickets for the selected date range and case-insensitive status checks
 const filteredTickets = computed(() => {
   return repairTickets.value.filter((t) => {
@@ -71,65 +71,6 @@ const filteredTickets = computed(() => {
 
     return ticketDate >= start && ticketDate < end;
   });
-});
-
-const ticketStats = computed(() => {
-  const currentFiltered = filteredTickets.value;
-  if (!currentFiltered.length) {
-    return {
-      total: 0,
-      open: 0,
-      openCount: 0,
-      inProgressCount: 0,
-      openTrend: 0,
-      avgResponse: '0.00',
-      resolved: 0,
-      resolvedTrend: 0,
-      bestResponse: '0.00',
-    };
-  }
-
-  const openCount = currentFiltered.filter((t) => t.status?.toLowerCase() === 'open').length;
-  const inProgressCount = currentFiltered.filter(
-    (t) => t.status?.toLowerCase() === 'in progress'
-  ).length;
-
-  const resolvedTickets = currentFiltered.filter((t) => {
-    const s = t.status?.toLowerCase();
-    return s === 'resolved' || s === 'closed' || s === 'approved';
-  });
-
-  const createdInPeriod = currentFiltered.length;
-  const resolvedInPeriod = resolvedTickets.length;
-
-  let totalResolutionTime = 0;
-  let minTimeMs = Infinity;
-
-  resolvedTickets.forEach((t) => {
-    const created = new Date(t.createdAt);
-    const updated = new Date(t.updatedAt);
-    const diff = updated.getTime() - created.getTime();
-    totalResolutionTime += diff;
-    if (diff < minTimeMs) {
-      minTimeMs = diff;
-    }
-  });
-
-  const avgTimeMs = resolvedTickets.length ? totalResolutionTime / resolvedTickets.length : 0;
-  const avgTimeHours = (avgTimeMs / (1000 * 60 * 60)).toFixed(2);
-  const bestTimeHours = minTimeMs !== Infinity ? (minTimeMs / (1000 * 60 * 60)).toFixed(2) : '0.00';
-
-  return {
-    total: currentFiltered.length,
-    open: openCount + inProgressCount,
-    openCount,
-    inProgressCount,
-    openTrend: createdInPeriod,
-    resolved: resolvedTickets.length,
-    resolvedTrend: resolvedInPeriod,
-    avgResponse: avgTimeHours,
-    bestResponse: bestTimeHours,
-  };
 });
 
 const paginatedTickets = computed(() => {
@@ -208,22 +149,38 @@ const formatTicketDate = (dateString: string | Date) => {
   return `${formatted} (${timeAgo})`;
 };
 
-const getStatusColor = (status: string) => {
+const getResolutionTime = (ticket: ITTicket) => {
+  if (!ticket.resolvedAt) return null;
+  const start = new Date(ticket.createdAt);
+  const end = new Date(ticket.resolvedAt);
+  const diffMs = end.getTime() - start.getTime();
+  if (diffMs < 0) return null;
+
+  const hours = Math.floor(diffMs / (1000 * 60 * 60));
+  const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes}m`;
+};
+
+const getStatusStyles = (status: string) => {
   switch (status) {
     case 'Open':
-      return 'bg-blue-100 text-blue-800';
+      return { dot: 'bg-blue-500', text: 'text-blue-700', bg: 'bg-blue-50/50' };
     case 'In Progress':
-      return 'bg-yellow-100 text-yellow-800';
+      return { dot: 'bg-amber-500', text: 'text-amber-700', bg: 'bg-amber-50/50' };
     case 'Pending':
-      return 'bg-orange-100 text-orange-800';
+      return { dot: 'bg-orange-500', text: 'text-orange-700', bg: 'bg-orange-50/50' };
     case 'Resolved':
-      return 'bg-green-100 text-green-800';
+      return { dot: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-emerald-50/50' };
     case 'Closed':
-      return 'bg-gray-100 text-gray-800';
+      return { dot: 'bg-slate-400', text: 'text-slate-600', bg: 'bg-slate-50/50' };
     case 'Cancelled':
-      return 'bg-red-100 text-red-800';
+      return { dot: 'bg-rose-500', text: 'text-rose-700', bg: 'bg-rose-50/50' };
     default:
-      return 'bg-slate-100 text-slate-800';
+      return { dot: 'bg-slate-400', text: 'text-slate-600', bg: 'bg-slate-50/50' };
   }
 };
 
@@ -248,69 +205,6 @@ onMounted(() => {
 <template>
   <div class="space-y-4">
     <template v-if="tickets.length > 0">
-      <!-- Stats Header & Filter -->
-      <template v-if="isITDepartment">
-        <div class="flex items-center justify-between">
-          <h3 class="text-lg font-medium text-muted-foreground">
-            {{ t('services.itHelp.stats.overview') }}
-          </h3>
-        </div>
-
-        <!-- Stats Section -->
-        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          <Card>
-            <CardContent class="p-3 text-center">
-              <p class="text-[0.7rem] font-medium text-muted-foreground uppercase tracking-tight">
-                Total Tickets
-              </p>
-              <h4 class="text-xl font-bold">{{ ticketStats.total }}</h4>
-            </CardContent>
-          </Card>
-          <Card class="border-l-4 border-l-blue-600 overflow-hidden">
-            <CardContent class="p-3 text-center">
-              <p class="text-[0.7rem] font-medium text-blue-600 uppercase tracking-tight">Open</p>
-              <h4 class="text-xl font-bold text-blue-600">{{ ticketStats.openCount }}</h4>
-            </CardContent>
-          </Card>
-          <Card class="border-l-4 border-l-primary overflow-hidden">
-            <CardContent class="p-3 text-center">
-              <p class="text-[0.7rem] font-medium text-primary uppercase tracking-tight">
-                In Progress
-              </p>
-              <h4 class="text-xl font-bold text-primary">{{ ticketStats.inProgressCount }}</h4>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent class="p-3 text-center bg-green-50/30">
-              <p
-                class="text-[0.7rem] font-medium text-green-600 uppercase tracking-tight flex items-center justify-center gap-1"
-              >
-                Resolved
-              </p>
-              <h4 class="text-xl font-bold text-green-600">{{ ticketStats.resolved }}</h4>
-            </CardContent>
-          </Card>
-          <Card class="col-span-1">
-            <CardContent class="p-3 text-center">
-              <p class="text-[0.7rem] font-medium text-muted-foreground uppercase tracking-tight">
-                Avg Time
-              </p>
-              <h4 class="text-lg font-bold">{{ ticketStats.avgResponse }}h</h4>
-            </CardContent>
-          </Card>
-          <Card class="col-span-1">
-            <CardContent class="p-3 text-center bg-primary/5">
-              <p
-                class="text-[0.7rem] font-medium text-primary uppercase tracking-tight flex items-center justify-center gap-1"
-              >
-                Best
-              </p>
-              <h4 class="text-lg font-bold text-primary">{{ ticketStats.bestResponse }}h</h4>
-            </CardContent>
-          </Card>
-        </div>
-      </template>
-
       <!-- Ticket List -->
       <Card>
         <CardHeader class="pb-3 border-b border-muted flex flex-row items-center justify-between">
@@ -329,63 +223,133 @@ onMounted(() => {
           </Button>
         </CardHeader>
         <CardContent class="p-0">
-          <div v-if="paginatedTickets.length" class="divide-y divide-border/50">
-            <div
-              v-for="ticket in paginatedTickets"
-              :key="ticket.id"
-              class="p-4 hover:bg-muted/30 transition-colors group flex items-center gap-4 cursor-pointer"
-              @click="handleTicketClick(ticket)"
-            >
-              <!-- Icon -->
-              <div
-                class="flex-shrink-0 w-10 h-10 rounded-lg flex items-center justify-center border transition-all duration-300"
-                :class="getPriorityIconStyles(ticket.priority)"
-              >
-                <TicketPercent v-if="ticket.category === 'Purchase Request'" class="w-5 h-5" />
-                <Ticket v-else class="w-5 h-5" />
-              </div>
-
-              <!-- Content -->
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 mb-1.5 w-full">
-                  <span class="font-semibold text-base text-foreground truncate block">
-                    {{ ticket.title }}
-                  </span>
-                </div>
-                <div class="flex items-center gap-3 text-xs text-muted-foreground">
-                  <span class="flex items-center gap-1.5 min-w-0 truncate">
-                    <span class="text-muted-foreground/70">{{
-                      ticket.requester?.displayName || ticket.requesterId || 'Unknown'
-                    }}</span>
-                    <span class="text-muted-foreground/40">&gt;</span>
-                    <span class="text-primary/80 font-medium">{{ ticket.category }}</span>
-                  </span>
-                  <span class="text-muted-foreground/40">&bull;</span>
-                  <span class="flex items-center gap-1.5 whitespace-nowrap">
-                    <Clock class="w-3 h-3 text-muted-foreground/70" />
-                    {{ formatTicketDate(ticket.createdAt) }}
-                  </span>
-                </div>
-              </div>
-
-              <!-- Right Side: Ticket No & Status -->
-              <div class="flex items-center gap-3 flex-shrink-0 pl-4">
-                <Badge
-                  variant="secondary"
-                  class="text-[0.625rem] h-5 px-1.5 font-mono font-medium text-muted-foreground bg-muted border border-border rounded pointer-events-none"
+          <div v-if="paginatedTickets.length" class="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow class="hover:bg-transparent border-b bg-slate-50/50">
+                  <TableHead
+                    class="w-[80px] text-[10px] font-black uppercase tracking-widest text-slate-500 pl-6 text-start"
+                    >No.</TableHead
+                  >
+                  <TableHead
+                    class="text-[10px] font-black uppercase tracking-widest text-slate-500 text-start"
+                    >Problem / Topic</TableHead
+                  >
+                  <TableHead
+                    class="text-[10px] font-black uppercase tracking-widest text-slate-500 text-start"
+                    >Requester</TableHead
+                  >
+                  <TableHead
+                    class="text-[10px] font-black uppercase tracking-widest text-slate-500 text-start whitespace-nowrap"
+                    >Category</TableHead
+                  >
+                  <TableHead
+                    class="text-[10px] font-black uppercase tracking-widest text-slate-500 text-start"
+                    >Created At</TableHead
+                  >
+                  <TableHead
+                    class="text-[10px] font-black uppercase tracking-widest text-slate-500 text-start"
+                    >Resolution</TableHead
+                  >
+                  <TableHead
+                    class="text-right text-[10px] font-black uppercase tracking-widest text-slate-500 pr-6"
+                    >Status</TableHead
+                  >
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow
+                  v-for="ticket in paginatedTickets"
+                  :key="ticket.id"
+                  class="cursor-pointer hover:bg-slate-50/80 transition-all group border-b border-slate-100/60"
+                  @click="handleTicketClick(ticket)"
                 >
-                  {{ ticket.ticketNo }}
-                </Badge>
-                <Badge
-                  :class="[
-                    getStatusColor(ticket.status),
-                    'px-2.5 py-0.5 text-[0.625rem] font-bold border-0 rounded uppercase tracking-wide pointer-events-none',
-                  ]"
-                >
-                  {{ ticket.status }}
-                </Badge>
-              </div>
-            </div>
+                  <TableCell class="pl-6 py-4 text-start">
+                    <span
+                      class="font-mono text-[10px] font-black text-slate-400 group-hover:text-primary transition-colors"
+                    >
+                      #{{ ticket.ticketNo }}
+                    </span>
+                  </TableCell>
+                  <TableCell class="py-4 text-start">
+                    <div class="flex items-center gap-3 min-w-[200px]">
+                      <div
+                        class="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center border transition-all duration-300"
+                        :class="getPriorityIconStyles(ticket.priority)"
+                      >
+                        <TicketPercent
+                          v-if="ticket.category === 'Purchase Request'"
+                          class="w-4 h-4"
+                        />
+                        <Ticket v-else class="w-4 h-4" />
+                      </div>
+                      <span
+                        class="font-bold text-slate-900 group-hover:text-primary transition-colors line-clamp-1"
+                      >
+                        {{ ticket.title }}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell class="py-4 text-start">
+                    <span
+                      class="text-xs font-semibold text-slate-600 block truncate max-w-[120px]"
+                      >{{
+                        ticket.requester?.displayName || ticket.requester?.username || 'Unknown'
+                      }}</span
+                    >
+                  </TableCell>
+                  <TableCell class="py-4 text-start">
+                    <span
+                      class="text-[10px] font-black uppercase tracking-wider text-slate-400/80 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded shadow-sm"
+                    >
+                      {{ ticket.category }}
+                    </span>
+                  </TableCell>
+                  <TableCell class="py-4 text-start">
+                    <div class="flex items-center gap-2 text-slate-500">
+                      <Clock class="w-3.5 h-3.5 opacity-40" />
+                      <span class="text-[11px] font-medium leading-none whitespace-nowrap">{{
+                        formatTicketDate(ticket.createdAt)
+                      }}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell class="py-4 text-start">
+                    <template v-if="getResolutionTime(ticket)">
+                      <div
+                        class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border border-emerald-100 bg-emerald-50/30 shadow-[0_1px_2px_rgba(16,185,129,0.05)]"
+                      >
+                        <CheckCircle2 class="w-3 h-3 text-emerald-500" />
+                        <span
+                          class="text-[10px] font-black text-emerald-600 tabular-nums uppercase tracking-tight"
+                        >
+                          {{ getResolutionTime(ticket) }}
+                        </span>
+                      </div>
+                    </template>
+                    <span v-else class="text-slate-200 font-black text-[10px] pl-2">--</span>
+                  </TableCell>
+                  <TableCell class="text-right py-4 pr-6">
+                    <div class="inline-flex items-center justify-end w-full">
+                      <div
+                        :class="[
+                          getStatusStyles(ticket.status).bg,
+                          getStatusStyles(ticket.status).text,
+                          'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-current border-opacity-10 group-hover:border-opacity-30 transition-all shadow-sm',
+                        ]"
+                      >
+                        <div
+                          :class="[
+                            getStatusStyles(ticket.status).dot,
+                            'w-1.5 h-1.5 rounded-full ring-2 ring-white',
+                          ]"
+                        ></div>
+                        {{ ticket.status }}
+                      </div>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
           </div>
           <div v-else class="flex flex-col items-center justify-center py-20 bg-muted/5">
             <div class="bg-muted p-6 rounded-full mb-4 border border-border/50">
@@ -405,7 +369,7 @@ onMounted(() => {
               <span>Rows per page:</span>
               <Select
                 :model-value="itemsPerPage.toString()"
-                @update:model-value="(v) => (itemsPerPage = parseInt(v))"
+                @update:model-value="(v: string) => (itemsPerPage = parseInt(v))"
               >
                 <SelectTrigger class="h-8 w-[60px] bg-background">
                   <SelectValue :placeholder="itemsPerPage.toString()" />

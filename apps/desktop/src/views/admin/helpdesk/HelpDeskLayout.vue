@@ -27,7 +27,7 @@ provide('helpDeskDateRange', dateRange);
     <!-- Header -->
     <div class="flex items-center justify-between space-y-2">
       <div>
-        <h2 class="text-2xl font-bold tracking-tight">Help Desk</h2>
+        <h2 class="text-2xl font-bold tracking-tight">IT Help Desk</h2>
       </div>
       <div class="flex items-center gap-3">
         <!-- Search Popover -->

@@ -1293,7 +1293,7 @@
         "title": "Request IT Equipment",
         "subtitle": "Fill out the form below to request new hardware or peripherals.",
         "createTicket": "Create New Ticket",
-        "back": "Back to Help Desk",
+        "back": "Back to IT Help Desk",
         "category": "Equipment Category",
         "urgency": "Urgency Level",
         "urgencyLevels": {

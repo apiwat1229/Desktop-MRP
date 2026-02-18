@@ -106,7 +106,7 @@ export function useSidebarMenu() {
                     ],
                 },
                 {
-                    name: 'IT HelpDesk',
+                    name: 'IT Help Desk',
                     path: '/admin/it-helpdesk',
                     icon: Monitor,
                     items: [
