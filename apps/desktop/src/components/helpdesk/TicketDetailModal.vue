@@ -15,7 +15,7 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import Time24hPicker from '@/components/ui/time-picker/Time24hPicker.vue';
 import { useUsers } from '@/composables/useUsers';
-import { cn, getAvatarUrl } from '@/lib/utils';
+import { getAvatarUrl } from '@/lib/utils';
 import type { ITTicket, UpdateITTicketDto } from '@/services/it-tickets';
 import { itTicketsApi } from '@/services/it-tickets';
 import { useAuthStore } from '@/stores/auth';
@@ -23,6 +23,7 @@ import { format, formatDistanceToNowStrict, intervalToDuration } from 'date-fns'
 import {
   AlertCircle,
   Check,
+  CheckCircle2,
   Clock,
   FileText,
   History,
@@ -261,6 +262,50 @@ const isEditable = computed(() => {
   );
 });
 
+const hasUnsavedCreatedAt = computed(() => {
+  if (!props.ticket?.createdAt || !createdAtDate.value) return false;
+  const current = new Date(props.ticket.createdAt).toISOString();
+  const [y, m, d] = createdAtDate.value.split('-').map(Number);
+  const [hh, mm] = createdAtTime.value.split(':').map(Number);
+  const next = new Date(y, m - 1, d, hh, mm).toISOString();
+  return current !== next;
+});
+
+const hasUnsavedResolvedAt = computed(() => {
+  const current = props.ticket?.resolvedAt ? new Date(props.ticket.resolvedAt).toISOString() : '';
+  let next = '';
+  if (resolvedAtDate.value) {
+    const [y, m, d] = resolvedAtDate.value.split('-').map(Number);
+    const [hh, mm] = resolvedAtTime.value.split(':').map(Number);
+    next = new Date(y, m - 1, d, hh, mm).toISOString();
+  }
+  return current !== next;
+});
+
+const displayFormattedResolvedDate = computed(() => {
+  if (!resolvedAtDate.value) return '';
+  const [y, m, d] = resolvedAtDate.value.split('-').map(Number);
+  const [hh, mm] = resolvedAtTime.value.split(':').map(Number);
+  const date = new Date(y, m - 1, d, hh, mm);
+  return format(date, 'dd MMM yyyy, HH:mm');
+});
+
+const totalResolutionTime = computed(() => {
+  if (!props.ticket?.createdAt || !props.ticket?.resolvedAt) return null;
+  const start = new Date(props.ticket.createdAt);
+  const end = new Date(props.ticket.resolvedAt);
+  const duration = intervalToDuration({ start, end });
+
+  const parts = [];
+  if (duration.years) parts.push(`${duration.years}y`);
+  if (duration.months) parts.push(`${duration.months}mo`);
+  if (duration.days) parts.push(`${duration.days}d`);
+  if (duration.hours) parts.push(`${duration.hours}h`);
+  if (duration.minutes) parts.push(`${duration.minutes}m`);
+
+  return parts.length > 0 ? parts.join(' ') : '0m';
+});
+
 const startEditingTitle = () => {
   if (isOwner.value && isEditable.value) {
     isEditingTitle.value = true;
@@ -378,87 +423,85 @@ const getImageUrl = (path: string | null | undefined) => {
         Details for ticket {{ localTicket?.ticketNo }}
       </DialogDescription>
       <!-- Header Area -->
-      <div class="p-6 pr-14 border-b bg-muted/10 shrink-0">
-        <div class="flex items-start justify-between gap-4">
-          <div class="space-y-1.5 flex-1">
-            <div class="flex items-center gap-2 text-sm text-muted-foreground">
-              <span class="font-mono font-medium text-primary bg-primary/10 px-2 py-0.5 rounded">{{
-                localTicket?.ticketNo
-              }}</span>
-              <span>&bull;</span>
-              <span>{{ localTicket?.category }}</span>
-              <span v-if="localTicket?.location">&bull; {{ localTicket.location }}</span>
-            </div>
-            <div v-if="isEditingTitle" class="w-full relative group">
-              <DialogTitle class="sr-only">{{ localTicket?.title }}</DialogTitle>
-              <Input
-                v-model="localTicket!.title"
-                @blur="isEditingTitle = false"
-                @keyup.enter="isEditingTitle = false"
-                autoFocus
-                class="text-xl font-semibold h-auto px-2 py-1 -ml-2 border-transparent hover:border-border focus-visible:border-primary w-full"
-              />
-            </div>
-            <DialogTitle
-              v-else
-              class="text-xl font-semibold leading-tight tracking-tight flex items-center gap-2 group cursor-pointer"
-              @click="startEditingTitle"
-            >
-              {{ localTicket?.title }}
-              <Button
-                v-if="isOwner && isEditable"
-                variant="ghost"
-                size="icon"
-                class="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <Pencil class="w-3.5 h-3.5 text-muted-foreground" />
-              </Button>
-            </DialogTitle>
-            <div class="flex items-center gap-2 text-[10px] text-muted-foreground pt-1.5">
-              <Clock class="w-3 h-3" />
-              <div v-if="!isEditingCreatedAt" class="flex items-center gap-2 group/date">
-                <span class="font-medium"
-                  >Created {{ localTicket ? formatDate(localTicket.createdAt) : '' }}</span
-                >
-                <Button
-                  v-if="isAdmin"
-                  variant="ghost"
-                  size="icon"
-                  class="h-5 w-5 opacity-40 group-hover/date:opacity-100 hover:bg-slate-200 transition-all rounded-full"
-                  @click="isEditingCreatedAt = true"
-                >
-                  <Pencil class="w-2.5 h-2.5" />
-                </Button>
-              </div>
-              <div
-                v-else
-                class="flex items-center gap-2 bg-slate-100/80 p-1.5 rounded-xl border border-slate-200 shadow-sm backdrop-blur-sm"
-              >
-                <DatePicker v-model="createdAtDate" class="h-7 text-[9px] bg-white" />
-                <Time24hPicker v-model="createdAtTime" class="h-7 w-16" />
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  class="h-7 w-7 text-green-600 hover:bg-green-50 rounded-full"
-                  @click="isEditingCreatedAt = false"
-                >
-                  <Check class="w-3.5 h-3.5" />
-                </Button>
-              </div>
-            </div>
-          </div>
+      <div class="p-6 pr-14 border-b bg-slate-50/50 shrink-0 relative overflow-hidden">
+        <!-- Subtle Background Deco -->
+        <div
+          class="absolute -top-10 -right-10 w-40 h-40 bg-primary/5 rounded-full blur-3xl pointer-events-none"
+        ></div>
 
-          <div class="flex flex-col items-end gap-2 shrink-0">
-            <Badge
-              :class="
-                cn(
-                  'px-3 py-1 text-sm font-medium shadow-sm pointer-events-none',
-                  getStatusColor(localTicket?.status || '')
-                )
-              "
-            >
-              {{ localTicket?.status }}
-            </Badge>
+        <div class="flex items-start justify-between gap-6 relative z-10">
+          <div class="space-y-4 flex-1">
+            <!-- Breadcrumbs / Meta & Resolution (Top Row) -->
+            <div class="flex items-center justify-between gap-2 flex-wrap min-h-6">
+              <div class="flex items-center gap-2 flex-wrap">
+                <Badge
+                  variant="outline"
+                  class="font-mono text-[10px] h-5 px-1.5 bg-white shadow-sm border-slate-200 text-slate-600 font-bold uppercase tracking-wider"
+                >
+                  {{ localTicket?.ticketNo }}
+                </Badge>
+                <div
+                  class="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-400"
+                >
+                  <span>{{ localTicket?.category }}</span>
+                  <span v-if="localTicket?.location" class="flex items-center gap-1.5">
+                    <span class="text-slate-200">/</span>
+                    <span class="text-slate-500">{{ localTicket.location }}</span>
+                  </span>
+                </div>
+                <!-- Status Badge (After Breadcrumbs) -->
+                <Badge
+                  :class="[
+                    getStatusColor(localTicket?.status || ''),
+                    'px-2 py-0.5 text-[9px] font-black border-0 rounded-full uppercase tracking-widest shadow-sm ring-4 ring-opacity-10 pointer-events-none ml-1',
+                    localTicket?.status === 'Resolved' || localTicket?.status === 'Closed'
+                      ? 'ring-green-500/20'
+                      : 'ring-primary/20',
+                  ]"
+                >
+                  {{ localTicket?.status }}
+                </Badge>
+              </div>
+
+              <!-- Resolution Time Summary Badge (Far Right) -->
+              <div
+                v-if="totalResolutionTime"
+                class="flex items-center gap-2 bg-green-100/50 text-green-700 px-2.5 py-1 rounded-full font-bold border border-green-200/50 shadow-sm text-[10px] uppercase tracking-wider animate-in fade-in slide-in-from-right-2 duration-500 pointer-events-none whitespace-nowrap"
+              >
+                <CheckCircle2 class="w-3.5 h-3.5" />
+                <span>RESOLVED IN {{ totalResolutionTime }}</span>
+              </div>
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <div v-if="isEditingTitle" class="w-full relative group">
+                <DialogTitle class="sr-only">{{ localTicket?.title }}</DialogTitle>
+                <Input
+                  v-model="localTicket!.title"
+                  @blur="isEditingTitle = false"
+                  @keyup.enter="isEditingTitle = false"
+                  autoFocus
+                  class="text-2xl font-black h-auto px-2 py-1 -ml-2 border-transparent hover:border-slate-200 focus-visible:border-primary w-full bg-transparent transition-all"
+                />
+              </div>
+              <DialogTitle
+                v-else
+                class="text-2xl font-black leading-tight tracking-tight flex items-center gap-3 group cursor-pointer text-slate-900 flex-wrap"
+                @click="startEditingTitle"
+              >
+                <span>{{ localTicket?.title }}</span>
+
+                <Button
+                  v-if="isOwner && isEditable"
+                  variant="ghost"
+                  size="icon"
+                  class="h-6 w-6 opacity-0 group-hover:opacity-100 transition-all rounded-full bg-slate-100 hover:bg-slate-200"
+                  @click.stop="startEditingTitle"
+                >
+                  <Pencil class="w-3 h-3 text-slate-500" />
+                </Button>
+              </DialogTitle>
+            </div>
           </div>
         </div>
       </div>
@@ -742,7 +785,7 @@ const getImageUrl = (path: string | null | undefined) => {
                 </Button>
                 <!-- Show warning if there are unsaved date changes -->
                 <p
-                  v-if="isAdmin && !isEditingCreatedAt && !isEditingResolvedAt"
+                  v-if="isAdmin && (hasUnsavedCreatedAt || hasUnsavedResolvedAt)"
                   class="text-[10px] text-center text-muted-foreground mt-2 italic"
                 >
                   * Click Save Changes to apply date modifications
@@ -905,20 +948,65 @@ const getImageUrl = (path: string | null | undefined) => {
                 </div>
 
                 <div v-if="isAdmin" class="space-y-2 border-t pt-4">
+                  <!-- Created At (IT/Admin Only) -->
+                  <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                      <label class="text-[10px] font-black uppercase tracking-wider text-slate-500"
+                        >Created At (วันที่แจ้งงาน)</label
+                      >
+                      <Button
+                        v-if="!isEditingCreatedAt"
+                        variant="ghost"
+                        size="icon"
+                        class="h-5 w-5 hover:bg-slate-100 rounded-full"
+                        @click="isEditingCreatedAt = true"
+                      >
+                        <Pencil class="w-2.5 h-2.5 text-slate-400" />
+                      </Button>
+                    </div>
+
+                    <div
+                      v-if="isEditingCreatedAt"
+                      class="space-y-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200"
+                    >
+                      <DatePicker v-model="createdAtDate" class="w-full text-[10px]" />
+                      <Time24hPicker v-model="createdAtTime" />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        class="w-full h-8 text-[11px] text-primary font-bold hover:bg-primary/5"
+                        @click="isEditingCreatedAt = false"
+                      >
+                        Done
+                      </Button>
+                    </div>
+
+                    <div
+                      v-else
+                      class="text-[11px] font-semibold text-slate-600 bg-slate-50 px-3 py-2.5 rounded-xl border border-slate-100 flex flex-col gap-0.5"
+                    >
+                      <div class="flex items-center gap-2">
+                        <Clock class="w-3.5 h-3.5 text-slate-400" />
+                        <span>{{
+                          localTicket
+                            ? format(new Date(localTicket.createdAt), 'dd MMM yyyy, HH:mm')
+                            : ''
+                        }}</span>
+                      </div>
+                      <div
+                        v-if="hasUnsavedCreatedAt"
+                        class="text-[9px] text-orange-600 font-bold ml-5.5"
+                      >
+                        * Unsaved Changes
+                      </div>
+                    </div>
+                  </div>
+
                   <div class="flex flex-col gap-1.5">
                     <div class="flex items-center justify-between">
                       <label class="text-[10px] font-black uppercase tracking-wider text-slate-500"
                         >Resolved At (วันที่ปิดงาน)</label
                       >
-                      <Button
-                        v-if="localTicket?.resolvedAt && !isEditingResolvedAt"
-                        variant="ghost"
-                        size="icon"
-                        class="h-5 w-5 hover:bg-slate-100 rounded-full"
-                        @click="isEditingResolvedAt = true"
-                      >
-                        <Pencil class="w-2.5 h-2.5 text-slate-400" />
-                      </Button>
                     </div>
 
                     <div
@@ -938,8 +1026,33 @@ const getImageUrl = (path: string | null | undefined) => {
                     </div>
 
                     <div v-else>
+                      <div
+                        v-if="resolvedAtDate"
+                        class="text-[11px] font-semibold text-slate-600 bg-green-50/50 px-3 py-2.5 rounded-xl border border-green-100/50 relative group/date-display"
+                      >
+                        <div class="flex flex-col gap-0.5">
+                          <div class="flex items-center gap-2">
+                            <Clock class="w-3.5 h-3.5 text-green-600" />
+                            <span>{{ displayFormattedResolvedDate }}</span>
+                          </div>
+                          <div
+                            v-if="hasUnsavedResolvedAt"
+                            class="text-[9px] text-orange-600 font-bold ml-5.5"
+                          >
+                            * Unsaved Changes
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          class="h-5 w-5 absolute top-2 right-2 opacity-0 group-hover/date-display:opacity-100 transition-opacity"
+                          @click="isEditingResolvedAt = true"
+                        >
+                          <Pencil class="w-2.5 h-2.5 text-slate-400" />
+                        </Button>
+                      </div>
                       <Button
-                        v-if="!localTicket?.resolvedAt"
+                        v-else
                         variant="outline"
                         size="sm"
                         class="w-full h-9 text-[11px] font-bold border-dashed border-slate-300 text-slate-500 hover:text-primary hover:border-primary transition-all rounded-lg"
@@ -947,13 +1060,6 @@ const getImageUrl = (path: string | null | undefined) => {
                       >
                         Set Resolved Date
                       </Button>
-                      <div
-                        v-else
-                        class="text-[11px] font-semibold text-slate-600 bg-green-50/50 px-3 py-2.5 rounded-xl border border-green-100/50 flex items-center gap-2"
-                      >
-                        <Clock class="w-3.5 h-3.5 text-green-600" />
-                        {{ formatDate(localTicket.resolvedAt) }}
-                      </div>
                     </div>
                   </div>
                 </div>
