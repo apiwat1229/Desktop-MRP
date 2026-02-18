@@ -33,6 +33,7 @@ export class ITTicketsService {
                 ...createDto,
                 ticketNo,
                 requesterId: userId,
+                createdAt: createDto.createdAt ? new Date(createDto.createdAt) : undefined,
             },
             include: {
                 requester: {
@@ -205,9 +206,22 @@ export class ITTicketsService {
             select: { status: true, isAssetRequest: true, assetId: true, quantity: true }
         });
 
+        const data: any = { ...updateDto };
+
+        // Handle Date conversion if strings are passed
+        if (updateDto.createdAt) data.createdAt = new Date(updateDto.createdAt);
+        if (updateDto.resolvedAt) data.resolvedAt = new Date(updateDto.resolvedAt);
+
+        // Auto-set resolvedAt when status changes to 'Resolved' or 'Closed' and it wasn't already resolved
+        if (['Resolved', 'Closed'].includes(updateDto.status) &&
+            !['Resolved', 'Closed'].includes(currentTicket?.status as string) &&
+            !updateDto.resolvedAt) {
+            data.resolvedAt = new Date();
+        }
+
         const ticket = await this.prisma.iTTicket.update({
             where: { id },
-            data: updateDto,
+            data,
             include: { requester: true }
         });
 

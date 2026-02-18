@@ -39,6 +39,10 @@ export class CreateITTicketDto {
 
     @IsOptional()
     isAssetRequest?: boolean;
+
+    @IsOptional()
+    @IsString()
+    createdAt?: string;
 }
 
 export class UpdateITTicketDto {
@@ -91,11 +95,15 @@ export class UpdateITTicketDto {
 
     @IsOptional()
     @IsString()
-    issuedAt?: string;
+    issuedBy?: string;
 
     @IsOptional()
     @IsString()
-    issuedBy?: string;
+    createdAt?: string;
+
+    @IsOptional()
+    @IsString()
+    resolvedAt?: string;
 }
 
 export class CreateTicketCommentDto {

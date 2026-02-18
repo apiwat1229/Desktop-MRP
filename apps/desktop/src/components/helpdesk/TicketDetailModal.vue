@@ -2,6 +2,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import DatePicker from '@/components/ui/date-picker.vue';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import {
@@ -12,11 +13,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import Time24hPicker from '@/components/ui/time-picker/Time24hPicker.vue';
 import { useUsers } from '@/composables/useUsers';
 import { cn, getAvatarUrl } from '@/lib/utils';
 import type { ITTicket, UpdateITTicketDto } from '@/services/it-tickets';
 import { itTicketsApi } from '@/services/it-tickets';
 import { useAuthStore } from '@/stores/auth';
+import { format, formatDistanceToNowStrict, intervalToDuration } from 'date-fns';
 import {
   AlertCircle,
   Check,
@@ -58,6 +61,13 @@ const selectedAssignee = ref('');
 const isDeleteDialogOpen = ref(false);
 const isRejectDialogOpen = ref(false);
 const isEditingTitle = ref(false);
+const isEditingCreatedAt = ref(false);
+const isEditingResolvedAt = ref(false);
+
+const createdAtDate = ref<string | null>(null);
+const createdAtTime = ref('00:00');
+const resolvedAtDate = ref<string | null>(null);
+const resolvedAtTime = ref('00:00');
 
 // Initialize local state when ticket changes
 watch(
@@ -68,6 +78,21 @@ watch(
       selectedStatus.value = newTicket.status;
       selectedPriority.value = newTicket.priority;
       selectedAssignee.value = newTicket.assigneeId || 'unassigned';
+
+      // Initialize dates
+      if (newTicket.createdAt) {
+        const d = new Date(newTicket.createdAt);
+        createdAtDate.value = format(d, 'yyyy-MM-dd');
+        createdAtTime.value = format(d, 'HH:mm');
+      }
+      if (newTicket.resolvedAt) {
+        const d = new Date(newTicket.resolvedAt);
+        resolvedAtDate.value = format(d, 'yyyy-MM-dd');
+        resolvedAtTime.value = format(d, 'HH:mm');
+      } else {
+        resolvedAtDate.value = null;
+        resolvedAtTime.value = '00:00';
+      }
     }
   },
   { immediate: true }
@@ -98,8 +123,6 @@ const getStatusColor = (status: string) => {
       return 'outline';
   }
 };
-
-import { format, formatDistanceToNowStrict, intervalToDuration } from 'date-fns';
 
 const formatDate = (date: string | Date | undefined) => {
   if (!date) return '';
@@ -148,6 +171,37 @@ const saveChanges = async () => {
     const assigneeVal = selectedAssignee.value === 'unassigned' ? null : selectedAssignee.value;
     if (assigneeVal !== localTicket.value.assigneeId) {
       (updateDto as any).assigneeId = assigneeVal;
+      hasChanges = true;
+    }
+
+    // Properly construct and compare dates (preserving local timezone input)
+    const currentCreatedAt = props.ticket?.createdAt
+      ? new Date(props.ticket.createdAt).toISOString()
+      : '';
+    let newCreatedAt = '';
+    if (createdAtDate.value) {
+      const [y, m, d] = createdAtDate.value.split('-').map(Number);
+      const [hh, mm] = createdAtTime.value.split(':').map(Number);
+      newCreatedAt = new Date(y, m - 1, d, hh, mm).toISOString();
+    }
+
+    if (newCreatedAt && newCreatedAt !== currentCreatedAt) {
+      updateDto.createdAt = newCreatedAt;
+      hasChanges = true;
+    }
+
+    const currentResolvedAt = props.ticket?.resolvedAt
+      ? new Date(props.ticket.resolvedAt).toISOString()
+      : '';
+    let newResolvedAt = '';
+    if (resolvedAtDate.value) {
+      const [y, m, d] = resolvedAtDate.value.split('-').map(Number);
+      const [hh, mm] = resolvedAtTime.value.split(':').map(Number);
+      newResolvedAt = new Date(y, m - 1, d, hh, mm).toISOString();
+    }
+
+    if (newResolvedAt && newResolvedAt !== currentResolvedAt) {
+      updateDto.resolvedAt = newResolvedAt;
       hasChanges = true;
     }
 
@@ -201,7 +255,10 @@ const isApprover = computed(() => {
 
 const isEditable = computed(() => {
   if (!localTicket.value) return false;
-  return !['Approved', 'Closed', 'Resolved', 'Cancelled'].includes(localTicket.value.status);
+  return (
+    isAdmin.value ||
+    !['Approved', 'Closed', 'Resolved', 'Cancelled'].includes(localTicket.value.status)
+  );
 });
 
 const startEditingTitle = () => {
@@ -357,9 +414,37 @@ const getImageUrl = (path: string | null | undefined) => {
                 <Pencil class="w-3.5 h-3.5 text-muted-foreground" />
               </Button>
             </DialogTitle>
-            <div class="flex items-center gap-2 text-xs text-muted-foreground pt-1">
-              <Clock class="w-3.5 h-3.5" />
-              <span>Created {{ localTicket ? formatDate(localTicket.createdAt) : '' }}</span>
+            <div class="flex items-center gap-2 text-[10px] text-muted-foreground pt-1.5">
+              <Clock class="w-3 h-3" />
+              <div v-if="!isEditingCreatedAt" class="flex items-center gap-2 group/date">
+                <span class="font-medium"
+                  >Created {{ localTicket ? formatDate(localTicket.createdAt) : '' }}</span
+                >
+                <Button
+                  v-if="isAdmin"
+                  variant="ghost"
+                  size="icon"
+                  class="h-5 w-5 opacity-40 group-hover/date:opacity-100 hover:bg-slate-200 transition-all rounded-full"
+                  @click="isEditingCreatedAt = true"
+                >
+                  <Pencil class="w-2.5 h-2.5" />
+                </Button>
+              </div>
+              <div
+                v-else
+                class="flex items-center gap-2 bg-slate-100/80 p-1.5 rounded-xl border border-slate-200 shadow-sm backdrop-blur-sm"
+              >
+                <DatePicker v-model="createdAtDate" class="h-7 text-[9px] bg-white" />
+                <Time24hPicker v-model="createdAtTime" class="h-7 w-16" />
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  class="h-7 w-7 text-green-600 hover:bg-green-50 rounded-full"
+                  @click="isEditingCreatedAt = false"
+                >
+                  <Check class="w-3.5 h-3.5" />
+                </Button>
+              </div>
             </div>
           </div>
 
@@ -645,6 +730,7 @@ const getImageUrl = (path: string | null | undefined) => {
               <!-- Actions -->
               <div
                 v-if="
+                  isAdmin ||
                   !['Approved', 'Closed', 'Resolved', 'Cancelled'].includes(
                     localTicket?.status || ''
                   )
@@ -654,6 +740,13 @@ const getImageUrl = (path: string | null | undefined) => {
                 <Button @click="saveChanges" :disabled="loading" class="w-full shadow-sm">
                   <Save class="w-4 h-4 mr-2" /> Save Changes
                 </Button>
+                <!-- Show warning if there are unsaved date changes -->
+                <p
+                  v-if="isAdmin && !isEditingCreatedAt && !isEditingResolvedAt"
+                  class="text-[10px] text-center text-muted-foreground mt-2 italic"
+                >
+                  * Click Save Changes to apply date modifications
+                </p>
                 <div class="my-4 border-b bg-border/60"></div>
               </div>
 
@@ -809,6 +902,60 @@ const getImageUrl = (path: string | null | undefined) => {
                       </SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div v-if="isAdmin" class="space-y-2 border-t pt-4">
+                  <div class="flex flex-col gap-1.5">
+                    <div class="flex items-center justify-between">
+                      <label class="text-[10px] font-black uppercase tracking-wider text-slate-500"
+                        >Resolved At (วันที่ปิดงาน)</label
+                      >
+                      <Button
+                        v-if="localTicket?.resolvedAt && !isEditingResolvedAt"
+                        variant="ghost"
+                        size="icon"
+                        class="h-5 w-5 hover:bg-slate-100 rounded-full"
+                        @click="isEditingResolvedAt = true"
+                      >
+                        <Pencil class="w-2.5 h-2.5 text-slate-400" />
+                      </Button>
+                    </div>
+
+                    <div
+                      v-if="isEditingResolvedAt"
+                      class="space-y-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200"
+                    >
+                      <DatePicker v-model="resolvedAtDate" class="w-full text-[10px]" />
+                      <Time24hPicker v-model="resolvedAtTime" />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        class="w-full h-8 text-[11px] text-green-600 font-bold hover:bg-green-50"
+                        @click="isEditingResolvedAt = false"
+                      >
+                        Done
+                      </Button>
+                    </div>
+
+                    <div v-else>
+                      <Button
+                        v-if="!localTicket?.resolvedAt"
+                        variant="outline"
+                        size="sm"
+                        class="w-full h-9 text-[11px] font-bold border-dashed border-slate-300 text-slate-500 hover:text-primary hover:border-primary transition-all rounded-lg"
+                        @click="isEditingResolvedAt = true"
+                      >
+                        Set Resolved Date
+                      </Button>
+                      <div
+                        v-else
+                        class="text-[11px] font-semibold text-slate-600 bg-green-50/50 px-3 py-2.5 rounded-xl border border-green-100/50 flex items-center gap-2"
+                      >
+                        <Clock class="w-3.5 h-3.5 text-green-600" />
+                        {{ formatDate(localTicket.resolvedAt) }}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

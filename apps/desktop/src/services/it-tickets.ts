@@ -37,6 +37,7 @@ export interface ITTicket {
     approverId?: string;
     issuedAt?: string;
     issuedBy?: string;
+    resolvedAt?: string;
     createdAt: string;
     updatedAt: string;
     comments?: TicketComment[];
@@ -69,6 +70,7 @@ export interface CreateITTicketDto {
     quantity?: number;
     expectedDate?: string;
     approverId?: string;
+    createdAt?: string;
 }
 
 export interface UpdateITTicketDto {
@@ -87,6 +89,8 @@ export interface UpdateITTicketDto {
     approverId?: string;
     issuedAt?: string;
     issuedBy?: string;
+    createdAt?: string;
+    resolvedAt?: string;
 }
 
 export const itTicketsApi = {

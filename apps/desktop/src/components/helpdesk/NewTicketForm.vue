@@ -12,6 +12,7 @@ import {
 import Spinner from '@/components/ui/spinner/Spinner.vue';
 import { Textarea } from '@/components/ui/textarea';
 import { itTicketsApi } from '@/services/it-tickets';
+import { useAuthStore } from '@/stores/auth';
 import { Paperclip, Send, Trash2 } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -28,6 +29,15 @@ const emit = defineEmits(['success', 'cancel']);
 const loading = ref(false);
 const attachmentInput = ref<HTMLInputElement | null>(null);
 const attachmentPreview = ref<string | null>(null);
+
+const authStore = useAuthStore();
+const canBackdate = computed(
+  () => authStore.user?.role === 'ADMIN' || authStore.user?.role === 'IT'
+);
+
+const isBackdated = ref(false);
+const backdateDate = ref<string | null>(null);
+const backdateTime = ref('00:00');
 
 const form = ref({
   subject: '',
@@ -125,12 +135,16 @@ const handleSubmit = async () => {
   loading.value = true;
   try {
     // Map form fields to the backend ITTicket model
-    const payload = {
+    const payload: any = {
       title: form.value.subject,
       category: `${form.value.category} > ${form.value.subcategory}${form.value.issueType ? ' > ' + form.value.issueType : ''}`,
       description: form.value.description,
       priority: form.value.priority.charAt(0).toUpperCase() + form.value.priority.slice(1), // capitalize
     };
+
+    if (isBackdated.value && backdateDate.value) {
+      payload.createdAt = `${backdateDate.value}T${backdateTime.value}:00Z`;
+    }
 
     await itTicketsApi.create(payload);
     emit('success');
@@ -309,6 +323,30 @@ const handleSubmit = async () => {
           class="hidden"
           @change="handleFileChange"
         />
+      </div>
+    </div>
+
+    <!-- Backdate Option (IT/Admin Only) -->
+    <div v-if="canBackdate" class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-4">
+      <div class="flex items-center space-x-2">
+        <Checkbox id="backdate" :checked="isBackdated" @update:checked="isBackdated = $event" />
+        <Label for="backdate" class="text-sm font-semibold text-slate-700 cursor-pointer">
+          Backdate Ticket (ย้อนหลังเวลาแจ้งซ่อม)
+        </Label>
+      </div>
+
+      <div
+        v-if="isBackdated"
+        class="grid grid-cols-2 gap-4 animation-in fade-in slide-in-from-top-1 duration-200"
+      >
+        <div class="space-y-2">
+          <Label class="text-[10px] text-slate-500 uppercase font-black font-sans">Date</Label>
+          <DatePicker v-model="backdateDate" class="w-full" />
+        </div>
+        <div class="space-y-2">
+          <Label class="text-[10px] text-slate-500 uppercase font-black font-sans">Time</Label>
+          <Time24hPicker v-model="backdateTime" />
+        </div>
       </div>
     </div>
 
