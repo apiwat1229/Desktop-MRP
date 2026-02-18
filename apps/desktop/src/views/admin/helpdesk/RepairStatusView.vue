@@ -29,7 +29,18 @@ import { itTicketsApi, type ITTicket } from '@/services/it-tickets';
 import { useAuthStore } from '@/stores/auth';
 import { getLocalTimeZone } from '@internationalized/date';
 import { format, formatDistanceToNowStrict, intervalToDuration } from 'date-fns';
-import { CheckCircle2, Clock, Plus, Ticket, TicketPercent } from 'lucide-vue-next';
+import {
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  ListTodo,
+  Plus,
+  RefreshCcw,
+  Ticket,
+  TicketPercent,
+  Timer,
+  Zap,
+} from 'lucide-vue-next';
 import type { DateRange } from 'reka-ui';
 import { computed, inject, onMounted, ref, type Ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -259,6 +270,23 @@ const getPriorityIconStyles = (priority: string) => {
   }
 };
 
+const getCategoryStyles = (category: string) => {
+  const cat = category?.toLowerCase() || '';
+  if (cat.includes('software')) {
+    return 'text-blue-700 bg-blue-50 border-blue-200/60 shadow-[0_1px_2px_rgba(59,130,246,0.05)]';
+  }
+  if (cat.includes('hardware')) {
+    return 'text-slate-700 bg-slate-100 border-slate-200/60 shadow-[0_1px_2px_rgba(71,85,105,0.05)]';
+  }
+  if (cat.includes('network') || cat.includes('internet')) {
+    return 'text-indigo-700 bg-indigo-50 border-indigo-200/60 shadow-[0_1px_2px_rgba(99,102,241,0.05)]';
+  }
+  if (cat.includes('user') || cat.includes('account')) {
+    return 'text-purple-700 bg-purple-50 border-purple-200/60 shadow-[0_1px_2px_rgba(168,85,247,0.05)]';
+  }
+  return 'text-slate-500 bg-slate-50 border-slate-200/60';
+};
+
 onMounted(() => {
   loadTickets();
 });
@@ -271,73 +299,150 @@ onMounted(() => {
       <!-- Statistics Overview (IT Department only) -->
       <template v-if="isITDepartment">
         <!-- Stats Grid -->
-        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-          <Card>
-            <CardContent class="p-3 text-center">
-              <p
-                class="text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wider mb-1"
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          <!-- Total Tickets -->
+          <Card
+            class="group hover:-translate-y-1 hover:shadow-md transition-all duration-300 overflow-hidden border-slate-200/60 shadow-sm bg-white"
+          >
+            <CardContent class="p-4 flex items-center gap-4">
+              <div
+                class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 group-hover:bg-slate-200 transition-colors duration-300"
               >
-                Total Tickets
-              </p>
-              <h4 class="text-xl font-black text-slate-900 tabular-nums">
-                {{ ticketStats.total }}
-              </h4>
+                <ListTodo class="w-6 h-6" />
+              </div>
+              <div class="space-y-0.5">
+                <p
+                  class="text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest leading-none mb-1"
+                >
+                  Total
+                </p>
+                <h4 class="text-2xl font-black text-slate-900 tabular-nums leading-none">
+                  {{ ticketStats.total }}
+                </h4>
+              </div>
             </CardContent>
           </Card>
-          <Card class="border-l-4 border-l-blue-600 overflow-hidden">
-            <CardContent class="p-3 text-center">
-              <p class="text-[0.7rem] font-bold text-blue-600 uppercase tracking-wider mb-1">
-                Open
-              </p>
-              <h4 class="text-xl font-black text-blue-600 tabular-nums">
-                {{ ticketStats.openCount }}
-              </h4>
-            </CardContent>
-          </Card>
-          <Card class="border-l-4 border-l-primary overflow-hidden">
-            <CardContent class="p-3 text-center">
-              <p class="text-[0.7rem] font-bold text-primary uppercase tracking-wider mb-1">
-                In Progress
-              </p>
-              <h4 class="text-xl font-black text-primary tabular-nums">
-                {{ ticketStats.inProgressCount }}
-              </h4>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent class="p-3 text-center bg-green-50/30">
-              <p
-                class="text-[0.7rem] font-bold text-green-600 uppercase tracking-wider mb-1 flex items-center justify-center gap-1"
+
+          <!-- Open Tickets -->
+          <Card
+            class="group hover:-translate-y-1 hover:shadow-md transition-all duration-300 overflow-hidden border-rose-100 shadow-sm bg-white"
+          >
+            <CardContent class="p-4 flex items-center gap-4">
+              <div
+                class="w-12 h-12 rounded-xl bg-rose-50 flex items-center justify-center text-rose-500 group-hover:bg-rose-100 transition-colors duration-300"
               >
-                <CheckCircle2 class="w-3 h-3" /> Resolved
-              </p>
-              <h4 class="text-xl font-black text-green-600 tabular-nums">
-                {{ ticketStats.resolved }}
-              </h4>
+                <AlertCircle class="w-6 h-6" />
+              </div>
+              <div class="space-y-0.5">
+                <p
+                  class="text-[0.65rem] font-bold text-rose-400 uppercase tracking-widest leading-none mb-1"
+                >
+                  Open
+                </p>
+                <h4 class="text-2xl font-black text-rose-600 tabular-nums leading-none">
+                  {{ ticketStats.openCount }}
+                </h4>
+              </div>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent class="p-3 text-center">
-              <p
-                class="text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wider mb-1"
+
+          <!-- In Progress -->
+          <Card
+            class="group hover:-translate-y-1 hover:shadow-md transition-all duration-300 overflow-hidden border-indigo-100 shadow-sm bg-white"
+          >
+            <CardContent class="p-4 flex items-center gap-4">
+              <div
+                class="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-500 group-hover:bg-indigo-100 transition-colors duration-300"
               >
-                Avg Time
-              </p>
-              <h4 class="text-lg font-black text-slate-900 tabular-nums">
-                {{ ticketStats.avgResponse }} hr.
-              </h4>
+                <RefreshCcw class="w-6 h-6" />
+              </div>
+              <div class="space-y-0.5">
+                <p
+                  class="text-[0.65rem] font-bold text-indigo-400 uppercase tracking-widest leading-none mb-1"
+                >
+                  Active
+                </p>
+                <h4 class="text-2xl font-black text-indigo-600 tabular-nums leading-none">
+                  {{ ticketStats.inProgressCount }}
+                </h4>
+              </div>
             </CardContent>
           </Card>
-          <Card class="bg-primary/5 border-primary/20">
-            <CardContent class="p-3 text-center">
-              <p
-                class="text-[0.7rem] font-bold text-primary uppercase tracking-wider mb-1 flex items-center justify-center gap-1"
+
+          <!-- Resolved -->
+          <Card
+            class="group hover:-translate-y-1 hover:shadow-md transition-all duration-300 overflow-hidden border-emerald-100 shadow-sm bg-white"
+          >
+            <CardContent class="p-4 flex items-center gap-4 text-emerald-600">
+              <div
+                class="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-500 group-hover:bg-emerald-100 transition-colors duration-300"
               >
-                <Zap class="w-3 h-3 font-bold" /> Best
-              </p>
-              <h4 class="text-lg font-black text-primary tabular-nums">
-                {{ ticketStats.bestResponse }} hr.
-              </h4>
+                <CheckCircle2 class="w-6 h-6" />
+              </div>
+              <div class="space-y-0.5">
+                <p
+                  class="text-[0.65rem] font-bold text-emerald-400 uppercase tracking-widest leading-none mb-1"
+                >
+                  Resolved
+                </p>
+                <h4 class="text-2xl font-black tabular-nums leading-none">
+                  {{ ticketStats.resolved }}
+                </h4>
+              </div>
+            </CardContent>
+          </Card>
+
+          <!-- Avg Time -->
+          <Card
+            class="group hover:-translate-y-1 hover:shadow-md transition-all duration-300 overflow-hidden border-purple-100 shadow-sm bg-white"
+          >
+            <CardContent class="p-4 flex items-center gap-4">
+              <div
+                class="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center text-purple-500 group-hover:bg-purple-100 transition-colors duration-300"
+              >
+                <Timer class="w-6 h-6" />
+              </div>
+              <div class="space-y-0.5">
+                <p
+                  class="text-[0.65rem] font-bold text-purple-400 uppercase tracking-widest leading-none mb-1"
+                >
+                  Avg Time
+                </p>
+                <div class="flex items-baseline gap-1">
+                  <h4 class="text-2xl font-black text-slate-900 tabular-nums leading-none">
+                    {{ ticketStats.avgResponse }}
+                  </h4>
+                  <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter">
+                    hr.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <!-- Best Time -->
+          <Card
+            class="group hover:-translate-y-1 hover:shadow-md transition-all duration-300 overflow-hidden border-blue-100 shadow-sm bg-white"
+          >
+            <CardContent class="p-4 flex items-center gap-4 text-blue-600">
+              <div
+                class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500 group-hover:bg-blue-100 transition-colors duration-300"
+              >
+                <Zap class="w-6 h-6 fill-blue-500" />
+              </div>
+              <div class="space-y-0.5">
+                <p
+                  class="text-[0.65rem] font-bold text-blue-400 uppercase tracking-widest leading-none mb-1"
+                >
+                  Best
+                </p>
+                <div class="flex items-baseline gap-1">
+                  <h4 class="text-2xl font-black tabular-nums leading-none">
+                    {{ ticketStats.bestResponse }}
+                  </h4>
+                  <p class="text-[10px] font-black text-blue-400 uppercase tracking-tighter">hr.</p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -438,7 +543,8 @@ onMounted(() => {
                   </TableCell>
                   <TableCell class="py-4 text-start">
                     <span
-                      class="text-[10px] font-black uppercase tracking-wider text-slate-400/80 bg-slate-50 border border-slate-100 px-2 py-0.5 rounded shadow-sm"
+                      class="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded border transition-colors"
+                      :class="getCategoryStyles(ticket.category)"
                     >
                       {{ ticket.category }}
                     </span>
