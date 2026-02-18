@@ -2,7 +2,7 @@
 import NewTicketForm from '@/components/helpdesk/NewTicketForm.vue';
 import TicketDetailModal from '@/components/helpdesk/TicketDetailModal.vue';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -26,6 +26,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { itTicketsApi, type ITTicket } from '@/services/it-tickets';
+import { useAuthStore } from '@/stores/auth';
 import { getLocalTimeZone } from '@internationalized/date';
 import { format, formatDistanceToNowStrict, intervalToDuration } from 'date-fns';
 import { CheckCircle2, Clock, Plus, Ticket, TicketPercent } from 'lucide-vue-next';
@@ -35,6 +36,7 @@ import { useI18n } from 'vue-i18n';
 import { toast } from 'vue-sonner';
 
 const { t } = useI18n();
+const authStore = useAuthStore();
 
 // Injected State
 const dateRange = inject<Ref<DateRange>>('helpDeskDateRange');
@@ -55,6 +57,11 @@ const currentPage = ref(1);
 const itemsPerPage = ref(5);
 const pageSizeOptions = [5, 10, 20, 50];
 
+const isITDepartment = computed(() => {
+  const userDept = authStore.user?.department;
+  return userDept === 'Information Technology' || userDept === 'เทคโนโลยีสารสนเทศ (IT)';
+});
+
 // Filter tickets for the selected date range and case-insensitive status checks
 const filteredTickets = computed(() => {
   return repairTickets.value.filter((t) => {
@@ -71,6 +78,61 @@ const filteredTickets = computed(() => {
 
     return ticketDate >= start && ticketDate < end;
   });
+});
+
+const ticketStats = computed(() => {
+  const currentFiltered = filteredTickets.value;
+  if (!currentFiltered.length) {
+    return {
+      total: 0,
+      open: 0,
+      openCount: 0,
+      inProgressCount: 0,
+      avgResponse: '0.00',
+      resolved: 0,
+    };
+  }
+
+  const openCount = currentFiltered.filter((t) => t.status?.toLowerCase() === 'open').length;
+  const inProgressCount = currentFiltered.filter(
+    (t) => t.status?.toLowerCase() === 'in progress'
+  ).length;
+
+  const resolvedTickets = currentFiltered.filter((t) => {
+    const s = t.status?.toLowerCase();
+    const isResolved = s === 'resolved' || s === 'closed' || s === 'approved';
+    return isResolved && t.resolvedAt;
+  });
+
+  let totalResolutionTime = 0;
+  let minTimeMs = Infinity;
+  resolvedTickets.forEach((t) => {
+    if (t.resolvedAt) {
+      const created = new Date(t.createdAt);
+      const resolved = new Date(t.resolvedAt);
+      const diff = resolved.getTime() - created.getTime();
+      if (diff >= 0) {
+        totalResolutionTime += diff;
+        if (diff < minTimeMs) {
+          minTimeMs = diff;
+        }
+      }
+    }
+  });
+
+  const avgTimeMs = resolvedTickets.length ? totalResolutionTime / resolvedTickets.length : 0;
+  const avgTimeHours = (avgTimeMs / (1000 * 60 * 60)).toFixed(2);
+  const bestTimeHours = minTimeMs !== Infinity ? (minTimeMs / (1000 * 60 * 60)).toFixed(2) : '0.00';
+
+  return {
+    total: currentFiltered.length,
+    open: openCount + inProgressCount,
+    openCount,
+    inProgressCount,
+    resolved: resolvedTickets.length,
+    avgResponse: avgTimeHours,
+    bestResponse: bestTimeHours,
+  };
 });
 
 const paginatedTickets = computed(() => {
@@ -205,6 +267,82 @@ onMounted(() => {
 <template>
   <div class="space-y-4">
     <template v-if="tickets.length > 0">
+      <!-- Ticket List -->
+      <!-- Statistics Overview (IT Department only) -->
+      <template v-if="isITDepartment">
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          <Card>
+            <CardContent class="p-3 text-center">
+              <p
+                class="text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wider mb-1"
+              >
+                Total Tickets
+              </p>
+              <h4 class="text-xl font-black text-slate-900 tabular-nums">
+                {{ ticketStats.total }}
+              </h4>
+            </CardContent>
+          </Card>
+          <Card class="border-l-4 border-l-blue-600 overflow-hidden">
+            <CardContent class="p-3 text-center">
+              <p class="text-[0.7rem] font-bold text-blue-600 uppercase tracking-wider mb-1">
+                Open
+              </p>
+              <h4 class="text-xl font-black text-blue-600 tabular-nums">
+                {{ ticketStats.openCount }}
+              </h4>
+            </CardContent>
+          </Card>
+          <Card class="border-l-4 border-l-primary overflow-hidden">
+            <CardContent class="p-3 text-center">
+              <p class="text-[0.7rem] font-bold text-primary uppercase tracking-wider mb-1">
+                In Progress
+              </p>
+              <h4 class="text-xl font-black text-primary tabular-nums">
+                {{ ticketStats.inProgressCount }}
+              </h4>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent class="p-3 text-center bg-green-50/30">
+              <p
+                class="text-[0.7rem] font-bold text-green-600 uppercase tracking-wider mb-1 flex items-center justify-center gap-1"
+              >
+                <CheckCircle2 class="w-3 h-3" /> Resolved
+              </p>
+              <h4 class="text-xl font-black text-green-600 tabular-nums">
+                {{ ticketStats.resolved }}
+              </h4>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent class="p-3 text-center">
+              <p
+                class="text-[0.7rem] font-bold text-muted-foreground uppercase tracking-wider mb-1"
+              >
+                Avg Time
+              </p>
+              <h4 class="text-lg font-black text-slate-900 tabular-nums">
+                {{ ticketStats.avgResponse }} hr.
+              </h4>
+            </CardContent>
+          </Card>
+          <Card class="bg-primary/5 border-primary/20">
+            <CardContent class="p-3 text-center">
+              <p
+                class="text-[0.7rem] font-bold text-primary uppercase tracking-wider mb-1 flex items-center justify-center gap-1"
+              >
+                <Zap class="w-3 h-3 font-bold" /> Best
+              </p>
+              <h4 class="text-lg font-black text-primary tabular-nums">
+                {{ ticketStats.bestResponse }} hr.
+              </h4>
+            </CardContent>
+          </Card>
+        </div>
+      </template>
+
       <!-- Ticket List -->
       <Card>
         <CardHeader class="pb-3 border-b border-muted flex flex-row items-center justify-between">
