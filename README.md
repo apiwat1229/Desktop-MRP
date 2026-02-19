@@ -1,6 +1,6 @@
 # YTRC Portal - Monorepo
 
-A modern desktop application monorepo built with **Electron + Vue 3**, **NestJS**, **Prisma**, and **PostgreSQL**.
+A modern desktop application monorepo built with **Electron + Vue 3**, **Prisma**, and **PostgreSQL**.
 
 The application is designed for the **YTRC Portal Center**, providing a robust system for managing factory operations, including user management, suppliers, bookings, and truck scale operations.
 
@@ -8,13 +8,11 @@ The application is designed for the **YTRC Portal Center**, providing a robust s
 
 ```
 my-app-monorepo/
-├── apps/
-│   ├── desktop/          # Electron + Vue 3 + Vite frontend
-│   └── api/              # NestJS backend API
+├── frontend/             # Electron + Vue 3 + Vite frontend
 ├── packages/
 │   ├── database/         # Prisma schema and migrations
 │   └── types/            # Shared TypeScript types
-└── docker-compose.yml    # PostgreSQL for local development
+└── docker-compose.yml    # PostgreSQL for local development (optional)
 ```
 
 ## 🚀 Key Features
@@ -35,11 +33,7 @@ my-app-monorepo/
 
 ### Backend (API)
 
-- **NestJS**: Scalable server-side application.
-- **Prisma ORM**: Type-safe database access with PostgreSQL.
-- **Role-Based Access Control (RBAC)**: Secure endpoints based on User roles.
-- **User Management**: Creating users, password reset flows, and profile management.
-- **Swagger Documentation**: API endpoints documented automatically.
+> Removed — this repository now contains frontend only. Backend services were moved out.
 
 ## 📋 Prerequisites
 
@@ -112,19 +106,18 @@ This will:
 npm run dev
 ```
 
-This starts both API server and Vite dev server for browser-based development.
+This starts the frontend dev server (Vite) or Electron app depending on the selected script.
 
 **Available Development Commands:**
 
-| Command            | Description           | Use Case                                   |
-| ------------------ | --------------------- | ------------------------------------------ |
-| `npm run dev`      | API + Vite (web mode) | 🌐 **Recommended** for browser development |
-| `npm run dev:web`  | API + Vite (web mode) | 🌐 Same as `npm run dev`                   |
-| `npm run dev:app`  | Electron app only     | 🖥️ Desktop app development                 |
-| `npm run dev:api`  | API server only       | 🔧 Backend development                     |
-| `npm run dev:vite` | Vite dev server only  | 🎨 Frontend development                    |
-| `npm run dev:db`   | PostgreSQL (Docker)   | 🗄️ Start database                          |
-| `npm run kill`     | Kill all dev servers  | 🛑 Stop all running processes              |
+| Command            | Description              | Use Case                           |
+| ------------------ | ------------------------ | ---------------------------------- |
+| `npm run dev`      | Frontend (Vite/Electron) | 🌐 **Recommended** for development |
+| `npm run dev:web`  | Vite dev server only     | 🎨 Frontend development            |
+| `npm run dev:app`  | Electron app only        | 🖥️ Desktop app development         |
+| `npm run dev:vite` | Vite dev server only     | 🎨 Frontend development            |
+| `npm run dev:db`   | PostgreSQL (Docker)      | 🗄️ Start database                  |
+| `npm run kill`     | Kill all dev servers     | 🛑 Stop all running processes      |
 
 **Access Points:**
 
@@ -189,7 +182,7 @@ This starts both API server and Vite dev server for browser-based development.
 ### Build Desktop App
 
 ```bash
-cd apps/desktop
+cd frontend
 
 # Build for current platform
 npm run build
@@ -204,17 +197,13 @@ Output will be in `dist/`.
 
 ### Build API
 
-```bash
-cd apps/api
-npm run build
-npm run start:prod
-```
+> Backend API removed — this repository now contains frontend only.
 
 ## 🗂️ Project Structure
 
 ### Apps
 
-#### `apps/desktop` - Frontend
+#### `frontend` - Frontend
 
 - `src/main/`: Electron main process.
 - `src/preload/`: Context bridge.
@@ -223,12 +212,9 @@ npm run start:prod
   - `views/`: Page components (Login, Home, TruckScale, NotFound, Error).
   - `stores/`: Pinia state management (Auth).
 
-#### `apps/api` - Backend
+#### Backend (Removed)
 
-- `src/auth/`: Authentication logic (Login, Change Password, Guards).
-- `src/users/`: User management.
-- `src/bookings/`: Booking management for truck scale.
-- `src/app.module.ts`: Root module.
+> Removed. API moved out of this repository.
 
 ### Packages
 

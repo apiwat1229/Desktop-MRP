@@ -10,37 +10,23 @@ jobs:
   deploy:
     runs-on: self-hosted
     steps:
-      - name: Deploy Local
+      - uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Build Frontend
         run: |
-          # Navigate to project directory
-          cd /home/admin/Desktop/Desktop-NestJS
-
-          # Pull latest code
-          git checkout package-lock.json apps/desktop/package.json
-          git fetch origin main
-          git reset --hard origin/main
-
-          # Install dependencies
-          npm install
-
-          # Build API
-          echo "Building API..."
-          npm run generate --workspace=packages/database
-          # Use db push to sync schema directly because migration history is messy on server
-          npx prisma db push --schema=packages/database/prisma/schema.prisma --accept-data-loss
-          npm run build:api
-          pm2 restart nestjs-api
-
-          # Build Frontend
           echo "Building Frontend..."
-          npm run build:web --workspace=apps/desktop
-
-          # Update Static Files
+          npm run build:web --workspace=frontend
+      - name: Update Static Files
+        run: |
           echo "Updating Static Files..."
-          # Note: /var/www/ytrc-app/ is writable by admin group
           rm -rf /var/www/ytrc-app/*
-          cp -r apps/desktop/dist/* /var/www/ytrc-app/
-
+          cp -r frontend/dist/* /var/www/ytrc-app/
           echo "Deployment Complete!"
 
   build-windows:
@@ -63,7 +49,7 @@ jobs:
 
       - name: Build Windows App
         run: |
-          cd apps/desktop
+          cd frontend
           npm run build:win
 
       - name: Upload Artifacts
@@ -71,8 +57,8 @@ jobs:
         with:
           name: windows-release
           path: |
-            apps/desktop/release/**/latest.yml
-            apps/desktop/release/**/*.exe
+            frontend/release/**/latest.yml
+            frontend/release/**/*.exe
           if-no-files-found: error
 
   deploy-windows:

@@ -6,7 +6,7 @@ description: Build the Windows application installer (.exe) and prepare for rele
     First, check the current version in `package.json` to ensure it's what you intend to build.
 
     ```bash
-    grep "\"version\":" apps/desktop/package.json
+     grep "\"version\":" frontend/package.json
     ```
 
 2.  **Build Application**
@@ -14,19 +14,19 @@ description: Build the Windows application installer (.exe) and prepare for rele
     // turbo
 
     ```bash
-    cd apps/desktop && npm run build:win
+     cd frontend && npm run build:win
     ```
 
 3.  **Verify Output**
     Confirm the installer and update files were created successfully.
 
     ```bash
-    ls -R apps/desktop/dist/release
+     ls -R frontend/dist/release
     ```
 
 4.  **Deployment Instructions**
     To release this update:
-    1.  Take the files from `apps/desktop/dist/release/<version>/`:
+    1.  Take the files from `frontend/dist/release/<version>/`:
         - `YTRC-Desktop-Windows-<version>-Setup.exe`
         - `latest.yml`
     2.  Upload them to your update server: `https://app.ytrc.co.th/updates`

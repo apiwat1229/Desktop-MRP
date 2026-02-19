@@ -13,9 +13,9 @@ However, subsequent builds should be faster.
 
 ## 2. Changing Version
 
-To release a new version, you must update the `version` field in `apps/desktop/package.json`.
+To release a new version, you must update the `version` field in `frontend/package.json`.
 
-1. Open `apps/desktop/package.json`
+1. Open `frontend/package.json`
 2. Change `"version": "1.0.2"` to your new version (e.g., `"1.0.3"`)
 3. Save the file.
 
