@@ -1,6 +1,6 @@
 # YTRC Portal - Monorepo
 
-A modern desktop application monorepo built with **Electron + Vue 3**, **Prisma**, and **PostgreSQL**.
+A modern desktop application monorepo built with **Electron + Vue 3**.
 
 The application is designed for the **YTRC Portal Center**, providing a robust system for managing factory operations, including user management, suppliers, bookings, and truck scale operations.
 
@@ -10,9 +10,7 @@ The application is designed for the **YTRC Portal Center**, providing a robust s
 my-app-monorepo/
 ├── frontend/             # Electron + Vue 3 + Vite frontend
 ├── packages/
-│   ├── database/         # Prisma schema and migrations
 │   └── types/            # Shared TypeScript types
-└── docker-compose.yml    # PostgreSQL for local development (optional)
 ```
 
 ## 🚀 Key Features
@@ -39,8 +37,6 @@ my-app-monorepo/
 
 - **Node.js**: >= 20.0.0
 - **npm**: >= 10.0.0
-- **Docker** (optional): For local PostgreSQL
-- **PostgreSQL**: If not using Docker
 
 ## 🛠️ Getting Started
 
@@ -59,46 +55,13 @@ Copy the environment template:
 cp .env.example .env
 ```
 
-Edit `.env` and configure your database connection:
+Edit `.env` and configure any frontend environment variables (for example `VITE_API_URL`):
 
 ```env
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/myapp?schema=public"
-API_URL="http://localhost:3000"
-JWT_SECRET="your-secret-key-change-in-production"
+VITE_API_URL="http://localhost:2530"
 ```
 
-### 3. Start PostgreSQL
-
-**Option A: Using Docker (Recommended)**
-
-```bash
-npm run dev:db
-# or
-docker-compose up -d
-```
-
-**Option B: Local PostgreSQL**
-
-Install PostgreSQL locally and create a database named `myapp`.
-
-### 4. Database Setup
-
-Generate Prisma Client and run migrations:
-
-```bash
-cd packages/database
-npx prisma generate
-npx prisma migrate dev
-npx prisma db seed
-```
-
-This will:
-
-- Generate the Prisma Client
-- Create database tables
-- Seed with sample data
-
-### 5. Start Development
+### 3. Start Development
 
 **Quick Start (Recommended for Web Development):**
 
@@ -116,14 +79,12 @@ This starts the frontend dev server (Vite) or Electron app depending on the sele
 | `npm run dev:web`  | Vite dev server only     | 🎨 Frontend development            |
 | `npm run dev:app`  | Electron app only        | 🖥️ Desktop app development         |
 | `npm run dev:vite` | Vite dev server only     | 🎨 Frontend development            |
-| `npm run dev:db`   | PostgreSQL (Docker)      | 🗄️ Start database                  |
 | `npm run kill`     | Kill all dev servers     | 🛑 Stop all running processes      |
 
 **Access Points:**
 
 - **Web App**: http://localhost:5173/
-- **API Server**: http://localhost:2530/api
-- **API Docs (Swagger)**: http://localhost:2530/api/docs
+- **API**: Configure `VITE_API_URL` in `frontend/.env` to point to your API host.
 
 **Development Workflow:**
 
@@ -143,13 +104,7 @@ This starts the frontend dev server (Vite) or Electron app depending on the sele
 
    Electron window will open automatically.
 
-3. **For Backend Only**:
-
-   ```bash
-   npm run dev:api
-   ```
-
-4. **Stop All Servers**:
+3. **Stop All Servers**:
 
    ```bash
    npm run kill
@@ -212,33 +167,19 @@ Output will be in `dist/`.
   - `views/`: Page components (Login, Home, TruckScale, NotFound, Error).
   - `stores/`: Pinia state management (Auth).
 
-#### Backend (Removed)
+#### Backend
 
-> Removed. API moved out of this repository.
+Backend API is maintained in a separate repository.
 
 ### Packages
 
-#### `packages/database`
+#### `packages/types`
 
-- `prisma/schema.prisma`: Database schema definition.
+- Shared TypeScript types used by the frontend.
 
 ## 🛠️ Useful Commands
 
-### Database Management
-
-```bash
-# Open Prisma Studio (Database GUI)
-npm run db:studio
-
-# Generate Prisma Client
-cd packages/database && npx prisma generate
-
-# Create new migration
-cd packages/database && npx prisma migrate dev --name your_migration_name
-
-# Reset database (⚠️ Deletes all data)
-cd packages/database && npx prisma migrate reset
-```
+Use the scripts in `package.json` and the `frontend` workspace to run the dev servers and build artifacts. Database management is handled in the backend repository.
 
 ### Code Quality
 

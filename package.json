@@ -2,7 +2,7 @@
   "name": "my-app-monorepo",
   "version": "1.0.0",
   "private": true,
-  "description": "Monorepo with Nextron (Next.js + Electron), Prisma, and PostgreSQL",
+  "description": "Frontend-focused monorepo (Electron + Vue 3)",
   "workspaces": [
     "frontend",
     "packages/*"
@@ -13,20 +13,17 @@
     "dev:app": "npm run dev:desktop",
     "dev:desktop": "npm run dev --workspace=frontend",
     "dev:vite": "npm run dev:web --workspace=frontend",
-    "dev:db": "docker-compose up -d",
     "dev:fix": "npm run kill:win && rimraf node_modules/.vite frontend/node_modules/.vite* && npm run dev -- --force",
     "kill": "lsof -ti :2530 -ti :5173 | xargs kill -9 2>/dev/null || true",
     "kill:win": "taskkill /F /IM node.exe /T",
     "kill:all": "killall node || true",
-    "db:studio": "npm run studio --workspace=packages/database",
     "build": "npm run build --workspaces",
     "build:desktop": "npm run build --workspace=frontend",
     "build:win": "npm run build:win --workspace=frontend",
     "clean": "rimraf node_modules frontend/node_modules packages/*/node_modules",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
-    "type-check": "tsc --noEmit",
-    "postinstall": "npm run generate --workspace=packages/database"
+    "type-check": "tsc --noEmit"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^6.21.0",
