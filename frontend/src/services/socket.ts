@@ -18,14 +18,17 @@ class SocketService {
             return;
         }
 
-        const apiUrl = process.env.VITE_API_URL || 'https://app.ytrc.co.th';
-        const socketUrl = apiUrl.replace('/api', '');
+        const apiUrl = import.meta.env.VITE_API_URL || '/api';
+        const socketUrl = apiUrl === '/api'
+            ? window.location.origin
+            : apiUrl.replace(/\/?api\/v1$/, '').replace(/\/?api$/, '');
 
 
 
         this.socket = io(socketUrl, {
             transports: ['websocket', 'polling'],
             autoConnect: true,
+            path: '/socket.io/',
             auth: {
                 token: token
             }

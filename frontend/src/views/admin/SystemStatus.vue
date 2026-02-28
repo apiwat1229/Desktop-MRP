@@ -3,17 +3,17 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { notificationsApi } from '@/services/notifications';
 import {
-  Activity,
-  AlertCircle,
-  BarChart3,
-  CheckCircle2,
-  Clock,
-  Database,
-  FileText,
-  RefreshCw,
-  Server,
-  Users,
-  Wifi,
+    Activity,
+    AlertCircle,
+    BarChart3,
+    CheckCircle2,
+    Clock,
+    Database,
+    FileText,
+    RefreshCw,
+    Server,
+    Users,
+    Wifi,
 } from 'lucide-vue-next';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 
@@ -60,7 +60,7 @@ const fetchStatus = async () => {
   let currentStatus: 'ok' | 'error' = 'error';
 
   try {
-    const res = await fetch('https://app.ytrc.co.th/api/health');
+    const res = await fetch('/health');
     const end = performance.now();
     const duration = end - start;
     responseTime.value = duration;

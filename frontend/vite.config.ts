@@ -144,19 +144,24 @@ export default defineConfig(() => {
         '/api': {
           target: 'https://app.ytrc.co.th',
           changeOrigin: true,
-          secure: false,
+          secure: true,
+          rewrite: (path) => path.replace(/^\/api/, '/api/v1'),
+        },
+        '/health': {
+          target: 'https://app.ytrc.co.th',
+          changeOrigin: true,
+          secure: true,
         },
         '/socket.io': {
           target: 'https://app.ytrc.co.th',
           changeOrigin: true,
-          secure: false,
+          secure: true,
           ws: true,
         },
       },
     },
     define: {
       __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
-      'process.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL || ''),
     },
   }
 })

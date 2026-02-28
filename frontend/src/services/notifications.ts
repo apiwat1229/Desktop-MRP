@@ -32,18 +32,18 @@ export const notificationsApi = {
         api.delete('/notifications/broadcast', { data: { ids } }),
 
     // Groups
-    getGroups: () => api.get<NotificationGroupDto[]>('/notifications/groups'),
+    getGroups: () => api.get<NotificationGroupDto[]>('/notification-groups'),
 
     createGroup: (data: CreateNotificationGroupDto) =>
-        api.post<NotificationGroupDto>('/notifications/groups', data),
+        api.post<NotificationGroupDto>('/notification-groups', data),
 
     updateGroup: (id: string, data: Partial<CreateNotificationGroupDto>) =>
-        api.put<NotificationGroupDto>(`/notifications/groups/${id}`, data),
+        api.put<NotificationGroupDto>(`/notification-groups/${id}`, data),
 
-    deleteGroup: (id: string) => api.delete(`/notifications/groups/${id}`),
+    deleteGroup: (id: string) => api.delete(`/notification-groups/${id}`),
 
     // Settings
     getSettings: () => api.get<UpdateNotificationSettingDto[]>('/notifications/settings'),
 
-    updateSetting: (data: UpdateNotificationSettingDto) => api.put('/notifications/settings', data),
+    updateSetting: (data: UpdateNotificationSettingDto) => api.patch('/notifications/settings', data),
 };

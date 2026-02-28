@@ -6,16 +6,11 @@ import { socketService } from './socket';
 let memoryToken: string | null = null;
 
 const getBaseUrl = () => {
-    let url = process.env.VITE_API_URL || 'https://app.ytrc.co.th';
-    // Remove trailing slash if present
-    if (url.endsWith('/')) {
-        url = url.slice(0, -1);
+    const url = import.meta.env.VITE_API_URL;
+    if (url && typeof url === 'string') {
+        return url.endsWith('/') ? url.slice(0, -1) : url;
     }
-    // Append /api if not already present
-    if (!url.endsWith('/api')) {
-        url += '/api';
-    }
-    return url;
+    return '/api';
 };
 
 const baseURL = getBaseUrl();

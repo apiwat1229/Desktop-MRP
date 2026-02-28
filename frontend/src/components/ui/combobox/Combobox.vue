@@ -58,7 +58,7 @@ const handleSelect = (currentValue: string) => {
         <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
       </Button>
     </PopoverTrigger>
-    <PopoverContent class="w-full p-0">
+    <PopoverContent class="w-full p-0" :disableOutsidePointerEvents="false">
       <Command>
         <CommandInput :placeholder="searchPlaceholder || 'Search...'" />
         <CommandEmpty>{{ emptyText || 'No results found.' }}</CommandEmpty>
