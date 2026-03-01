@@ -558,7 +558,12 @@ onMounted(() => {
 
       <!-- Create/Edit Modal -->
       <Dialog v-model:open="isModalOpen">
-        <DialogContent class="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+        <DialogContent
+          v-if="isModalOpen"
+          class="sm:max-w-[700px] max-h-[90vh] overflow-y-auto"
+          @interact-outside="(e) => e.preventDefault()"
+          @pointer-down-outside="(e) => e.preventDefault()"
+        >
           <DialogHeader>
             <DialogTitle>{{
               editingItem ? t('admin.suppliers.edit') : t('admin.suppliers.addNew')

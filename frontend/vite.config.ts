@@ -142,20 +142,19 @@ export default defineConfig(() => {
       allowedHosts: ['app.ytrc.co.th', 'localhost', '122.154.46.21'],
       proxy: {
         '/api': {
-          target: 'https://app.ytrc.co.th',
+          target: 'http://localhost:2530',
           changeOrigin: true,
-          secure: true,
-          rewrite: (path) => path.replace(/^\/api/, '/api/v1'),
+          secure: false,
         },
         '/health': {
-          target: 'https://app.ytrc.co.th',
+          target: 'http://localhost:2530',
           changeOrigin: true,
-          secure: true,
+          secure: false,
         },
         '/socket.io': {
-          target: 'https://app.ytrc.co.th',
+          target: 'http://localhost:2530',
           changeOrigin: true,
-          secure: true,
+          secure: false,
           ws: true,
         },
       },
