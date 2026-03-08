@@ -6,6 +6,15 @@ import { useThemeStore } from './theme';
 
 export const useAuthStore = defineStore('auth', {
     state: () => {
+        const currentApiBaseUrl = (import.meta.env.VITE_API_URL || '/api').toString();
+        const persistedApiBaseUrl = storage.get('apiBaseUrl');
+
+        if (persistedApiBaseUrl !== currentApiBaseUrl) {
+            storage.delete('accessToken');
+            storage.delete('user');
+            storage.set('apiBaseUrl', currentApiBaseUrl);
+        }
+
         const user = storage.get('user') || null;
         const accessToken = storage.get('accessToken') || null;
 
@@ -26,18 +35,28 @@ export const useAuthStore = defineStore('auth', {
             return getAvatarUrl(state.user?.avatar);
         },
         // ... (rest of the getters remain same)
+        isAdmin: (state): boolean => {
+            const role = state.user?.role || '';
+            return ['ADMIN', 'admin', 'Administrator'].includes(role);
+        },
         userPermissions: (state): string[] => {
             return state.user?.permissions || [];
         },
         hasPermission: (state) => (permission: string): boolean => {
+            const role = state.user?.role || '';
+            if (['ADMIN', 'admin', 'Administrator'].includes(role)) return true;
             const permissions = state.user?.permissions || [];
             return permissions.includes(permission);
         },
         hasAnyPermission: (state) => (permissions: string[]): boolean => {
+            const role = state.user?.role || '';
+            if (['ADMIN', 'admin', 'Administrator'].includes(role)) return true;
             const userPermissions = state.user?.permissions || [];
             return permissions.some(p => userPermissions.includes(p));
         },
         hasAllPermissions: (state) => (permissions: string[]): boolean => {
+            const role = state.user?.role || '';
+            if (['ADMIN', 'admin', 'Administrator'].includes(role)) return true;
             const userPermissions = state.user?.permissions || [];
             return permissions.every(p => userPermissions.includes(p));
         },
@@ -51,10 +70,15 @@ export const useAuthStore = defineStore('auth', {
         },
         async login(credentials: any, _rememberMe: boolean = false) {
             try {
-                const response = await api.post('/auth/login', {
-                    email: credentials.email,
-                    password: credentials.password
-                });
+                const identifier = String(credentials.email || '').trim();
+                const loginPayload = {
+                    password: credentials.password,
+                    ...(identifier.includes('@')
+                        ? { email: identifier }
+                        : { username: identifier })
+                };
+
+                const response = await api.post('/auth/login', loginPayload);
 
                 this.accessToken = response.data.accessToken;
                 this.user = response.data.user;
@@ -65,6 +89,7 @@ export const useAuthStore = defineStore('auth', {
                 // Always persist token and user for session persistence across reloads
                 storage.set('accessToken', this.accessToken);
                 storage.set('user', this.user);
+                storage.set('apiBaseUrl', (import.meta.env.VITE_API_URL || '/api').toString());
 
                 // Load preferences
                 const themeStore = useThemeStore();
@@ -99,6 +124,7 @@ export const useAuthStore = defineStore('auth', {
             setAuthToken(null);
             storage.delete('accessToken');
             storage.delete('user');
+            storage.set('apiBaseUrl', (import.meta.env.VITE_API_URL || '/api').toString());
         }
     }
 });

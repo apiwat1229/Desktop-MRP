@@ -303,6 +303,8 @@ const togglePoolGrade = (pool: any, grade: string) => {
 // Mock initial state for a 7-day plan (14 shifts)
 const plan = ref(getDefaultPlan());
 
+const isSubmitting = ref(false);
+
 const fetchNextPlanNo = async () => {
   if (isEditMode.value || isSubmitting.value || plan.value.id || (plan.value as any)._id) return;
   try {
@@ -422,8 +424,6 @@ const handleDateUpdate = (newDate: any) => {
     }
   }
 };
-
-const isSubmitting = ref(false); // Added based on instruction's usage
 
 const handleSave = async () => {
   if (!plan.value.planNo) {

@@ -145,11 +145,7 @@ export default defineConfig(() => {
           target: 'http://localhost:2530',
           changeOrigin: true,
           secure: false,
-        },
-        '/health': {
-          target: 'http://localhost:2530',
-          changeOrigin: true,
-          secure: false,
+          rewrite: (path) => path,
         },
         '/socket.io': {
           target: 'http://localhost:2530',

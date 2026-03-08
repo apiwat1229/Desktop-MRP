@@ -1,0 +1,29 @@
+name: Deploy Production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Deploy Backend (Self-Hosted)
+        run: |
+          # Navigate to project directory (adjust path on runner if needed)
+          cd /home/admin/Desktop/Desktop-NestJS || true
+
+          # Fetch latest code and install deps
+          git fetch origin main
+          git reset --hard origin/main
+          npm install
+
+          # Generate Prisma client and push schema if needed
+          npm run generate --workspace=packages/database || true
+          npx prisma db push --schema=packages/database/prisma/schema.prisma --accept-data-loss || true
+
+          # Build API and restart process manager
+          npm run build:api
+          pm2 restart nestjs-api || pm2 start ecosystem.config.js
+
+          echo "Backend deployment complete"

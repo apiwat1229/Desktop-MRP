@@ -11,18 +11,9 @@
     "build:win": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false WIN_CSC_LINK=undefined vite build && electron-builder --win",
     "build:mac": "vite build && electron-builder --mac",
     "build:linux": "vite build && electron-builder --linux",
-    "preview": "vite preview",
-    "android:sync": "npm run build:web && npx cap sync android",
-    "android:build": "npm run android:sync && cd android && gradlew assembleDebug",
-    "android:build:release": "npm run android:sync && cd android && gradlew assembleRelease",
-    "android:open": "npx cap open android"
+    "preview": "vite preview"
   },
   "dependencies": {
-    "@capacitor/android": "^8.0.1",
-    "@capacitor/app": "^8.0.0",
-    "@capacitor/cli": "^8.0.1",
-    "@capacitor/core": "^8.0.1",
-    "@capacitor/status-bar": "^8.0.0",
     "@internationalized/date": "^3.10.1",
     "@radix-icons/vue": "^1.0.0",
     "@tanstack/vue-table": "^8.21.3",

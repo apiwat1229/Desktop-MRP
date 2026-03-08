@@ -29,7 +29,7 @@ import { Bell, ChevronsUpDown, LogOut, Settings, User as UserIcon } from 'lucide
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 
-const { isMobile } = useSidebar();
+useSidebar();
 const authStore = useAuthStore();
 const router = useRouter();
 
@@ -73,7 +73,7 @@ const handleLogout = () => {
           </DropdownMenuTrigger>
           <DropdownMenuContent
             class="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-            :side="isMobile ? 'bottom' : 'right'"
+            side="right"
             align="end"
             :side-offset="4"
           >

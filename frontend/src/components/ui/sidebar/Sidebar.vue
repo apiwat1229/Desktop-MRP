@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { computed, inject } from 'vue';
 import { SIDEBAR_CONTEXT_KEY } from './utils';
@@ -18,7 +17,7 @@ const props = withDefaults(
   }
 );
 
-const { isMobile, state, openMobile, setOpenMobile } = inject(SIDEBAR_CONTEXT_KEY)!;
+const { state } = inject(SIDEBAR_CONTEXT_KEY)!;
 
 const sidebarState = computed(() => state.value);
 </script>
@@ -32,19 +31,6 @@ const sidebarState = computed(() => state.value);
   >
     <slot />
   </div>
-
-  <Sheet v-else-if="isMobile" :open="openMobile" @update:open="setOpenMobile">
-    <SheetContent
-      data-sidebar="sidebar"
-      data-mobile="true"
-      :side="side"
-      class="w-[--sidebar-width] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden"
-    >
-      <div class="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:border-r">
-        <slot />
-      </div>
-    </SheetContent>
-  </Sheet>
 
   <div
     v-else
