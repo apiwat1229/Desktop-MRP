@@ -15,6 +15,57 @@ import {
 import { computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 
+
+export function useSystemSettingMenu() {
+    const { hasPermission, isAdmin } = usePermissions();
+    const { t } = useI18n();
+
+    const menuGroups = computed(() => [
+        {
+            title: t('admin.sidebar.system'),
+            items: [
+                {
+                    name: t('admin.sidebar.notifications'),
+                    path: '/system/notifications',
+                    icon: Bell,
+                    permission: 'notifications:read',
+                },
+                {
+                    name: t('admin.sidebar.roles'),
+                    path: '/system/roles',
+                    icon: Shield,
+                    permission: 'roles:read',
+                },
+                {
+                    name: t('admin.sidebar.rubberTypes'),
+                    path: '/system/rubber-types',
+                    icon: Layers,
+                    permission: 'rubberTypes:read',
+                },
+                {
+                    name: t('admin.sidebar.suppliers'),
+                    path: '/system/suppliers',
+                    icon: Truck,
+                    permission: 'suppliers:read',
+                },
+                { name: t('admin.systemStatus.title'), path: '/system/system-status', icon: Server },
+                {
+                    name: t('admin.sidebar.users'),
+                    path: '/system/users',
+                    icon: Users,
+                    permission: 'users:read',
+                },
+            ].filter((item) => {
+                if (!('permission' in item) || !item.permission) return true;
+                if (isAdmin.value) return true;
+                return hasPermission(item.permission);
+            }),
+        },
+    ]);
+
+    return { menuGroups };
+}
+
 export function useSidebarMenu() {
     const { hasPermission, isAdmin } = usePermissions();
     const { t } = useI18n();
@@ -116,42 +167,6 @@ export function useSidebarMenu() {
                         { name: 'Asset Request', path: '/admin/it-helpdesk/asset-request' },
                         { name: 'Repair Status', path: '/admin/it-helpdesk/repair-status' },
                     ],
-                },
-            ],
-        },
-        {
-            title: t('admin.sidebar.system'),
-            items: [
-                {
-                    name: t('admin.sidebar.notifications'),
-                    path: '/admin/notifications',
-                    icon: Bell,
-                    permission: 'notifications:read',
-                },
-                {
-                    name: t('admin.sidebar.roles'),
-                    path: '/admin/roles',
-                    icon: Shield,
-                    permission: 'roles:read',
-                },
-                {
-                    name: t('admin.sidebar.rubberTypes'),
-                    path: '/admin/rubber-types',
-                    icon: Layers,
-                    permission: 'rubberTypes:read',
-                },
-                {
-                    name: t('admin.sidebar.suppliers'),
-                    path: '/admin/suppliers',
-                    icon: Truck,
-                    permission: 'suppliers:read',
-                },
-                { name: t('admin.systemStatus.title'), path: '/admin/system-status', icon: Server },
-                {
-                    name: t('admin.sidebar.users'),
-                    path: '/admin/users',
-                    icon: Users,
-                    permission: 'users:read',
                 },
             ],
         },

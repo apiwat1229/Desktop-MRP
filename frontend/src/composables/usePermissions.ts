@@ -46,6 +46,16 @@ export function usePermissions() {
         return permissions.includes('users:read') || permissions.includes('roles:read');
     });
 
+    const isSystemAdmin = computed(() => {
+        const user = authStore.user;
+        const role = user?.role;
+        if (user?.email === 'apiwat.s@ytrc.co.th') return true;
+        if (role === 'ADMIN' || role === 'admin' || role === 'Administrator') return true;
+        if (role === 'IT' || role === 'it') return true;
+        const permissions = authStore.userPermissions;
+        return permissions.includes('users:read') || permissions.includes('roles:read');
+    });
+
     /**
      * Get all user permissions
      */
@@ -56,6 +66,7 @@ export function usePermissions() {
         hasAnyPermission,
         hasAllPermissions,
         isAdmin,
+        isSystemAdmin,
         permissions
     };
 }

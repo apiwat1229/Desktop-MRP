@@ -413,6 +413,47 @@ const routes = [
         name: 'NotFound',
         component: () => import('../views/NotFound.vue'),
     },
+    {
+        path: '/system',
+        component: () => import('@/components/layout/SystemSettingLayout.vue'),
+        meta: { requiresAuth: true, requiresSystemAccess: true },
+        children: [
+            {
+                path: '',
+                redirect: '/system/users',
+            },
+            {
+                path: 'notifications',
+                name: 'SystemNotifications',
+                component: () => import('../views/admin/NotificationsManagement.vue'),
+            },
+            {
+                path: 'roles',
+                name: 'SystemRoles',
+                component: () => import('../views/admin/Roles.vue'),
+            },
+            {
+                path: 'users',
+                name: 'SystemUsers',
+                component: () => import('../views/admin/UsersManagement.vue'),
+            },
+            {
+                path: 'suppliers',
+                name: 'SystemSuppliers',
+                component: () => import('../views/admin/Suppliers.vue'),
+            },
+            {
+                path: 'rubber-types',
+                name: 'SystemRubberTypes',
+                component: () => import('../views/admin/RubberTypes.vue'),
+            },
+            {
+                path: 'system-status',
+                name: 'SystemStatus',
+                component: () => import('../views/admin/SystemStatus.vue'),
+            },
+        ],
+    },
 ];
 
 const router = createRouter({
@@ -426,6 +467,20 @@ router.beforeEach((to, _from, next) => {
 
     if (to.meta.requiresAuth && !isAuthenticated) {
         next('/login');
+    } else if (to.meta.requiresSystemAccess && isAuthenticated) {
+        const role = authStore.user?.role || '';
+        const email = authStore.user?.email || '';
+        const permissions = authStore.userPermissions || [];
+        const allowed =
+            email === 'apiwat.s@ytrc.co.th' ||
+            ['ADMIN', 'admin', 'Administrator', 'IT', 'it'].includes(role) ||
+            permissions.includes('users:read') ||
+            permissions.includes('roles:read');
+        if (!allowed) {
+            next('/');
+        } else {
+            next();
+        }
     } else if (to.meta.requiresGuest && isAuthenticated) {
         next('/');
     } else {

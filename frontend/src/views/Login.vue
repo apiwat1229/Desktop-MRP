@@ -5,7 +5,7 @@ import LoginForm from '@/components/LoginForm.vue';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { storage } from '@/services/storage';
 import { useAuthStore } from '@/stores/auth';
-import { AlertCircle } from 'lucide-vue-next';
+import { AlertCircle, Settings2 } from 'lucide-vue-next';
 import { onMounted, ref } from 'vue';
 import { useI18n } from 'vue-i18n';
 import { useRouter } from 'vue-router';
@@ -16,6 +16,7 @@ const showChangePasswordDialog = ref(false);
 const tempToken = ref('');
 const emailForChange = ref('');
 const loginFormRef = ref<InstanceType<typeof LoginForm> | null>(null);
+const mode = ref<'app' | 'system'>('app');
 
 const { t } = useI18n();
 const authStore = useAuthStore();
@@ -61,6 +62,24 @@ async function handleLogin({
     // Check user status
     if (authStore.user?.status === 'PENDING') {
       router.push('/pending-approval');
+      return;
+    }
+
+    if (mode.value === 'system') {
+      const role = authStore.user?.role || '';
+      const userEmail = authStore.user?.email || '';
+      const permissions = authStore.userPermissions || [];
+      const allowed =
+        userEmail === 'apiwat.s@ytrc.co.th' ||
+        ['ADMIN', 'admin', 'Administrator', 'IT', 'it'].includes(role) ||
+        permissions.includes('users:read') ||
+        permissions.includes('roles:read');
+      if (!allowed) {
+        loginError.value = 'คุณไม่มีสิทธิ์เข้าใช้งาน System Setting';
+        authStore.logout();
+        return;
+      }
+      router.push('/system');
     } else {
       router.push('/');
     }
@@ -113,7 +132,55 @@ function handlePasswordChangeSuccess() {
         <AlertDescription>{{ loginError }}</AlertDescription>
       </Alert>
 
-      <LoginForm ref="loginFormRef" @submit="handleLogin" />
+      <LoginForm ref="loginFormRef" @submit="handleLogin">
+        <template #before-submit>
+          <!-- Mode Toggle -->
+          <div class="flex rounded-lg border border-border bg-muted/40 p-1 gap-1">
+            <button
+              type="button"
+              @click="
+                mode = 'app';
+                loginError = '';
+              "
+              :class="[
+                'flex-1 flex items-center justify-center gap-1.5 rounded-md py-1.5 text-sm font-medium transition-all',
+                mode === 'app'
+                  ? 'bg-background shadow-sm text-foreground'
+                  : 'text-muted-foreground hover:text-foreground',
+              ]"
+            >
+              Application
+            </button>
+            <button
+              type="button"
+              @click="
+                mode = 'system';
+                loginError = '';
+              "
+              :class="[
+                'flex-1 flex items-center justify-center gap-1.5 rounded-md py-1.5 text-sm font-medium transition-all',
+                mode === 'system'
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground',
+              ]"
+            >
+              <Settings2 class="h-3.5 w-3.5" />
+              System Setting
+            </button>
+          </div>
+
+          <!-- System Setting mode notice -->
+          <div
+            v-if="mode === 'system'"
+            class="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2"
+          >
+            <div class="flex items-center gap-2 text-xs text-primary font-medium">
+              <Settings2 class="h-3.5 w-3.5 shrink-0" />
+              <span>สำหรับ IT และ Administrator เท่านั้น</span>
+            </div>
+          </div>
+        </template>
+      </LoginForm>
     </div>
 
     <!-- Change Password Dialog -->

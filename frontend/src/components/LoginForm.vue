@@ -100,6 +100,8 @@ defineExpose({
           </Label>
         </div>
 
+        <slot name="before-submit" />
+
         <Button type="submit" class="w-full" :disabled="loading">
           <span v-if="loading" class="flex items-center gap-2">
             <Spinner class="h-4 w-4" />
