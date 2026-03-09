@@ -572,7 +572,7 @@ const exportToExcel = async () => {
     const footerRow = currentRow + 1;
     worksheet.mergeCells(`A${footerRow}:O${footerRow}`);
     const footerCell = worksheet.getCell(`A${footerRow}`);
-    footerCell.value = `Exported by YTRC CPK System • ${new Date().toLocaleString()}`;
+    footerCell.value = `Exported by YTRC CPK System â€¢ ${new Date().toLocaleString()}`;
     footerCell.font = { italic: true, size: 9, color: { argb: 'FF94A3B8' } };
     footerCell.alignment = { horizontal: 'right' };
 
@@ -696,8 +696,9 @@ onMounted(fetchHistory);
 </script>
 
 <template>
-  <div class="space-y-6">
-    <div class="flex items-center justify-between mb-8">
+  <div class="space-y-4">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-2">
       <div class="flex items-center gap-4">
         <div class="p-3 bg-primary rounded-2xl shadow-lg shadow-primary/20">
           <Calculator :size="24" class="text-white" />
@@ -748,401 +749,748 @@ onMounted(fetchHistory);
       </div>
     </div>
 
-    <div class="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
-      <!-- Left: History -->
-      <Card
-        class="lg:col-span-3 border-2 border-slate-100 shadow-none overflow-hidden flex flex-col h-[320px]"
-      >
-        <div
-          class="px-4 py-2 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between"
+    <!-- Tabs -->
+    <Tabs default-value="analysis" class="w-full">
+      <TabsList class="h-11 bg-slate-100/80 p-1 rounded-xl mb-5 inline-flex gap-1">
+        <TabsTrigger
+          value="analysis"
+          class="flex items-center gap-2 px-5 h-9 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm"
         >
-          <div class="flex items-center gap-2">
-            <History :size="14" class="text-slate-400" />
-            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500"
-              >History</span
-            >
-          </div>
-          <div class="relative">
-            <Search :size="11" class="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input
-              v-model="searchQuery"
-              class="w-24 h-6 pl-6 pr-2 bg-white border border-slate-200 rounded-lg text-[9px] font-bold focus:w-32 transition-all outline-none"
-              placeholder="Search..."
-            />
-          </div>
-        </div>
-        <CardContent class="p-0 overflow-y-auto flex-1">
-          <div v-if="isLoadingHistory" class="p-8 flex flex-col items-center justify-center gap-2">
-            <Loader2 class="animate-spin text-slate-300" :size="24" />
-            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
-              >Loading...</span
-            >
-          </div>
-          <div v-else-if="filteredHistory.length === 0" class="p-8 text-center">
-            <p
-              class="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed"
-            >
-              {{ searchQuery ? 'No results found' : 'No history found' }}
-            </p>
-          </div>
-          <div v-else class="divide-y divide-slate-100">
+          <Calculator :size="14" />
+          Analysis
+        </TabsTrigger>
+        <TabsTrigger
+          value="charts"
+          class="flex items-center gap-2 px-5 h-9 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm"
+        >
+          <LineChart :size="14" />
+          Charts
+          <span
+            v-if="results"
+            class="ml-1 w-1.5 h-1.5 bg-primary rounded-full animate-pulse"
+          ></span>
+        </TabsTrigger>
+        <TabsTrigger
+          value="history"
+          class="flex items-center gap-2 px-5 h-9 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm"
+        >
+          <History :size="14" />
+          History
+          <span
+            v-if="savedAnalyses.length > 0"
+            class="ml-1 px-1.5 py-0.5 bg-slate-200 text-slate-600 rounded-full text-[9px] font-black"
+            >{{ savedAnalyses.length }}</span
+          >
+        </TabsTrigger>
+      </TabsList>
+
+      <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Tab: Analysis â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+      <TabsContent value="analysis" class="mt-0">
+        <div class="space-y-6">
+          <!-- Data Input -->
+          <Card class="border-2 border-slate-100 shadow-none overflow-hidden">
             <div
-              v-for="item in filteredHistory"
-              :key="item.id"
-              class="p-2 hover:bg-slate-50 transition-colors cursor-pointer group relative"
-              @click="loadAnalysis(item.id)"
+              class="px-3 py-3 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between"
             >
-              <div class="flex flex-col gap-0.5 pr-6">
-                <span class="text-[10px] font-bold text-slate-700 truncate">{{ item.title }}</span>
-                <span class="text-[8px] font-medium text-slate-400">{{
-                  new Date(item.createdAt).toLocaleDateString()
+              <div class="flex items-center gap-1.5 overflow-hidden">
+                <FileSpreadsheet :size="14" class="text-slate-400 shrink-0" />
+                <span
+                  class="text-[10px] font-black uppercase tracking-widest text-slate-500 truncate"
+                  >Data Input</span
+                >
+                <Badge
+                  v-if="dataPointCount > 0"
+                  variant="secondary"
+                  class="ml-2 bg-primary/10 text-primary border-none text-[9px] font-black hover:bg-primary/20 transition-colors"
+                >
+                  {{ dataPointCount }} pts
+                </Badge>
+                <button
+                  v-if="dataInput.trim() !== ''"
+                  @click="clearDataInput"
+                  class="ml-2 p-1 text-slate-400 hover:text-red-500 transition-colors"
+                  title="Clear data"
+                >
+                  <XCircle :size="12" />
+                </button>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-[9px] font-black text-slate-400 uppercase">LSL</span>
+                  <input
+                    v-model.number="lsl"
+                    type="number"
+                    class="w-12 h-6 bg-white border border-slate-200 rounded text-xs font-black text-center focus:border-primary focus:ring-0 transition-colors"
+                  />
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="text-[9px] font-black text-slate-400 uppercase">USL</span>
+                  <input
+                    v-model.number="usl"
+                    type="number"
+                    class="w-12 h-6 bg-white border border-slate-200 rounded text-xs font-black text-center focus:border-primary focus:ring-0 transition-colors"
+                  />
+                </div>
+                <div class="flex items-center gap-1">
+                  <span class="text-[9px] font-black text-slate-400 uppercase">Size</span>
+                  <input
+                    v-model.number="subgroupSize"
+                    type="number"
+                    class="w-10 h-6 bg-white border border-slate-200 rounded text-xs font-black text-center focus:border-primary focus:ring-0 transition-colors"
+                  />
+                </div>
+              </div>
+            </div>
+            <CardContent class="p-0">
+              <div class="grid grid-cols-1 lg:grid-cols-[1fr,300px]">
+                <textarea
+                  v-model="dataInput"
+                  class="w-full h-[160px] p-4 text-xs font-medium text-slate-600 bg-white border-none focus:ring-0 transition-all resize-none leading-relaxed"
+                  placeholder="Paste your numerical data here..."
+                ></textarea>
+                <div
+                  class="p-3 border-t lg:border-t-0 lg:border-l border-dashed border-slate-100 bg-slate-50/30"
+                >
+                  <textarea
+                    v-model="analysisNote"
+                    class="w-full h-full min-h-[120px] p-2 text-[10px] font-medium text-slate-500 bg-white border border-slate-200 rounded-lg focus:border-primary/30 focus:ring-0 transition-all resize-none"
+                    placeholder="Add additional notes or comments here..."
+                  ></textarea>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <!-- CPK Statistics (same layout as Charts tab) -->
+          <Card ref="statsRef" class="border-2 border-slate-100 shadow-none overflow-hidden">
+            <div class="px-4 py-3 bg-slate-50/50 border-b border-slate-100 flex items-center gap-2">
+              <Calculator :size="14" class="text-slate-400" />
+              <span class="text-[10px] font-black uppercase tracking-widest text-slate-500"
+                >CPK Statistics</span
+              >
+              <div
+                v-if="analysisTitle"
+                class="ml-auto px-2 py-0.5 bg-primary/5 rounded border border-primary/10 max-w-[200px]"
+              >
+                <span class="text-[9px] font-black text-primary truncate block uppercase">{{
+                  analysisTitle
                 }}</span>
               </div>
-              <button
-                @click.stop="deleteAnalysis(item.id)"
-                class="absolute right-1 top-1/2 -translate-y-1/2 p-1 opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 text-slate-400 rounded transition-all"
+            </div>
+            <CardContent class="p-0 overflow-hidden bg-white">
+              <div
+                v-if="results"
+                class="grid grid-cols-[120px,1fr,140px] divide-x divide-slate-100"
               >
-                <Trash2 :size="10" />
-              </button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+                <!-- Within Stats -->
+                <div class="p-4 flex flex-col items-center justify-center">
+                  <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
+                    Within
+                  </h4>
+                  <div class="w-full space-y-3">
+                    <div class="flex justify-between items-center">
+                      <span class="text-[11px] font-bold text-slate-600">StDev</span>
+                      <span class="text-[11px] font-black text-slate-900 tabular-nums">{{
+                        results.stdevWithin.toFixed(3)
+                      }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-[11px] font-bold text-slate-600">Cp</span>
+                      <span class="text-xs font-black text-primary tabular-nums">{{
+                        results.cp.toFixed(2)
+                      }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-[11px] font-bold text-slate-600">Cpk</span>
+                      <span
+                        class="text-xs font-black tabular-nums"
+                        :class="results.cpk < 1.33 ? 'text-orange-500' : 'text-primary'"
+                        >{{ results.cpk.toFixed(2) }}</span
+                      >
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-[11px] font-bold text-slate-600">PPM</span>
+                      <span class="text-[11px] font-black text-slate-900 tabular-nums">{{
+                        results.ppmWithin.toFixed(2)
+                      }}</span>
+                    </div>
+                  </div>
+                </div>
+                <!-- Center Bars -->
+                <div class="p-5 flex flex-col justify-center bg-slate-50/30">
+                  <div class="space-y-6">
+                    <div class="space-y-2">
+                      <div
+                        class="flex justify-between text-[10px] font-black uppercase tracking-wider"
+                      >
+                        <span class="text-primary">Within (Cpk)</span>
+                        <span class="text-slate-900">{{ results.cpk.toFixed(2) }}</span>
+                      </div>
+                      <div class="relative h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          class="absolute h-full bg-primary/20 rounded-full transition-all duration-700 ease-out"
+                          :style="{ width: `${Math.min((results.cpk / 2) * 100, 100)}%` }"
+                        ></div>
+                        <div
+                          class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-0.5 bg-primary rounded-full"
+                        ></div>
+                      </div>
+                    </div>
+                    <div class="space-y-2">
+                      <div
+                        class="flex justify-between text-[10px] font-black uppercase tracking-wider"
+                      >
+                        <span class="text-orange-600">Overall (Ppk)</span>
+                        <span class="text-slate-900">{{ results.ppk.toFixed(2) }}</span>
+                      </div>
+                      <div class="relative h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          class="absolute h-full bg-orange-600/20 rounded-full transition-all duration-700 ease-out"
+                          :style="{ width: `${Math.min((results.ppk / 2) * 100, 100)}%` }"
+                        ></div>
+                        <div
+                          class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[55%] h-0.5 bg-orange-600 rounded-full"
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="mt-6 pt-4 border-t border-slate-100 grid grid-cols-2 gap-3">
+                    <div class="bg-white rounded-lg p-2 border border-slate-100 text-center">
+                      <div class="text-[9px] font-black text-slate-400 uppercase tracking-wider">
+                        Mean
+                      </div>
+                      <div class="text-sm font-black text-slate-900 tabular-nums mt-0.5">
+                        {{ results.mean.toFixed(3) }}
+                      </div>
+                    </div>
+                    <div class="bg-white rounded-lg p-2 border border-slate-100 text-center">
+                      <div class="text-[9px] font-black text-slate-400 uppercase tracking-wider">
+                        N pts
+                      </div>
+                      <div class="text-sm font-black text-slate-900 tabular-nums mt-0.5">
+                        {{ results.dataPointsCount }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <!-- Overall Stats -->
+                <div class="p-4 flex flex-col items-center justify-center">
+                  <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
+                    Overall
+                  </h4>
+                  <div class="w-full space-y-3">
+                    <div class="flex justify-between items-center">
+                      <span class="text-[11px] font-bold text-slate-600">StDev</span>
+                      <span class="text-[11px] font-black text-slate-900 tabular-nums">{{
+                        results.stdevOverall.toFixed(3)
+                      }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-[11px] font-bold text-slate-600">Pp</span>
+                      <span class="text-xs font-black text-orange-600 tabular-nums">{{
+                        results.pp.toFixed(2)
+                      }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-[11px] font-bold text-slate-600">Ppk</span>
+                      <span
+                        class="text-xs font-black tabular-nums"
+                        :class="results.ppk < 1.33 ? 'text-orange-500' : 'text-orange-600'"
+                        >{{ results.ppk.toFixed(2) }}</span
+                      >
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-[11px] font-bold text-slate-600">Cpm</span>
+                      <span class="text-xs font-black text-orange-600 tabular-nums">{{
+                        results.cpm.toFixed(2)
+                      }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-[11px] font-bold text-slate-600">PPM</span>
+                      <span class="text-[11px] font-black text-slate-900 tabular-nums">{{
+                        results.ppmOverall.toFixed(2)
+                      }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- Empty State -->
+              <div
+                v-else
+                class="flex flex-col items-center justify-center text-slate-400 bg-slate-50/10 p-10"
+              >
+                <div class="p-4 bg-white rounded-2xl mb-4 border border-slate-100 shadow-sm">
+                  <Calculator :size="24" class="text-primary/30" />
+                </div>
+                <h3 class="font-bold text-slate-900 text-[10px] uppercase tracking-widest">
+                  No Analysis Data
+                </h3>
+                <p class="text-[9px] mt-1 text-slate-400 text-center max-w-[160px] font-medium">
+                  Input data or select from history to view results
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
-      <!-- Middle: Inputs -->
-      <Card
-        class="lg:col-span-4 border-2 border-slate-100 shadow-none overflow-hidden flex flex-col h-[320px]"
-      >
-        <div
-          class="px-3 py-3 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between"
-        >
-          <div class="flex items-center gap-1.5 overflow-hidden">
-            <FileSpreadsheet :size="14" class="text-slate-400 shrink-0" />
-            <span class="text-[10px] font-black uppercase tracking-widest text-slate-500 truncate"
-              >Data Input</span
+          <!-- Charts Grid -->
+          <div v-if="results" class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <Card
+              ref="xbarCardRef"
+              class="border-2 border-slate-100 shadow-none overflow-hidden h-[340px]"
             >
-            <Badge
-              v-if="dataPointCount > 0"
-              variant="secondary"
-              class="ml-2 bg-primary/10 text-primary border-none text-[9px] font-black hover:bg-primary/20 transition-colors"
+              <div
+                class="px-4 py-2 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between"
+              >
+                <div class="flex items-center gap-2">
+                  <LineChart :size="14" class="text-slate-400" />
+                  <span class="text-[10px] font-black uppercase tracking-widest text-slate-500"
+                    >Xbar Chart</span
+                  >
+                </div>
+                <div class="flex gap-4 text-[9px] font-bold">
+                  <span class="text-red-500">UCL: {{ results.xbarUCL.toFixed(3) }}</span>
+                  <span class="text-primary">CL: {{ results.avgMean.toFixed(3) }}</span>
+                  <span class="text-red-500">LCL: {{ results.xbarLCL.toFixed(3) }}</span>
+                </div>
+              </div>
+              <ApexChart
+                type="line"
+                height="285"
+                :options="xbarChartOptions"
+                :series="[
+                  { name: 'Mean', data: results.subgroupData.map((d) => d.mean) },
+                  { name: 'UCL', data: results.subgroupData.map(() => results?.xbarUCL) },
+                  { name: 'LCL', data: results.subgroupData.map(() => results?.xbarLCL) },
+                  { name: 'CL', data: results.subgroupData.map(() => results?.avgMean) },
+                ]"
+              />
+            </Card>
+
+            <Card
+              ref="histogramCardRef"
+              class="border-2 border-slate-100 shadow-none overflow-hidden h-[340px]"
             >
-              {{ dataPointCount }} Item
-            </Badge>
-            <button
-              v-if="dataInput.trim() !== ''"
-              @click="clearDataInput"
-              class="ml-2 p-1 text-slate-400 hover:text-red-500 transition-colors"
-              title="Clear data"
-            >
-              <XCircle :size="12" />
-            </button>
+              <div
+                class="px-4 py-2 bg-slate-50/50 border-b border-slate-100 flex items-center gap-2"
+              >
+                <BarChart3 :size="14" class="text-slate-400" />
+                <span class="text-[10px] font-black uppercase tracking-widest text-slate-500"
+                  >Distribution Histogram</span
+                >
+              </div>
+              <ApexChart
+                type="line"
+                height="285"
+                :options="histogramChartOptions"
+                :series="[
+                  { name: 'Data', type: 'column', data: results.histogramData },
+                  { name: 'Overall', type: 'line', data: results.overallCurve },
+                  { name: 'Within', type: 'line', data: results.withinCurve },
+                ]"
+              />
+            </Card>
           </div>
-          <div class="flex items-center gap-3">
-            <div class="flex items-center gap-1.5">
-              <span class="text-[9px] font-black text-slate-400 uppercase">LSL</span>
-              <input
-                v-model.number="lsl"
-                type="number"
-                class="w-12 h-6 bg-white border border-slate-200 rounded text-xs font-black text-center focus:border-primary focus:ring-0 transition-colors"
-              />
-            </div>
-            <div class="flex items-center gap-1.5">
-              <span class="text-[9px] font-black text-slate-400 uppercase">USL</span>
-              <input
-                v-model.number="usl"
-                type="number"
-                class="w-12 h-6 bg-white border border-slate-200 rounded text-xs font-black text-center focus:border-primary focus:ring-0 transition-colors"
-              />
-            </div>
-            <div class="flex items-center gap-1">
-              <span class="text-[9px] font-black text-slate-400 uppercase">Size</span>
-              <input
-                v-model.number="subgroupSize"
-                type="number"
-                class="w-10 h-6 bg-white border border-slate-200 rounded text-xs font-black text-center focus:border-primary focus:ring-0 transition-colors"
-              />
-            </div>
+
+          <!-- No data charts empty state -->
+          <div v-else class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <Card
+              class="border-2 border-slate-100 border-dashed shadow-none bg-slate-50/10 h-[340px] flex flex-col items-center justify-center group/card transition-all duration-500"
+            >
+              <div
+                class="p-6 bg-white rounded-3xl border border-slate-100 shadow-sm mb-4 group-hover/card:scale-110 group-hover/card:border-primary/20 transition-all duration-500"
+              >
+                <LineChart
+                  :size="32"
+                  class="text-slate-300 group-hover/card:text-primary/30 transition-colors duration-500"
+                />
+              </div>
+              <h3
+                class="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover/card:text-slate-600 transition-colors"
+              >
+                Xbar Chart
+              </h3>
+              <p class="text-[9px] text-slate-400 mt-2 font-medium">
+                Input data to see control limits
+              </p>
+            </Card>
+
+            <Card
+              class="border-2 border-slate-100 border-dashed shadow-none bg-slate-50/10 h-[340px] flex flex-col items-center justify-center group/card transition-all duration-500"
+            >
+              <div
+                class="p-6 bg-white rounded-3xl border border-slate-100 shadow-sm mb-4 group-hover/card:scale-110 group-hover/card:border-primary/20 transition-all duration-500"
+              >
+                <BarChart3
+                  :size="32"
+                  class="text-slate-300 group-hover/card:text-primary/30 transition-colors duration-500"
+                />
+              </div>
+              <h3
+                class="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover/card:text-slate-600 transition-colors"
+              >
+                Distribution Histogram
+              </h3>
+              <p class="text-[9px] text-slate-400 mt-2 font-medium">
+                Process capability visualization
+              </p>
+            </Card>
           </div>
         </div>
-        <CardContent class="p-0 flex-1">
-          <textarea
-            v-model="dataInput"
-            class="w-full h-[180px] p-4 text-xs font-medium text-slate-600 bg-white border-none focus:ring-0 transition-all resize-none leading-relaxed"
-            placeholder="Paste your numerical data here..."
-          ></textarea>
-          <div class="p-3 border-t border-dashed border-slate-100 bg-slate-50/30">
-            <textarea
-              v-model="analysisNote"
-              class="w-full h-16 p-2 text-[10px] font-medium text-slate-500 bg-white border border-slate-200 rounded-lg focus:border-primary/30 focus:ring-0 transition-all resize-none"
-              placeholder="Add additional notes or comments here..."
-            ></textarea>
-          </div>
-        </CardContent>
-      </Card>
+      </TabsContent>
+      <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Tab: Charts â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+      <TabsContent value="charts" class="mt-0">
+        <div v-if="results" class="space-y-6">
+          <!-- CPK Statistics Summary Bar -->
+          <Card class="border-2 border-slate-100 shadow-none overflow-hidden">
+            <div class="px-4 py-3 bg-slate-50/50 border-b border-slate-100 flex items-center gap-2">
+              <Calculator :size="14" class="text-slate-400" />
+              <span class="text-[10px] font-black uppercase tracking-widest text-slate-500"
+                >CPK Statistics</span
+              >
+              <div
+                v-if="analysisTitle"
+                class="ml-auto px-2 py-0.5 bg-primary/5 rounded border border-primary/10 max-w-[200px]"
+              >
+                <span class="text-[9px] font-black text-primary truncate block uppercase">{{
+                  analysisTitle
+                }}</span>
+              </div>
+            </div>
+            <CardContent class="p-0 overflow-hidden bg-white">
+              <div class="grid grid-cols-[120px,1fr,140px] divide-x divide-slate-100">
+                <!-- Within Stats -->
+                <div class="p-4 flex flex-col items-center justify-center">
+                  <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
+                    Within
+                  </h4>
+                  <div class="w-full space-y-3">
+                    <div class="flex justify-between items-center">
+                      <span class="text-[11px] font-bold text-slate-600">StDev</span>
+                      <span class="text-[11px] font-black text-slate-900 tabular-nums">{{
+                        results.stdevWithin.toFixed(3)
+                      }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-[11px] font-bold text-slate-600">Cp</span>
+                      <span class="text-xs font-black text-primary tabular-nums">{{
+                        results.cp.toFixed(2)
+                      }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-[11px] font-bold text-slate-600">Cpk</span>
+                      <span
+                        class="text-xs font-black tabular-nums"
+                        :class="results.cpk < 1.33 ? 'text-orange-500' : 'text-primary'"
+                        >{{ results.cpk.toFixed(2) }}</span
+                      >
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-[11px] font-bold text-slate-600">PPM</span>
+                      <span class="text-[11px] font-black text-slate-900 tabular-nums">{{
+                        results.ppmWithin.toFixed(2)
+                      }}</span>
+                    </div>
+                  </div>
+                </div>
 
-      <!-- Right: Results / Empty State -->
-      <Card
-        ref="statsRef"
-        class="lg:col-span-5 border-2 border-slate-100 shadow-none overflow-hidden flex flex-col h-[320px]"
-      >
-        <div class="px-4 py-3 bg-slate-50/50 border-b border-slate-100 flex items-center gap-2">
-          <Calculator :size="14" class="text-slate-400" />
-          <span class="text-[10px] font-black uppercase tracking-widest text-slate-500"
-            >CPK Statistics</span
-          >
-          <div
-            v-if="analysisTitle"
-            class="ml-auto px-2 py-0.5 bg-primary/5 rounded border border-primary/10 max-w-[150px]"
-          >
-            <span class="text-[9px] font-black text-primary truncate block uppercase">
-              {{ analysisTitle }}
-            </span>
+                <!-- Center Bars -->
+                <div class="p-5 flex flex-col justify-center bg-slate-50/30">
+                  <div class="space-y-6">
+                    <div class="space-y-2">
+                      <div
+                        class="flex justify-between text-[10px] font-black uppercase tracking-wider"
+                      >
+                        <span class="text-primary">Within (Cpk)</span>
+                        <span class="text-slate-900">{{ results.cpk.toFixed(2) }}</span>
+                      </div>
+                      <div class="relative h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          class="absolute h-full bg-primary/20 rounded-full transition-all duration-700 ease-out"
+                          :style="{ width: `${Math.min((results.cpk / 2) * 100, 100)}%` }"
+                        ></div>
+                        <div
+                          class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-0.5 bg-primary rounded-full"
+                        ></div>
+                      </div>
+                    </div>
+                    <div class="space-y-2">
+                      <div
+                        class="flex justify-between text-[10px] font-black uppercase tracking-wider"
+                      >
+                        <span class="text-orange-600">Overall (Ppk)</span>
+                        <span class="text-slate-900">{{ results.ppk.toFixed(2) }}</span>
+                      </div>
+                      <div class="relative h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          class="absolute h-full bg-orange-600/20 rounded-full transition-all duration-700 ease-out"
+                          :style="{ width: `${Math.min((results.ppk / 2) * 100, 100)}%` }"
+                        ></div>
+                        <div
+                          class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[55%] h-0.5 bg-orange-600 rounded-full"
+                        ></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="mt-6 pt-4 border-t border-slate-100 grid grid-cols-2 gap-3">
+                    <div class="bg-white rounded-lg p-2 border border-slate-100 text-center">
+                      <div class="text-[9px] font-black text-slate-400 uppercase tracking-wider">
+                        Mean
+                      </div>
+                      <div class="text-sm font-black text-slate-900 tabular-nums mt-0.5">
+                        {{ results.mean.toFixed(3) }}
+                      </div>
+                    </div>
+                    <div class="bg-white rounded-lg p-2 border border-slate-100 text-center">
+                      <div class="text-[9px] font-black text-slate-400 uppercase tracking-wider">
+                        N pts
+                      </div>
+                      <div class="text-sm font-black text-slate-900 tabular-nums mt-0.5">
+                        {{ results.dataPointsCount }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Overall Stats -->
+                <div class="p-4 flex flex-col items-center justify-center">
+                  <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
+                    Overall
+                  </h4>
+                  <div class="w-full space-y-3">
+                    <div class="flex justify-between items-center">
+                      <span class="text-[11px] font-bold text-slate-600">StDev</span>
+                      <span class="text-[11px] font-black text-slate-900 tabular-nums">{{
+                        results.stdevOverall.toFixed(3)
+                      }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-[11px] font-bold text-slate-600">Pp</span>
+                      <span class="text-xs font-black text-orange-600 tabular-nums">{{
+                        results.pp.toFixed(2)
+                      }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-[11px] font-bold text-slate-600">Ppk</span>
+                      <span
+                        class="text-xs font-black tabular-nums"
+                        :class="results.ppk < 1.33 ? 'text-orange-500' : 'text-orange-600'"
+                        >{{ results.ppk.toFixed(2) }}</span
+                      >
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-[11px] font-bold text-slate-600">Cpm</span>
+                      <span class="text-xs font-black text-orange-600 tabular-nums">{{
+                        results.cpm.toFixed(2)
+                      }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                      <span class="text-[11px] font-bold text-slate-600">PPM</span>
+                      <span class="text-[11px] font-black text-slate-900 tabular-nums">{{
+                        results.ppmOverall.toFixed(2)
+                      }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <!-- Charts Grid -->
+          <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <Card
+              ref="xbarCardRef"
+              class="border-2 border-slate-100 shadow-none overflow-hidden h-[340px]"
+            >
+              <div
+                class="px-4 py-2 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between"
+              >
+                <div class="flex items-center gap-2">
+                  <LineChart :size="14" class="text-slate-400" />
+                  <span class="text-[10px] font-black uppercase tracking-widest text-slate-500"
+                    >Xbar Chart</span
+                  >
+                </div>
+                <div class="flex gap-4 text-[9px] font-bold">
+                  <span class="text-red-500">UCL: {{ results.xbarUCL.toFixed(3) }}</span>
+                  <span class="text-primary">CL: {{ results.avgMean.toFixed(3) }}</span>
+                  <span class="text-red-500">LCL: {{ results.xbarLCL.toFixed(3) }}</span>
+                </div>
+              </div>
+              <ApexChart
+                type="line"
+                height="285"
+                :options="xbarChartOptions"
+                :series="[
+                  { name: 'Mean', data: results.subgroupData.map((d) => d.mean) },
+                  { name: 'UCL', data: results.subgroupData.map(() => results?.xbarUCL) },
+                  { name: 'LCL', data: results.subgroupData.map(() => results?.xbarLCL) },
+                  { name: 'CL', data: results.subgroupData.map(() => results?.avgMean) },
+                ]"
+              />
+            </Card>
+
+            <Card
+              ref="histogramCardRef"
+              class="border-2 border-slate-100 shadow-none overflow-hidden h-[340px]"
+            >
+              <div
+                class="px-4 py-2 bg-slate-50/50 border-b border-slate-100 flex items-center gap-2"
+              >
+                <BarChart3 :size="14" class="text-slate-400" />
+                <span class="text-[10px] font-black uppercase tracking-widest text-slate-500"
+                  >Distribution Histogram</span
+                >
+              </div>
+              <ApexChart
+                type="line"
+                height="285"
+                :options="histogramChartOptions"
+                :series="[
+                  { name: 'Data', type: 'column', data: results.histogramData },
+                  { name: 'Overall', type: 'line', data: results.overallCurve },
+                  { name: 'Within', type: 'line', data: results.withinCurve },
+                ]"
+              />
+            </Card>
           </div>
         </div>
 
-        <CardContent class="p-0 flex-1 overflow-hidden bg-white">
-          <div v-if="results" class="h-full flex flex-col">
-            <!-- Content Grid -->
-            <div class="grid grid-cols-[120px,1fr,120px] divide-x divide-slate-100 flex-1">
-              <!-- Within Stats -->
-              <div class="p-4 flex flex-col items-center justify-center">
-                <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
-                  Within
-                </h4>
-                <div class="w-full space-y-3">
-                  <div class="flex justify-between items-center group">
-                    <span class="text-[11px] font-bold text-slate-600">StDev</span>
-                    <span class="text-[11px] font-black text-slate-900 tabular-nums">{{
-                      results.stdevWithin.toFixed(3)
-                    }}</span>
-                  </div>
-                  <div class="flex justify-between items-center group">
-                    <span class="text-[11px] font-bold text-slate-600">Cp</span>
-                    <span class="text-xs font-black text-primary tabular-nums">{{
-                      results.cp.toFixed(2)
-                    }}</span>
-                  </div>
-                  <div class="flex justify-between items-center group">
-                    <span class="text-[11px] font-bold text-slate-600">Cpk</span>
-                    <span
-                      class="text-xs font-black tabular-nums"
-                      :class="results.cpk < 1.33 ? 'text-orange-500' : 'text-primary'"
-                    >
-                      {{ results.cpk.toFixed(2) }}
-                    </span>
-                  </div>
-                  <div class="flex justify-between items-center group">
-                    <span class="text-[11px] font-bold text-slate-600">PPM</span>
-                    <span class="text-[11px] font-black text-slate-900 tabular-nums">{{
-                      results.ppmWithin.toFixed(2)
-                    }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Center Visuals -->
-              <div class="p-5 flex flex-col justify-center bg-slate-50/30">
-                <div class="space-y-6">
-                  <!-- Within -->
-                  <div class="space-y-2">
-                    <div
-                      class="flex justify-between text-[10px] font-black uppercase tracking-wider"
-                    >
-                      <span class="text-primary">Within (Cpk)</span>
-                      <span class="text-slate-900">{{ results.cpk.toFixed(2) }}</span>
-                    </div>
-                    <div class="relative h-2 bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        class="absolute h-full bg-primary/20 rounded-full transition-all duration-700 ease-out"
-                        :style="{ width: `${Math.min((results.cpk / 2) * 100, 100)}%` }"
-                      ></div>
-                      <div
-                        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%] h-0.5 bg-primary rounded-full"
-                      ></div>
-                    </div>
-                  </div>
-
-                  <!-- Overall -->
-                  <div class="space-y-2">
-                    <div
-                      class="flex justify-between text-[10px] font-black uppercase tracking-wider"
-                    >
-                      <span class="text-orange-600">Overall (Ppk)</span>
-                      <span class="text-slate-900">{{ results.ppk.toFixed(2) }}</span>
-                    </div>
-                    <div class="relative h-2 bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        class="absolute h-full bg-orange-600/20 rounded-full transition-all duration-700 ease-out"
-                        :style="{ width: `${Math.min((results.ppk / 2) * 100, 100)}%` }"
-                      ></div>
-                      <div
-                        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[55%] h-0.5 bg-orange-600 rounded-full"
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Overall Stats -->
-              <div class="p-4 flex flex-col items-center justify-center">
-                <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">
-                  Overall
-                </h4>
-                <div class="w-full space-y-3">
-                  <div class="flex justify-between items-center group">
-                    <span class="text-[11px] font-bold text-slate-600">StDev</span>
-                    <span class="text-[11px] font-black text-slate-900 tabular-nums">{{
-                      results.stdevOverall.toFixed(3)
-                    }}</span>
-                  </div>
-                  <div class="flex justify-between items-center group">
-                    <span class="text-[11px] font-bold text-slate-600">Pp</span>
-                    <span class="text-xs font-black text-orange-600 tabular-nums">{{
-                      results.pp.toFixed(2)
-                    }}</span>
-                  </div>
-                  <div class="flex justify-between items-center group">
-                    <span class="text-[11px] font-bold text-slate-600">Ppk</span>
-                    <span
-                      class="text-xs font-black tabular-nums"
-                      :class="results.ppk < 1.33 ? 'text-orange-500' : 'text-orange-600'"
-                    >
-                      {{ results.ppk.toFixed(2) }}
-                    </span>
-                  </div>
-                  <div class="flex justify-between items-center group">
-                    <span class="text-[11px] font-bold text-slate-600">Cpm</span>
-                    <span class="text-xs font-black text-orange-600 tabular-nums">{{
-                      results.cpm.toFixed(2)
-                    }}</span>
-                  </div>
-                  <div class="flex justify-between items-center group">
-                    <span class="text-[11px] font-bold text-slate-600">PPM</span>
-                    <span class="text-[11px] font-black text-slate-900 tabular-nums">{{
-                      results.ppmOverall.toFixed(2)
-                    }}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Empty State -->
-          <div
-            v-else
-            class="h-full flex flex-col items-center justify-center text-slate-400 bg-slate-50/10 p-6"
+        <!-- No data empty state -->
+        <div v-else class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <Card
+            class="border-2 border-slate-100 border-dashed shadow-none bg-slate-50/10 h-[340px] flex flex-col items-center justify-center group/card transition-all duration-500"
           >
-            <div class="p-4 bg-white rounded-2xl mb-4 border border-slate-100 group shadow-sm">
-              <Calculator
-                :size="24"
-                class="text-primary/30 group-hover:text-primary transition-colors duration-500"
+            <div
+              class="p-6 bg-white rounded-3xl border border-slate-100 shadow-sm mb-4 group-hover/card:scale-110 group-hover/card:border-primary/20 transition-all duration-500"
+            >
+              <LineChart
+                :size="32"
+                class="text-slate-300 group-hover/card:text-primary/30 transition-colors duration-500"
               />
             </div>
-            <h3 class="font-bold text-slate-900 text-[10px] uppercase tracking-widest">
-              No analysis data
+            <h3
+              class="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover/card:text-slate-600 transition-colors"
+            >
+              Xbar Chart
             </h3>
-            <p class="text-[9px] mt-1 text-slate-400 text-center max-w-[160px] font-medium">
-              Input data or select from history to view results
+            <p class="text-[9px] text-slate-400 mt-2 font-medium">
+              Input data to see control limits
             </p>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+          </Card>
 
-    <!-- CPK Analysis Dashboard -->
-    <div v-if="results" class="grid grid-cols-1 xl:grid-cols-2 gap-8 mt-8">
-      <!-- Row 1: Xbar and CPK Histogram -->
-      <Card
-        ref="xbarCardRef"
-        class="border-2 border-slate-100 shadow-none overflow-hidden h-[300px]"
-      >
-        <div
-          class="px-4 py-2 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between"
-        >
-          <span class="text-[10px] font-black uppercase tracking-widest text-slate-500"
-            >Xbar Chart</span
+          <Card
+            class="border-2 border-slate-100 border-dashed shadow-none bg-slate-50/10 h-[340px] flex flex-col items-center justify-center group/card transition-all duration-500"
           >
-          <div class="flex gap-4 text-[9px] font-bold">
-            <span class="text-red-500">UCL: {{ results.xbarUCL.toFixed(3) }}</span>
-            <span class="text-primary">CL: {{ results.avgMean.toFixed(3) }}</span>
-            <span class="text-red-500">LCL: {{ results.xbarLCL.toFixed(3) }}</span>
-          </div>
+            <div
+              class="p-6 bg-white rounded-3xl border border-slate-100 shadow-sm mb-4 group-hover/card:scale-110 group-hover/card:border-primary/20 transition-all duration-500"
+            >
+              <BarChart3
+                :size="32"
+                class="text-slate-300 group-hover/card:text-primary/30 transition-colors duration-500"
+              />
+            </div>
+            <h3
+              class="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover/card:text-slate-600 transition-colors"
+            >
+              Distribution Histogram
+            </h3>
+            <p class="text-[9px] text-slate-400 mt-2 font-medium">
+              Process capability visualization
+            </p>
+          </Card>
         </div>
-        <ApexChart
-          type="line"
-          height="250"
-          :options="xbarChartOptions"
-          :series="[
-            { name: 'Mean', data: results.subgroupData.map((d) => d.mean) },
-            { name: 'UCL', data: results.subgroupData.map(() => results?.xbarUCL) },
-            { name: 'LCL', data: results.subgroupData.map(() => results?.xbarLCL) },
-            { name: 'CL', data: results.subgroupData.map(() => results?.avgMean) },
-          ]"
-        />
-      </Card>
+      </TabsContent>
 
-      <Card
-        ref="histogramCardRef"
-        class="border-2 border-slate-100 shadow-none overflow-hidden h-[300px]"
-      >
-        <div class="px-4 py-2 bg-slate-50/50 border-b border-slate-100">
-          <span class="text-[10px] font-black uppercase tracking-widest text-slate-500"
-            >CPK Histogram</span
+      <!-- â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Tab: History â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+      <TabsContent value="history" class="mt-0">
+        <Card class="border-2 border-slate-100 shadow-none overflow-hidden">
+          <div
+            class="px-4 py-3 bg-slate-50/50 border-b border-slate-100 flex items-center justify-between"
           >
-        </div>
-        <ApexChart
-          type="line"
-          height="250"
-          :options="histogramChartOptions"
-          :series="[
-            { name: 'Data', type: 'column', data: results.histogramData },
-            { name: 'Overall', type: 'line', data: results.overallCurve },
-            { name: 'Within', type: 'line', data: results.withinCurve },
-          ]"
-        />
-      </Card>
-    </div>
+            <div class="flex items-center gap-2">
+              <History :size="14" class="text-slate-400" />
+              <span class="text-[10px] font-black uppercase tracking-widest text-slate-500"
+                >Saved Analyses</span
+              >
+              <span
+                v-if="savedAnalyses.length > 0"
+                class="px-2 py-0.5 bg-primary/10 text-primary rounded-full text-[9px] font-black"
+                >{{ savedAnalyses.length }}</span
+              >
+            </div>
+            <div class="relative">
+              <Search
+                :size="12"
+                class="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+              <input
+                v-model="searchQuery"
+                class="w-52 h-8 pl-7 pr-3 bg-white border border-slate-200 rounded-lg text-[10px] font-bold focus:border-primary focus:ring-0 transition-all outline-none"
+                placeholder="Search history..."
+              />
+            </div>
+          </div>
+          <CardContent class="p-0">
+            <div
+              v-if="isLoadingHistory"
+              class="py-16 flex flex-col items-center justify-center gap-3"
+            >
+              <Loader2 class="animate-spin text-slate-300" :size="28" />
+              <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest"
+                >Loading...</span
+              >
+            </div>
+            <div v-else-if="filteredHistory.length === 0" class="py-16 text-center">
+              <History :size="28" class="mx-auto text-slate-200 mb-3" />
+              <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                {{ searchQuery ? 'No results found' : 'No saved analyses' }}
+              </p>
+            </div>
+            <div v-else class="divide-y divide-slate-100">
+              <div
+                v-for="item in filteredHistory"
+                :key="item.id"
+                class="flex items-center gap-4 px-4 py-3 hover:bg-slate-50 transition-colors cursor-pointer group"
+                @click="loadAnalysis(item.id)"
+              >
+                <div
+                  class="p-2 bg-primary/5 rounded-lg group-hover:bg-primary/10 transition-colors"
+                >
+                  <Calculator
+                    :size="14"
+                    class="text-primary/50 group-hover:text-primary transition-colors"
+                  />
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-xs font-bold text-slate-700 truncate">{{ item.title }}</p>
+                  <p class="text-[9px] font-medium text-slate-400 mt-0.5">
+                    {{ new Date(item.createdAt).toLocaleString() }}
+                  </p>
+                </div>
+                <div class="flex items-center gap-3 shrink-0">
+                  <div class="text-right hidden sm:block">
+                    <div class="text-[9px] font-black text-slate-400 uppercase">LSL / USL</div>
+                    <div class="text-[10px] font-black text-slate-600">
+                      {{ item.lsl ?? '-' }} / {{ item.usl ?? '-' }}
+                    </div>
+                    <div class="text-[9px] font-medium text-slate-400 mt-0.5">
+                      Size: {{ item.subgroupSize ?? '-' }}
+                    </div>
+                  </div>
+                  <button
+                    @click.stop="deleteAnalysis(item.id)"
+                    class="p-1.5 opacity-0 group-hover:opacity-100 hover:bg-red-50 hover:text-red-500 text-slate-400 rounded-lg transition-all"
+                  >
+                    <Trash2 :size="13" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+    </Tabs>
 
-    <!-- Empty State Placeholder Grid -->
-    <div v-else class="grid grid-cols-1 xl:grid-cols-2 gap-8 mt-8">
-      <Card
-        class="border-2 border-slate-100 border-dashed shadow-none bg-slate-50/10 h-[300px] flex flex-col items-center justify-center group/card transition-all duration-500"
-      >
-        <div
-          class="p-6 bg-white rounded-3xl border border-slate-100 shadow-sm mb-4 group-hover/card:scale-110 group-hover/card:border-primary/20 transition-all duration-500"
-        >
-          <LineChart
-            :size="32"
-            class="text-slate-300 group-hover/card:text-primary/30 transition-colors duration-500"
-          />
-        </div>
-        <h3
-          class="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover/card:text-slate-600 transition-colors"
-        >
-          Xbar Chart
-        </h3>
-        <p class="text-[9px] text-slate-400 mt-2 font-medium">Input data to see control limits</p>
-      </Card>
-
-      <Card
-        class="border-2 border-slate-100 border-dashed shadow-none bg-slate-50/10 h-[300px] flex flex-col items-center justify-center group/card transition-all duration-500"
-      >
-        <div
-          class="p-6 bg-white rounded-3xl border border-slate-100 shadow-sm mb-4 group-hover/card:scale-110 group-hover/card:border-primary/20 transition-all duration-500"
-        >
-          <BarChart3
-            :size="32"
-            class="text-slate-300 group-hover/card:text-primary/30 transition-colors duration-500"
-          />
-        </div>
-        <h3
-          class="text-[10px] font-black uppercase tracking-widest text-slate-400 group-hover/card:text-slate-600 transition-colors"
-        >
-          Distribution Histogram
-        </h3>
-        <p class="text-[9px] text-slate-400 mt-2 font-medium">Process capability visualization</p>
-      </Card>
-    </div>
     <!-- Delete Confirmation Dialog -->
     <AlertDialog v-model:open="isDeleteDialogOpen">
       <AlertDialogContent>

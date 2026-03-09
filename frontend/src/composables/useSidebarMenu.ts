@@ -115,7 +115,6 @@ export function useSidebarMenu() {
                         },
                         { name: t('qa.tabs.cpkAnalysis'), path: '/admin/qa/cpk-analysis' },
                         { name: t('qa.tabs.jobOrder'), path: '/admin/qa/job-order-list' },
-                        { name: t('qa.tabs.jobOrder'), path: '/admin/qa/job-order-list' },
                         {
                             name: t('qa.tabs.shippingPlan'),
                             path: '/admin/qa/shipping-plan-list',
