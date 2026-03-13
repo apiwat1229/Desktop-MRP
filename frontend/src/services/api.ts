@@ -5,10 +5,19 @@ import { socketService } from './socket';
 
 let memoryToken: string | null = null;
 
+const normalizeBaseUrl = (url: string) => {
+    return url.endsWith('/') ? url.slice(0, -1) : url;
+};
+
 const getBaseUrl = () => {
+    const runtimeUrl = storage.get('apiBaseUrl');
+    if (runtimeUrl && typeof runtimeUrl === 'string') {
+        return normalizeBaseUrl(runtimeUrl);
+    }
+
     const url = import.meta.env.VITE_API_URL;
     if (url && typeof url === 'string') {
-        return url.endsWith('/') ? url.slice(0, -1) : url;
+        return normalizeBaseUrl(url);
     }
     return '/api';
 };
@@ -51,6 +60,13 @@ export const setAuthToken = (token: string | null) => {
         delete api.defaults.headers.common['Authorization'];
         socketService.disconnect();
     }
+};
+
+export const setApiBaseUrl = (baseUrl: string) => {
+    const normalizedBaseUrl = normalizeBaseUrl(baseUrl);
+    storage.set('apiBaseUrl', normalizedBaseUrl);
+    api.defaults.baseURL = normalizedBaseUrl;
+    socketService.disconnect();
 };
 
 api.interceptors.response.use(

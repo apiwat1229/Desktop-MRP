@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Spinner from '@/components/ui/spinner/Spinner.vue';
+import { storage } from '@/services/storage';
 import { Eye, EyeOff } from 'lucide-vue-next';
 import { ref } from 'vue';
 import { useI18n } from 'vue-i18n';
@@ -13,20 +14,28 @@ import { useI18n } from 'vue-i18n';
 const { t } = useI18n();
 
 const emit = defineEmits<{
-  submit: [{ email: string; password: string; rememberMe: boolean }];
+  submit: [{ email: string; password: string; rememberMe: boolean; backendUrl: string }];
 }>();
 
 const email = ref('');
 const password = ref('');
 const rememberMe = ref(false);
+const initialBackend = (storage.get('apiBaseUrl') || import.meta.env.VITE_API_URL || '/api').toString();
+const selectedBackend = ref(initialBackend === 'https://app.ytrc.co.th/api' ? '/api' : initialBackend);
 const showPassword = ref(false);
 const loading = ref(false);
+
+const backendOptions = [
+  { label: 'Production (app.ytrc.co.th)', value: '/api' },
+  { label: 'Staging (app.ytrc.co.th:2531)', value: '/api-staging' },
+];
 
 const handleSubmit = () => {
   emit('submit', {
     email: email.value,
     password: password.value,
     rememberMe: rememberMe.value,
+    backendUrl: selectedBackend.value,
   });
 };
 
@@ -98,6 +107,19 @@ defineExpose({
           <Label for="remember" class="text-sm font-normal cursor-pointer select-none">
             {{ t('auth.rememberMe') }}
           </Label>
+        </div>
+
+        <div class="grid gap-2">
+          <Label for="backend">Backend Environment</Label>
+          <select
+            id="backend"
+            v-model="selectedBackend"
+            class="h-9 rounded-md border border-input bg-background px-3 text-sm ring-offset-background"
+          >
+            <option v-for="option in backendOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
+          </select>
         </div>
 
         <slot name="before-submit" />

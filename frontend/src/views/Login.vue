@@ -3,6 +3,7 @@ import ChangePasswordDialog from '@/components/auth/ChangePasswordDialog.vue';
 import WindowControls from '@/components/layout/WindowControls.vue';
 import LoginForm from '@/components/LoginForm.vue';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { setApiBaseUrl } from '@/services/api';
 import { storage } from '@/services/storage';
 import { useAuthStore } from '@/stores/auth';
 import { AlertCircle, Settings2 } from 'lucide-vue-next';
@@ -37,10 +38,12 @@ async function handleLogin({
   email,
   password,
   rememberMe,
+  backendUrl,
 }: {
   email: string;
   password: string;
   rememberMe: boolean;
+  backendUrl: string;
 }) {
   if (loginFormRef.value) {
     loginFormRef.value.setLoading(true);
@@ -48,7 +51,10 @@ async function handleLogin({
   loginError.value = '';
 
   try {
-    await authStore.login({ email, password }, rememberMe);
+    const selectedBackend = backendUrl.trim() || (import.meta.env.VITE_API_URL || '/api').toString();
+    setApiBaseUrl(selectedBackend);
+
+    await authStore.login({ email, password }, rememberMe, selectedBackend);
 
     // Handle Remember Me
     if (rememberMe) {
@@ -101,7 +107,11 @@ async function handleLogin({
     }
 
     // Handle other errors
-    loginError.value = err.response?.data?.message || err.message || t('auth.loginFailed');
+    loginError.value =
+      err.response?.data?.message ||
+      err.response?.data?.detail ||
+      err.message ||
+      t('auth.loginFailed');
   } finally {
     if (loginFormRef.value) {
       loginFormRef.value.setLoading(false);
@@ -121,7 +131,17 @@ function handlePasswordChangeSuccess() {
     class="relative min-h-svh w-full flex items-center justify-center p-6 md:p-10 app-drag-region overflow-hidden"
   >
     <!-- Top Bar for Frameless Window -->
-    <div class="absolute top-0 right-0 p-2 z-50 app-no-drag">
+    <div class="absolute top-0 right-0 p-2 z-50 app-no-drag flex items-center gap-3">
+      <button
+        type="button"
+        class="text-xs underline text-muted-foreground hover:text-foreground transition-colors"
+        @click="
+          mode = mode === 'system' ? 'app' : 'system';
+          loginError = '';
+        "
+      >
+        {{ mode === 'system' ? 'Login Application' : 'System Setting Login' }}
+      </button>
       <WindowControls />
     </div>
 
@@ -132,55 +152,17 @@ function handlePasswordChangeSuccess() {
         <AlertDescription>{{ loginError }}</AlertDescription>
       </Alert>
 
-      <LoginForm ref="loginFormRef" @submit="handleLogin">
-        <template #before-submit>
-          <!-- Mode Toggle -->
-          <div class="flex rounded-lg border border-border bg-muted/40 p-1 gap-1">
-            <button
-              type="button"
-              @click="
-                mode = 'app';
-                loginError = '';
-              "
-              :class="[
-                'flex-1 flex items-center justify-center gap-1.5 rounded-md py-1.5 text-sm font-medium transition-all',
-                mode === 'app'
-                  ? 'bg-background shadow-sm text-foreground'
-                  : 'text-muted-foreground hover:text-foreground',
-              ]"
-            >
-              Application
-            </button>
-            <button
-              type="button"
-              @click="
-                mode = 'system';
-                loginError = '';
-              "
-              :class="[
-                'flex-1 flex items-center justify-center gap-1.5 rounded-md py-1.5 text-sm font-medium transition-all',
-                mode === 'system'
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground',
-              ]"
-            >
-              <Settings2 class="h-3.5 w-3.5" />
-              System Setting
-            </button>
-          </div>
+      <div
+        v-if="mode === 'system'"
+        class="mb-3 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2"
+      >
+        <div class="flex items-center gap-2 text-xs text-primary font-medium">
+          <Settings2 class="h-3.5 w-3.5 shrink-0" />
+          <span>กำลังเข้าสู่ระบบแบบ System Setting (เฉพาะ IT/Admin)</span>
+        </div>
+      </div>
 
-          <!-- System Setting mode notice -->
-          <div
-            v-if="mode === 'system'"
-            class="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2"
-          >
-            <div class="flex items-center gap-2 text-xs text-primary font-medium">
-              <Settings2 class="h-3.5 w-3.5 shrink-0" />
-              <span>สำหรับ IT และ Administrator เท่านั้น</span>
-            </div>
-          </div>
-        </template>
-      </LoginForm>
+      <LoginForm ref="loginFormRef" @submit="handleLogin" />
     </div>
 
     <!-- Change Password Dialog -->

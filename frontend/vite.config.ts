@@ -141,17 +141,33 @@ export default defineConfig(() => {
       port: 5173,
       allowedHosts: ['app.ytrc.co.th', 'localhost', '122.154.46.21'],
       proxy: {
-        '/api': {
-          target: 'http://localhost:2530',
-          changeOrigin: true,
-          secure: false,
-          rewrite: (path) => path,
-        },
-        '/socket.io': {
-          target: 'http://localhost:2530',
+        '/api/socket.io': {
+          target: 'https://app.ytrc.co.th',
           changeOrigin: true,
           secure: false,
           ws: true,
+          rewrite: (path) => path.replace(/^\/api/, ''),
+        },
+        '/api': {
+          target: 'https://app.ytrc.co.th',
+          changeOrigin: true,
+          secure: false,
+          ws: true,
+          rewrite: (path) => path,
+        },
+        '/api-staging/socket.io': {
+          target: 'http://app.ytrc.co.th:2531',
+          changeOrigin: true,
+          secure: false,
+          ws: true,
+          rewrite: (path) => path.replace(/^\/api-staging/, ''),
+        },
+        '/api-staging': {
+          target: 'http://app.ytrc.co.th:2531',
+          changeOrigin: true,
+          secure: false,
+          ws: true,
+          rewrite: (path) => path.replace(/^\/api-staging/, '/api'),
         },
       },
     },

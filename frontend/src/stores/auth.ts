@@ -6,14 +6,15 @@ import { useThemeStore } from './theme';
 
 export const useAuthStore = defineStore('auth', {
     state: () => {
-        const currentApiBaseUrl = (import.meta.env.VITE_API_URL || '/api').toString();
-        const persistedApiBaseUrl = storage.get('apiBaseUrl');
+        const selectedApiBaseUrl = (storage.get('apiBaseUrl') || import.meta.env.VITE_API_URL || '/api').toString();
+        const persistedAuthApiBaseUrl = storage.get('authApiBaseUrl');
 
-        if (persistedApiBaseUrl !== currentApiBaseUrl) {
+        if (persistedAuthApiBaseUrl && persistedAuthApiBaseUrl !== selectedApiBaseUrl) {
             storage.delete('accessToken');
             storage.delete('user');
-            storage.set('apiBaseUrl', currentApiBaseUrl);
         }
+
+        storage.set('authApiBaseUrl', selectedApiBaseUrl);
 
         const user = storage.get('user') || null;
         const accessToken = storage.get('accessToken') || null;
@@ -68,7 +69,7 @@ export const useAuthStore = defineStore('auth', {
         clearTempToken() {
             this.tempToken = null;
         },
-        async login(credentials: any, _rememberMe: boolean = false) {
+        async login(credentials: any, _rememberMe: boolean = false, backendUrl?: string) {
             try {
                 const identifier = String(credentials.email || '').trim();
                 const loginPayload = {
@@ -77,8 +78,11 @@ export const useAuthStore = defineStore('auth', {
                         ? { email: identifier }
                         : { username: identifier })
                 };
+                const selectedBaseUrl = (backendUrl || storage.get('apiBaseUrl') || import.meta.env.VITE_API_URL || '/api').toString();
 
-                const response = await api.post('/auth/login', loginPayload);
+                const response = await api.post('/auth/login', loginPayload, {
+                    baseURL: selectedBaseUrl,
+                });
 
                 this.accessToken = response.data.accessToken;
                 this.user = response.data.user;
@@ -89,7 +93,7 @@ export const useAuthStore = defineStore('auth', {
                 // Always persist token and user for session persistence across reloads
                 storage.set('accessToken', this.accessToken);
                 storage.set('user', this.user);
-                storage.set('apiBaseUrl', (import.meta.env.VITE_API_URL || '/api').toString());
+                storage.set('authApiBaseUrl', selectedBaseUrl);
 
                 // Load preferences
                 const themeStore = useThemeStore();
@@ -124,7 +128,7 @@ export const useAuthStore = defineStore('auth', {
             setAuthToken(null);
             storage.delete('accessToken');
             storage.delete('user');
-            storage.set('apiBaseUrl', (import.meta.env.VITE_API_URL || '/api').toString());
+            storage.set('authApiBaseUrl', (storage.get('apiBaseUrl') || import.meta.env.VITE_API_URL || '/api').toString());
         }
     }
 });

@@ -18,17 +18,19 @@ class SocketService {
             return;
         }
 
-        const apiUrl = import.meta.env.VITE_API_URL || '/api';
-        const socketUrl = apiUrl === '/api'
+        const apiUrl = (storage.get('apiBaseUrl') || import.meta.env.VITE_API_URL || '/api').toString();
+        const isProxyMode = apiUrl.startsWith('/');
+        const socketUrl = isProxyMode
             ? window.location.origin
             : apiUrl.replace(/\/?api\/v1$/, '').replace(/\/?api$/, '');
+        const socketPath = isProxyMode ? `${apiUrl}/socket.io/` : '/socket.io/';
 
 
 
         this.socket = io(socketUrl, {
             transports: ['websocket', 'polling'],
             autoConnect: true,
-            path: '/socket.io/',
+            path: socketPath,
             auth: {
                 token: token
             }
