@@ -1,33 +1,26 @@
-name: Deploy Production
+name: Deploy to Production
 
 on:
   push:
-    branches: [main]
-    tags:
-      - 'v*.*.*' # Trigger on version tags like v1.0.0
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
-          node-version: '20'
-          cache: 'npm'
-      - name: Install dependencies
-        run: npm ci
-      - name: Build Frontend
-        run: |
-          echo "Building Frontend..."
-          npm run build:web --workspace=frontend
-      - name: Update Static Files
-        run: |
-          echo "Updating Static Files..."
-          rm -rf /var/www/ytrc-app/*
-          cp -r frontend/dist/* /var/www/ytrc-app/
-          echo "Deployment Complete!"
+          clean: true
+
+      - name: Make deploy script executable
+        run: chmod +x deploy.sh
+
+      - name: Run Deployment
+        run: ./deploy.sh
+
 
   build-windows:
     name: Build & Deploy Windows App
