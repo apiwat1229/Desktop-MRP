@@ -152,6 +152,9 @@ const displayEstimatedWeight = computed({
 watch(
   () => props.open,
   async (isOpen) => {
+    if (!isOpen) {
+      openSupplierCombo.value = false;
+    }
     if (isOpen) {
       // Fetch master data first
       await fetchMasterData();
@@ -330,7 +333,7 @@ async function handleSubmit() {
                 <ChevronsUpDown class="ml-2 h-4 w-4 shrink-0 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent class="w-[400px] p-0">
+            <PopoverContent class="w-[400px] p-0 z-[200]">
               <Command
                 :filter-function="
                   (list: any[], term: string) =>

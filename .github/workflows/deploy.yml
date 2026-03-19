@@ -1,101 +1,24 @@
-name: Deploy
+﻿name: Deploy to Production
 
 on:
   push:
-    branches: [main]
-    tags:
-      - 'v*.*.*'
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
-  # ─── Deploy Web (PWA) ─────────────────────────────────────────────────────
+  # Deploy Web (PWA via Docker)
   deploy-web:
     name: Deploy Web (PWA)
-    if: github.ref == 'refs/heads/main'
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          clean: true
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Make deploy script executable
+        run: chmod +x deploy.sh
 
-      - name: Build Frontend (PWA)
-        run: npm run build:web --workspace=frontend
-
-      - name: Deploy static files
-        run: |
-          sudo mkdir -p /var/www/ytrc-app
-          sudo rsync -a --delete frontend/dist/ /var/www/ytrc-app/
-          sudo chown -R www-data:www-data /var/www/ytrc-app
-          echo "✅ Static files deployed to /var/www/ytrc-app"
-
-      - name: Deploy nginx config
-        run: |
-          CONF="/etc/nginx/conf.d/app.ytrc.co.th.conf"
-          # Backup current config if it exists and differs
-          if [ -f "$CONF" ] && ! diff -q deploy/nginx.conf "$CONF" > /dev/null 2>&1; then
-            sudo cp "$CONF" "${CONF}.bak.$(date +%Y%m%d_%H%M%S)"
-            echo "📝 Backed up old nginx config"
-          fi
-          sudo cp deploy/nginx.conf "$CONF"
-          sudo nginx -t
-          sudo systemctl reload nginx
-          echo "✅ nginx config deployed and reloaded"
-
-  # ─── Build Windows Installer ─────────────────────────────────────────────
-  build-windows:
-    name: Build Windows Installer
-    if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build Windows App
-        run: |
-          cd frontend
-          npm run build:win
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-release
-          path: |
-            frontend/release/**/latest.yml
-            frontend/release/**/*.exe
-          if-no-files-found: error
-
-  # ─── Deploy Windows Installer to Update Server ───────────────────────────
-  deploy-windows:
-    name: Deploy Windows Installer
-    needs: build-windows
-    if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: self-hosted
-    steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: windows-release
-          path: windows-release
-
-      - name: Deploy to update server
-        run: |
-          mkdir -p /var/www/ytrc-updates
-          find windows-release -name "*.exe" -exec cp {} /var/www/ytrc-updates/ \;
-          find windows-release -name "latest.yml" -exec cp {} /var/www/ytrc-updates/ \;
-          echo "✅ Windows installer deployed:"
-          ls -lh /var/www/ytrc-updates/
-
+      - name: Run Deployment
+        run: ./deploy.sh

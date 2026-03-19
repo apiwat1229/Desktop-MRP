@@ -9,7 +9,7 @@ declare module '*.vue' {
 }
 
 interface Window {
-    ipcRenderer: {
+    ipcRenderer?: {
         autoUpdate: {
             checkForUpdates: () => void
             downloadUpdate: () => void
