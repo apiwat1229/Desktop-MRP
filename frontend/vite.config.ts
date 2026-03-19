@@ -3,6 +3,7 @@ import path from 'node:path'
 import Components from 'unplugin-vue-components/vite'
 import { defineConfig } from 'vite'
 import electron from 'vite-plugin-electron/simple'
+import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vitejs.dev/config/
 export default defineConfig(() => {
@@ -87,6 +88,77 @@ export default defineConfig(() => {
       ]
     }),
   ]
+
+  // Add PWA plugin only in web-only mode (not for Electron builds)
+  if (isWebOnly) {
+    plugins.push(
+      VitePWA({
+        registerType: 'autoUpdate',
+        includeAssets: ['logo-light.png', 'logo-dark.png', 'vite.svg'],
+        manifest: {
+          name: 'YTRC Center',
+          short_name: 'YTRC',
+          description: 'YTRC Center Management System',
+          theme_color: '#0c0c0c',
+          background_color: '#0c0c0c',
+          display: 'standalone',
+          start_url: '/',
+          orientation: 'portrait',
+          icons: [
+            {
+              src: 'pwa-192x192.png',
+              sizes: '192x192',
+              type: 'image/png',
+            },
+            {
+              src: 'pwa-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+            },
+            {
+              src: 'pwa-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'maskable',
+            },
+          ],
+        },
+        workbox: {
+          globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+          maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4 MB
+          navigateFallback: '/index.html',
+          navigateFallbackDenylist: [/^\/api/],
+          runtimeCaching: [
+            {
+              urlPattern: /^https:\/\/app\.ytrc\.co\.th\/api\/.*/i,
+              handler: 'NetworkFirst',
+              options: {
+                cacheName: 'api-cache',
+                expiration: {
+                  maxEntries: 100,
+                  maxAgeSeconds: 60 * 60 * 24, // 24 hours
+                },
+              },
+            },
+            {
+              urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'google-fonts-cache',
+                expiration: {
+                  maxEntries: 10,
+                  maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+                },
+                cacheableResponse: {
+                  statuses: [0, 200],
+                },
+              },
+            },
+          ],
+        },
+      })
+    )
+  }
 
   // Only add electron plugin if not in web-only mode
   if (!isWebOnly) {

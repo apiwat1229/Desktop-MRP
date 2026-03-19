@@ -1,42 +1,59 @@
-name: Deploy Production
+name: Deploy
 
 on:
   push:
     branches: [main]
     tags:
-      - 'v*.*.*' # Trigger on version tags like v1.0.0
+      - 'v*.*.*'
 
 jobs:
-  deploy:
+  # ─── Deploy Web (PWA) ─────────────────────────────────────────────────────
+  deploy-web:
+    name: Deploy Web (PWA)
+    if: github.ref == 'refs/heads/main'
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
+
       - name: Install dependencies
         run: npm ci
-      - name: Build Frontend
-        run: |
-          echo "Building Frontend..."
-          npm run build:web --workspace=frontend
-      - name: Update Static Files
-        run: |
-          echo "Updating Static Files..."
-          rm -rf /var/www/ytrc-app/*
-          cp -r frontend/dist/* /var/www/ytrc-app/
-          echo "Deployment Complete!"
 
+      - name: Build Frontend (PWA)
+        run: npm run build:web --workspace=frontend
+
+      - name: Deploy static files
+        run: |
+          sudo mkdir -p /var/www/ytrc-app
+          sudo rsync -a --delete frontend/dist/ /var/www/ytrc-app/
+          sudo chown -R www-data:www-data /var/www/ytrc-app
+          echo "✅ Static files deployed to /var/www/ytrc-app"
+
+      - name: Deploy nginx config
+        run: |
+          CONF="/etc/nginx/conf.d/app.ytrc.co.th.conf"
+          # Backup current config if it exists and differs
+          if [ -f "$CONF" ] && ! diff -q deploy/nginx.conf "$CONF" > /dev/null 2>&1; then
+            sudo cp "$CONF" "${CONF}.bak.$(date +%Y%m%d_%H%M%S)"
+            echo "📝 Backed up old nginx config"
+          fi
+          sudo cp deploy/nginx.conf "$CONF"
+          sudo nginx -t
+          sudo systemctl reload nginx
+          echo "✅ nginx config deployed and reloaded"
+
+  # ─── Build Windows Installer ─────────────────────────────────────────────
   build-windows:
-    name: Build & Deploy Windows App
+    name: Build Windows Installer
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -52,7 +69,7 @@ jobs:
           cd frontend
           npm run build:win
 
-      - name: Upload Artifacts
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: windows-release
@@ -61,29 +78,24 @@ jobs:
             frontend/release/**/*.exe
           if-no-files-found: error
 
+  # ─── Deploy Windows Installer to Update Server ───────────────────────────
   deploy-windows:
-    name: Deploy Windows App (Self-Hosted)
+    name: Deploy Windows Installer
     needs: build-windows
-    runs-on: self-hosted
     if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: self-hosted
     steps:
-      - name: Download Artifacts
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
           name: windows-release
           path: windows-release
 
-      - name: Deploy to Update Server
+      - name: Deploy to update server
         run: |
-          echo "Deploying Windows App from Self-Hosted Runner..."
-
-          # Ensure target directory exists (using sudo if needed, but assuming permissions fixed)
-          mkdir -p /var/www/ytrc-updates/
-
-          # Copy files
-          # Note: Artifact download structure might include the full path, so we find and move
+          mkdir -p /var/www/ytrc-updates
           find windows-release -name "*.exe" -exec cp {} /var/www/ytrc-updates/ \;
           find windows-release -name "latest.yml" -exec cp {} /var/www/ytrc-updates/ \;
-
-          echo "Listing deployed files:"
+          echo "✅ Windows installer deployed:"
           ls -lh /var/www/ytrc-updates/
+
