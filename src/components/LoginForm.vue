@@ -20,8 +20,6 @@ const emit = defineEmits<{
 const email = ref('');
 const password = ref('');
 const rememberMe = ref(false);
-const initialBackend = (storage.get('apiBaseUrl') || import.meta.env.VITE_API_URL || '/api').toString();
-const selectedBackend = ref(initialBackend === 'https://app.ytrc.co.th/api' ? '/api' : initialBackend);
 const showPassword = ref(false);
 const loading = ref(false);
 
@@ -30,12 +28,24 @@ const backendOptions = [
   { label: 'Staging (app.ytrc.co.th:2531)', value: '/api-staging' },
 ];
 
+const normalizeBackendSelection = (value: string) => {
+  const normalized = value.trim();
+  const mappedValue = normalized === 'https://app.ytrc.co.th/api' ? '/api' : normalized;
+  return backendOptions.some(option => option.value === mappedValue) ? mappedValue : '/api';
+};
+
+const initialBackend = (storage.get('apiBaseUrl') || import.meta.env.VITE_API_URL || '/api').toString();
+const selectedBackend = ref(normalizeBackendSelection(initialBackend));
+
 const handleSubmit = () => {
+  const safeBackend = normalizeBackendSelection(selectedBackend.value);
+  selectedBackend.value = safeBackend;
+
   emit('submit', {
     email: email.value,
     password: password.value,
     rememberMe: rememberMe.value,
-    backendUrl: selectedBackend.value,
+    backendUrl: safeBackend,
   });
 };
 

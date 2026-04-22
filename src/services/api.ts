@@ -4,22 +4,41 @@ import { storage } from '../services/storage';
 import { socketService } from './socket';
 
 let memoryToken: string | null = null;
+const DEFAULT_BASE_URL = '/api';
+
+const sanitizeBaseUrl = (url: string) => {
+    const trimmedUrl = url.trim();
+    if (!trimmedUrl) return DEFAULT_BASE_URL;
+
+    // Reject placeholder/example domains that can leak from old templates.
+    if (trimmedUrl.includes('api.example.com')) {
+        return DEFAULT_BASE_URL;
+    }
+
+    return trimmedUrl;
+};
 
 const normalizeBaseUrl = (url: string) => {
-    return url.endsWith('/') ? url.slice(0, -1) : url;
+    const sanitized = sanitizeBaseUrl(url);
+    return sanitized.endsWith('/') ? sanitized.slice(0, -1) : sanitized;
 };
 
 const getBaseUrl = () => {
     const runtimeUrl = storage.get('apiBaseUrl');
     if (runtimeUrl && typeof runtimeUrl === 'string') {
-        return normalizeBaseUrl(runtimeUrl);
+        const normalizedRuntimeUrl = normalizeBaseUrl(runtimeUrl);
+        // Keep storage aligned so stale placeholder values are removed.
+        if (normalizedRuntimeUrl !== runtimeUrl) {
+            storage.set('apiBaseUrl', normalizedRuntimeUrl);
+        }
+        return normalizedRuntimeUrl;
     }
 
     const url = import.meta.env.VITE_API_URL;
     if (url && typeof url === 'string') {
         return normalizeBaseUrl(url);
     }
-    return '/api';
+    return DEFAULT_BASE_URL;
 };
 
 const baseURL = getBaseUrl();

@@ -10,4 +10,5 @@ echo "📦 Building & starting Docker container..."
 docker compose -p desktop-mrp up -d --build
 
 echo "✅ Deploy complete!"
-echo "   🌐 https://app.ytrc.co.th"
+echo "   🌐 Portal: https://app.ytrc.co.th"
+echo "   🧩 MRP:    https://app.ytrc.co.th/mrp/"

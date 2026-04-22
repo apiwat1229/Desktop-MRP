@@ -5,7 +5,8 @@ import { defineConfig } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  base: command === 'build' ? '/mrp/' : '/',
   plugins: [
     vue(),
     Components({
@@ -90,7 +91,7 @@ export default defineConfig({
         theme_color: '#0c0c0c',
         background_color: '#0c0c0c',
         display: 'standalone',
-        start_url: '/',
+        start_url: '/mrp/',
         orientation: 'portrait',
         icons: [
           { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
@@ -101,7 +102,7 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
-        navigateFallback: '/index.html',
+        navigateFallback: '/mrp/index.html',
         navigateFallbackDenylist: [/^\/api/],
       },
     }),
@@ -165,4 +166,4 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
   },
-})
+}))
