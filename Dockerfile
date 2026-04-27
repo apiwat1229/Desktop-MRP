@@ -18,6 +18,9 @@ COPY --from=builder /app/dist /usr/share/nginx/html/mrp
 # Copy portal homepage for /
 COPY deploy/portal/index.html /usr/share/nginx/html/index.html
 
+# Basic auth credentials for /kanban
+COPY deploy/kanban.htpasswd /etc/nginx/.kanban_htpasswd
+
 # Copy nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
